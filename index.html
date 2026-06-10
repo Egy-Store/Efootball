@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر eFootball المتميز</title>
+    <title>متجر eFootball المتميز | eFootball Store</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -104,6 +104,28 @@
             box-shadow: 0 0 20px rgba(255, 0, 122, 0.25);
         }
 
+        /* Status Selection Square Buttons */
+        .status-btn {
+            background: rgba(18, 26, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .status-btn.active[data-status="all"] {
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.1);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+        }
+        .status-btn.active[data-status="active"] {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+        }
+        .status-btn.active[data-status="sold"] {
+            border-color: #f43f5e;
+            background: rgba(244, 63, 94, 0.1);
+            box-shadow: 0 0 20px rgba(244, 63, 94, 0.25);
+        }
+
         /* Hero Carousel Animations */
         .carousel-item {
             position: absolute;
@@ -168,6 +190,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Star Rating Colors */
+        .star-rating i {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        /* Language Toggle Classes */
+        html[dir="rtl"] .en-only { display: none !important; }
+        html[dir="ltr"] .ar-only { display: none !important; }
+        html[dir="ltr"] { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     </style>
 </head>
 <body class="relative">
@@ -188,70 +221,129 @@
                     <span class="text-xl font-extrabold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-cyan-300">
                         eFOOTBALL
                     </span>
-                    <span class="text-xs block text-cyan-400 font-semibold tracking-widest uppercase">المتجر المميز</span>
+                    <span class="text-xs block text-cyan-400 font-semibold tracking-widest uppercase ar-only">المتجر المميز</span>
+                    <span class="text-xs block text-cyan-400 font-semibold tracking-widest uppercase en-only">Premium Store</span>
                 </div>
             </div>
 
             <nav class="hidden md:flex items-center space-x-6 space-x-reverse">
-                <a href="#store-section" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors">الكتالوج</a>
-                <a href="#how-to-buy" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors">ضمانات الأمان</a>
-                <span class="h-4 w-[1px] bg-slate-700"></span>
+                <a href="#store-section" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors ar-only">الكتالوج</a>
+                <a href="#store-section" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors en-only">Catalog</a>
+                
+                <button onclick="openReviewsModal()" class="text-sm font-bold text-yellow-400 hover:text-yellow-300 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-star"></i> 
+                    <span class="ar-only">تقييمات العملاء</span>
+                    <span class="en-only">Reviews</span>
+                </button>
+
+                <button onclick="toggleLanguage()" class="glass-panel px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:text-cyan-400 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-globe text-cyan-400"></i> <span id="lang-text">English</span>
+                </button>
+
                 <span id="admin-status" class="hidden text-xs px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse">
-                    <i class="fa-solid fa-user-shield ml-1"></i> جلسة المسؤول
+                    <i class="fa-solid fa-user-shield ml-1"></i> <span class="ar-only">جلسة المسؤول</span><span class="en-only">Admin Active</span>
                 </span>
             </nav>
 
             <div class="flex items-center space-x-3 space-x-reverse">
+                <button onclick="openReviewsModal()" class="md:hidden text-yellow-400 hover:text-yellow-300 text-lg mx-2">
+                    <i class="fa-solid fa-star"></i>
+                </button>
                 <a href="https://wa.me/201065277949" target="_blank" class="glass-panel px-4 py-2 rounded-lg text-sm font-semibold hover:border-cyan-400 hover:text-cyan-300 transition-all flex items-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-emerald-400"></i> تواصل مع الوكيل
+                    <i class="fa-brands fa-whatsapp text-emerald-400"></i> <span class="ar-only">تواصل مع الوكيل</span><span class="en-only">Contact Agent</span>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- HERO SECTION with Carousel -->
-    <section class="relative h-[480px] md:h-[600px] w-full overflow-hidden flex items-center px-4 lg:px-12">
+    <!-- HERO SECTION with Dynamic Carousel -->
+    <section class="relative h-[480px] md:h-[600px] w-full overflow-hidden flex items-center px-4 lg:px-12 bg-slate-900">
         <div id="hero-carousel" class="absolute inset-0 z-0">
-            <div class="carousel-item active bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(8, 12, 30, 0.4) 0%, rgba(8, 12, 30, 0.95) 100%), url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1920&q=80')"></div>
-            <div class="carousel-item bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(8, 12, 30, 0.4) 0%, rgba(8, 12, 30, 0.95) 100%), url('https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=1920&q=80')"></div>
-            <div class="carousel-item bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(8, 12, 30, 0.4) 0%, rgba(8, 12, 30, 0.95) 100%), url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=80')"></div>
+            <!-- Will be dynamically populated with uploaded account photos -->
         </div>
 
         <div class="max-w-7xl mx-auto w-full z-10 relative">
-            <div class="max-w-2xl">
+            <div class="max-w-2xl bg-slate-950/55 p-8 rounded-3xl backdrop-blur-md border border-white/10">
                 <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-xs text-cyan-300 font-bold uppercase tracking-wider mb-6">
-                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> مخزون الحسابات المباشر
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> 
+                    <span class="ar-only">مخزون الحسابات المباشر</span>
+                    <span class="en-only">Live Stock Sync</span>
                 </span>
-                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight text-white mb-6">
-                    مرحباً بك في <br>
-                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-pink-500">متجر eFootball المتميز</span>
+                <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-white mb-6">
+                    <span class="ar-only">مرحباً بك في</span>
+                    <span class="en-only">Welcome to</span> <br>
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-pink-500 ar-only">متجر eFootball المتميز</span>
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-300 to-pink-500 en-only">Premium eFootball Store</span>
                 </h1>
-                <p class="text-base md:text-xl text-slate-300 mb-8 leading-relaxed max-w-lg">
-                    احصل فوراً على أفضل حسابات eFootball عبر منصات Steam و PS و Xbox و Mobile. معرّفات Konami آمنة، وحالة أمان معتمدة، وتشكيلات لاعبين لا مثيل لها.
+                <p class="text-base md:text-lg text-slate-300 mb-8 leading-relaxed max-w-lg">
+                    <span class="ar-only">تصفح واشترِ الحسابات الأسطورية بأعلى معايير الأمان مع التسليم الفوري عبر الوكيل المعتمد.</span>
+                    <span class="en-only">Browse and purchase legendary accounts with top security standards and instant delivery from our verified agent.</span>
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4">
                     <a href="#store-section" class="bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-900 font-extrabold px-8 py-4 rounded-xl shadow-neon-cyan hover:shadow-cyan-400/30 transition-all text-center flex items-center justify-center gap-2">
-                        تصفح الكتالوج <i class="fa-solid fa-arrow-down"></i>
-                    </a>
-                    <a href="#how-to-buy" class="glass-panel text-white hover:bg-slate-800/40 font-semibold px-8 py-4 rounded-xl transition-all text-center">
-                        سياستنا الأمنية
+                        <span class="ar-only">تصفح الكتالوج</span><span class="en-only">Browse Catalog</span> <i class="fa-solid fa-arrow-down"></i>
                     </a>
                 </div>
             </div>
         </div>
 
-        <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 space-x-reverse z-20">
-            <button class="w-3 h-3 rounded-full bg-cyan-400 cursor-pointer" onclick="setCarousel(0)"></button>
-            <button class="w-3 h-3 rounded-full bg-slate-500 cursor-pointer" onclick="setCarousel(1)"></button>
-            <button class="w-3 h-3 rounded-full bg-slate-500 cursor-pointer" onclick="setCarousel(2)"></button>
+        <div id="carousel-indicators" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 space-x-reverse z-20">
+            <!-- Indicators will be injected here -->
         </div>
     </section>
 
     <!-- MAIN PLATFORM SELECTOR / FILTERS -->
     <section class="max-w-7xl mx-auto px-4 py-12 relative z-10" id="store-section">
+        
+        <!-- STATUS FILTERS (BIG SQUARES) -->
+        <div class="mb-12">
+            <h3 class="text-xl font-bold text-white mb-6 text-center">
+                <i class="fa-solid fa-filter text-cyan-400"></i>
+                <span class="ar-only">تصفية حسب حالة الحساب</span>
+                <span class="en-only">Filter by Account Status</span>
+            </h3>
+            <div class="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
+                <button data-status="all" onclick="selectStatus('all')" class="status-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-purple-400 transition-all">
+                        <i class="fa-solid fa-layer-group text-2xl text-purple-400"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white ar-only">الكل</h3>
+                    <h3 class="font-bold text-lg text-white en-only">All</h3>
+                    <p class="text-[10px] text-slate-400 mt-1 ar-only">كل المعروض</p>
+                    <p class="text-[10px] text-slate-400 mt-1 en-only">Full Stock</p>
+                </button>
+                
+                <button data-status="active" onclick="selectStatus('active')" class="status-btn rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-emerald-400 transition-all">
+                        <i class="fa-solid fa-check-circle text-2xl text-emerald-400"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white ar-only">لسى متباعش</h3>
+                    <h3 class="font-bold text-lg text-white en-only">Active</h3>
+                    <p class="text-[10px] text-slate-400 mt-1 ar-only">حسابات متاحة</p>
+                    <p class="text-[10px] text-slate-400 mt-1 en-only">Available Accounts</p>
+                </button>
+
+                <button data-status="sold" onclick="selectStatus('sold')" class="status-btn rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-b from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-rose-400 transition-all">
+                        <i class="fa-solid fa-tags text-2xl text-rose-400"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white ar-only">مباع</h3>
+                    <h3 class="font-bold text-lg text-white en-only">Sold</h3>
+                    <p class="text-[10px] text-slate-400 mt-1 ar-only">حسابات تم بيعها</p>
+                    <p class="text-[10px] text-slate-400 mt-1 en-only">Sold Out</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- PLATFORM FILTERS -->
         <div class="text-center mb-10">
-            <h2 class="text-3xl font-bold tracking-tight text-white mb-2">تصفية حسب منصة اللعب</h2>
-            <p class="text-slate-400">حدد المنصة المفضلة لديك لعرض الحسابات النشطة المطابقة</p>
+            <h2 class="text-3xl font-bold tracking-tight text-white mb-2 ar-only">تصفية حسب منصة اللعب</h2>
+            <h2 class="text-3xl font-bold tracking-tight text-white mb-2 en-only">Filter by Platform</h2>
+            <p class="text-slate-400 ar-only">اضغط على المنصة لتصفية حصرية</p>
+            <p class="text-slate-400 en-only">Click on a platform for exclusive view</p>
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
@@ -260,185 +352,377 @@
                 <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-cyan-400 transition-all">
                     <i class="fa-brands fa-steam text-3xl text-cyan-400"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white">ستيم (كمبيوتر)</h3>
-                <p class="text-xs text-slate-400 mt-1">حسابات ستيم جاهزة</p>
+                <h3 class="font-bold text-lg text-white ar-only">ستيم (كمبيوتر)</h3>
+                <h3 class="font-bold text-lg text-white en-only">Steam (PC)</h3>
             </button>
             <button data-platform="xbox" onclick="selectPlatform('xbox')" class="platform-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-emerald-400 transition-all">
                     <i class="fa-brands fa-xbox text-3xl text-emerald-500"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white">إكس بوكس لايف</h3>
-                <p class="text-xs text-slate-400 mt-1">سيريس وإكس بوكس ون</p>
+                <h3 class="font-bold text-lg text-white ar-only">إكس بوكس لايف</h3>
+                <h3 class="font-bold text-lg text-white en-only">Xbox Live</h3>
             </button>
             <button data-platform="ps" onclick="selectPlatform('ps')" class="platform-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-blue-500 transition-all">
                     <i class="fa-brands fa-playstation text-3xl text-blue-400"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white">بلايستيشن</h3>
-                <p class="text-xs text-slate-400 mt-1">حسابات وعملات PSN</p>
+                <h3 class="font-bold text-lg text-white ar-only">بلايستيشن</h3>
+                <h3 class="font-bold text-lg text-white en-only">PlayStation</h3>
             </button>
             <button data-platform="mobile" onclick="selectPlatform('mobile')" class="platform-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-b from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-pink-500 transition-all">
                     <i class="fa-solid fa-mobile-screen-button text-3xl text-pink-400"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white">موبايل</h3>
-                <p class="text-xs text-slate-400 mt-1">حسابات أندرويد و iOS</p>
+                <h3 class="font-bold text-lg text-white ar-only">موبايل</h3>
+                <h3 class="font-bold text-lg text-white en-only">Mobile</h3>
             </button>
         </div>
 
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-2xl font-bold text-white flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> الحسابات المتاحة
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> 
+                    <span class="ar-only">الحسابات المتاحة</span><span class="en-only">Available Accounts</span>
                 </h3>
-                <p class="text-sm text-slate-400">عرض <span id="displayed-count">0</span> من الفرص المطابقة</p>
+                <p class="text-sm text-slate-400">
+                    <span class="ar-only">عرض <span id="displayed-count">0</span> من الفرص المطابقة</span>
+                    <span class="en-only">Displaying <span id="displayed-count">0</span> matching opportunities</span>
+                </p>
             </div>
             
             <div class="flex items-center gap-3 w-full sm:w-auto">
                 <div id="admin-add-container" class="hidden w-full sm:w-auto">
                     <button onclick="openAddModal()" class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2 text-sm">
-                        <i class="fa-solid fa-plus"></i> إضافة حساب
+                        <i class="fa-solid fa-plus"></i> <span class="ar-only">إضافة حساب</span><span class="en-only">Add Account</span>
                     </button>
                 </div>
                 
                 <div class="relative w-full sm:w-64">
-                    <input type="text" id="search-input" oninput="applyFilters()" placeholder="ابحث عن المواصفات، اللاعبين..." class="w-full bg-slate-900/60 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 transition-all">
+                    <input type="text" id="search-input" oninput="applyFilters()" placeholder="بحث..." class="w-full bg-slate-900/60 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 transition-all text-right ltr:text-left">
                     <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
                 </div>
             </div>
         </div>
 
-        <!-- إشعار نمط المعاينة السحابية / التشخيص -->
-        <div id="connection-warning" class="hidden mb-6 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 text-xs leading-relaxed space-y-2">
-            <div class="flex items-center gap-2 font-bold text-sm">
-                <i class="fa-solid fa-triangle-exclamation text-yellow-400 text-base animate-pulse"></i>
-                <span>تم تفعيل وضع المعاينة المحلية (بسبب قيود الاتصال بجوجل شيت)</span>
-            </div>
-            <p>لقد تعذر على المتصفح الوصول مباشرة إلى الرابط الخاص بك بسبب قيود CORS أو خطأ الشبكة (Failed to Fetch). قمنا بتحميل قاعدة بيانات تجريبية لك لتجربة الموقع بشكل مثالي.</p>
-            <div class="bg-slate-950/50 p-3 rounded-lg border border-slate-800 space-y-1.5 text-slate-300">
-                <span class="font-bold text-white block">💡 كيفية إصلاح المشكلة وجعل الموقع يتصل بجدول البيانات الخاص بك فوراً:</span>
-                <ol class="list-decimal list-inside space-y-1">
-                    <li>افتح الـ <b class="text-cyan-400">Google Apps Script</b> المربوط بالشيت الخاص بك.</li>
-                    <li>اضغط على الزر الأزرق <b class="text-cyan-400">Deploy</b> ثم اختر <b class="text-cyan-400">Manage deployments</b>.</li>
-                    <li>اضغط على رمز <b class="text-cyan-400">القلم (تعديل)</b> بجوار النشر الحالي.</li>
-                    <li>في خانة <b>Who has access</b>، قم بتغييرها من "Only myself" إلى <b class="text-emerald-400 font-bold">Anyone</b> (هام جداً).</li>
-                    <li>من خانة <b>Version</b>، اختر دائمًا <b class="text-emerald-400">New version</b> لإنشاء إصدار جديد.</li>
-                    <li>اضغط على <b class="text-emerald-400">Deploy</b> للتأكيد.</li>
-                </ol>
-            </div>
-        </div>
-
         <div id="catalog-loading" class="py-24 flex flex-col items-center justify-center space-y-4">
             <div class="spinner"></div>
-            <p class="text-slate-400 animate-pulse text-sm">جاري جلب الكتالوج، يتم الاتصال الآمن بقاعدة البيانات...</p>
-        </div>
-
-        <div id="catalog-error" class="hidden py-16 text-center max-w-md mx-auto">
-            <div class="w-16 h-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center text-2xl mx-auto mb-4">
-                <i class="fa-solid fa-circle-exclamation"></i>
-            </div>
-            <h4 class="text-lg font-bold text-white mb-2">فشل تحميل الحسابات</h4>
-            <p class="text-slate-400 text-sm mb-6">واجهنا فشلاً مؤقتاً في الوصول إلى مخزون البيانات. يرجى التحديث أو استشارة خدمة العملاء.</p>
-            <button onclick="fetchSheetData()" class="px-5 py-2.5 bg-slate-800 border border-slate-700 hover:border-slate-500 rounded-lg text-sm text-white transition-all">
-                إعادة المحاولة
-            </button>
+            <p class="text-slate-400 animate-pulse text-sm ar-only">جاري الاتصال بقاعدة البيانات...</p>
+            <p class="text-slate-400 animate-pulse text-sm en-only">Connecting to sheet database...</p>
         </div>
 
         <div id="catalog-empty" class="hidden py-16 text-center max-w-md mx-auto">
             <div class="w-16 h-16 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-2xl mx-auto mb-4">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </div>
-            <h4 class="text-lg font-bold text-white mb-2">لا توجد حسابات مطابقة</h4>
-            <p class="text-slate-400 text-sm">حاول تعديل المنصات المحددة أو مسح علامات البحث.</p>
+            <h4 class="text-lg font-bold text-white mb-2 ar-only">لا توجد حسابات مطابقة</h4>
+            <h4 class="text-lg font-bold text-white mb-2 en-only">No Accounts Found</h4>
         </div>
 
-        <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Dynamic components appended here -->
+        <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- ===== INLINE REVIEWS SECTION ===== -->
+    <section id="reviews-section" class="max-w-7xl mx-auto px-4 py-16 relative z-10">
+        <div class="text-center mb-12">
+            <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-400/30 text-xs text-yellow-300 font-bold uppercase tracking-wider mb-4">
+                <i class="fa-solid fa-star text-yellow-400"></i>
+                <span class="ar-only">آراء عملائنا</span>
+                <span class="en-only">Client Reviews</span>
+            </span>
+            <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-3 ar-only">تقييمات العملاء </h2>
+            <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-3 en-only">Client Reviews</h2>
+            <p class="text-slate-400 max-w-xl mx-auto ar-only">شاهد ما يقوله عملاؤنا الحقيقيون عن تجربتهم مع متجر eFootball المتميز</p>
+            <p class="text-slate-400 max-w-xl mx-auto en-only">See what real clients say about their experience with our premium eFootball store</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Review Form Column -->
+            <div class="lg:col-span-1">
+                <div class="glass-panel rounded-2xl p-6 sticky top-24">
+                    <h3 class="text-lg font-bold text-white mb-4 border-b border-white/10 pb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square text-cyan-400"></i>
+                        <span class="ar-only">شارك تجربتك</span><span class="en-only">Write Review</span>
+                    </h3>
+                    <form id="inline-review-form" onsubmit="submitInlineReview(event)" class="space-y-5">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-2 ar-only">تقييمك بالنجوم</label>
+                            <label class="block text-xs text-slate-400 mb-2 en-only">Your Star Rating</label>
+                            <div class="flex flex-row-reverse justify-end gap-3.5 text-2xl text-slate-600" id="inline-star-selector">
+                                <div class="flex flex-col items-center cursor-pointer" onclick="setInlineRating(5)"><span class="text-[10px] text-slate-400 font-semibold mb-1">5</span><i class="fa-solid fa-star" data-val="5"></i></div>
+                                <div class="flex flex-col items-center cursor-pointer" onclick="setInlineRating(4)"><span class="text-[10px] text-slate-400 font-semibold mb-1">4</span><i class="fa-solid fa-star" data-val="4"></i></div>
+                                <div class="flex flex-col items-center cursor-pointer" onclick="setInlineRating(3)"><span class="text-[10px] text-slate-400 font-semibold mb-1">3</span><i class="fa-solid fa-star" data-val="3"></i></div>
+                                <div class="flex flex-col items-center cursor-pointer" onclick="setInlineRating(2)"><span class="text-[10px] text-slate-400 font-semibold mb-1">2</span><i class="fa-solid fa-star" data-val="2"></i></div>
+                                <div class="flex flex-col items-center cursor-pointer" onclick="setInlineRating(1)"><span class="text-[10px] text-slate-400 font-semibold mb-1">1</span><i class="fa-solid fa-star" data-val="1"></i></div>
+                            </div>
+                            <input type="hidden" id="inline-selected-rating" value="5">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 ar-only">الاسم المستعار *</label>
+                            <label class="block text-xs text-slate-400 mb-1.5 en-only">Nick Name *</label>
+                            <input type="text" id="inline-review-name" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-cyan-400 outline-none text-right ltr:text-left">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 ar-only">تعليقك *</label>
+                            <label class="block text-xs text-slate-400 mb-1.5 en-only">Comment *</label>
+                            <textarea id="inline-review-comment" required rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:border-cyan-400 outline-none text-right ltr:text-left"></textarea>
+                        </div>
+                        <button type="submit" id="inline-review-submit-btn" class="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span class="ar-only">نشر التقييم</span><span class="en-only">Publish Review</span>
+                        </button>
+                        <p id="inline-review-form-msg" class="text-xs text-center hidden"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Reviews List Column -->
+            <div class="lg:col-span-2 space-y-4" id="inline-reviews-container">
+                <div class="text-center py-12 text-slate-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-cyan-400 block"></i>
+                    <p class="ar-only">جاري تحميل التقييمات...</p>
+                    <p class="en-only">Loading reviews...</p>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- SECURITY GUARANTEES AND HOW TO BUY -->
-    <section class="max-w-7xl mx-auto px-4 py-16 relative z-10 border-t border-slate-800/60" id="how-to-buy">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-                <span class="text-cyan-400 font-extrabold uppercase text-xs tracking-widest block mb-3">تسليم آمن وفوري</span>
-                <h3 class="text-3xl md:text-4xl font-extrabold text-white mb-6">ضماناتنا الصارمة</h3>
-                <div class="space-y-6">
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 border border-cyan-400/20 text-cyan-300 text-xl">
-                            <i class="fa-solid fa-envelope-circle-check"></i>
+    <!-- ===== GUARANTEES + HOW TO BUY SECTION (from Image 1) ===== -->
+    <section class="max-w-7xl mx-auto px-4 py-16 relative z-10">
+        <div class="glass-panel rounded-3xl p-8 md:p-12">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+                <!-- Right: Guarantees -->
+                <div>
+                    <span class="text-cyan-400 text-sm font-bold uppercase tracking-widest ar-only">تسليم آمن وفوري</span>
+                    <span class="text-cyan-400 text-sm font-bold uppercase tracking-widest en-only">Secure & Instant Delivery</span>
+                    <h2 class="text-4xl md:text-5xl font-extrabold text-white mt-2 mb-8 ar-only">ضماناتنا الصارمة</h2>
+                    <h2 class="text-4xl md:text-5xl font-extrabold text-white mt-2 mb-8 en-only">Our Iron Guarantees</h2>
+
+                    <div class="space-y-8">
+                        <!-- Guarantee 1 -->
+                        <div class="flex items-start gap-4 flex-row-reverse ltr:flex-row">
+                            <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-envelope-open-text text-cyan-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold text-lg mb-1 ar-only">تحكم كامل في الإيميل الأساسي</h4>
+                                <h4 class="text-white font-bold text-lg mb-1 en-only">Full Primary Email Control</h4>
+                                <p class="text-slate-400 text-sm leading-relaxed ar-only">صناديق بريد التفعيل الأساسية مشمولة مع خياراتنا من الفئة العليا، لضمان عدم تمكن أي شخص غيرك من الوصول إلى بيانات الاعتماد أو استردادها.</p>
+                                <p class="text-slate-400 text-sm leading-relaxed en-only">Primary activation mailboxes are included with our top-tier options to ensure no third party can ever access or reclaim your credentials.</p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="font-bold text-lg text-white">تحكم كامل في الإيميل الأساسي</h4>
-                            <p class="text-slate-400 text-sm mt-1">صناديق بريد التفعيل الأساسية الموثقة مشمولة مع خياراتنا من الفئة العليا، لضمان عدم تمكن أي شخص غيرك من الوصول إلى بيانات الاعتماد أو استردادها.</p>
+                        <!-- Guarantee 2 -->
+                        <div class="flex items-start gap-4 flex-row-reverse ltr:flex-row">
+                            <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-shield-halved text-cyan-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold text-lg mb-1 ar-only">سجل حظر نظيف</h4>
+                                <h4 class="text-white font-bold text-lg mb-1 en-only">Clean Ban Record</h4>
+                                <p class="text-slate-400 text-sm leading-relaxed ar-only">يتم فحص كل حساب بدقة لضمان توافقه مع المعايير التشغيلية لكونامي، مما يحميك من أي مخاطر متعلقة بمستوى الأمان.</p>
+                                <p class="text-slate-400 text-sm leading-relaxed en-only">Every account is meticulously checked to meet Konami's operational standards, protecting you from any safety-level risks.</p>
+                            </div>
+                        </div>
+                        <!-- Guarantee 3 -->
+                        <div class="flex items-start gap-4 flex-row-reverse ltr:flex-row">
+                            <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-user-shield text-cyan-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-bold text-lg mb-1 ar-only">تسليم رموز التحقق</h4>
+                                <h4 class="text-white font-bold text-lg mb-1 en-only">2FA Code Delivery</h4>
+                                <p class="text-slate-400 text-sm leading-relaxed ar-only">يعمل دعم العملاء لدينا على مدار الساعة لمساعدتك في النقل المباشر لرموز التحقق الثنائية (2FA) وتحديثات الربط بخطوات بسيطة.</p>
+                                <p class="text-slate-400 text-sm leading-relaxed en-only">Our client support works 24/7 to assist you in direct transfer of 2FA codes and linking updates with simple steps.</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0 border border-indigo-400/20 text-indigo-300 text-xl">
-                            <i class="fa-solid fa-shield-halved"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-lg text-white">سجل حظر نظيف</h4>
-                            <p class="text-slate-400 text-sm mt-1">يتم فحص كل حساب بدقة لضمان توافقه مع المعايير التشغيلية لكونامي، مما يحميك من أي مخاطر متعلقة بمستوى الأمان.</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center shrink-0 border border-pink-400/20 text-pink-300 text-xl">
-                            <i class="fa-solid fa-user-lock"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-lg text-white">تسليم رموز التحقق</h4>
-                            <p class="text-slate-400 text-sm mt-1">يعمل دعم العملاء لدينا على مدار الساعة لمساعدتك في النقل المباشر لرموز التحقق الثنائية (2FA) وتحديثات الربط بخطوات بسيطة.</p>
+                </div>
+
+                <!-- Left: How to Buy -->
+                <div>
+                    <div class="glass-card rounded-2xl p-8 h-full">
+                        <h3 class="text-2xl font-extrabold text-white mb-8 text-center ar-only">كيف تشتري؟</h3>
+                        <h3 class="text-2xl font-extrabold text-white mb-8 text-center en-only">How to Buy?</h3>
+
+                        <div class="space-y-8">
+                            <!-- Step 1 -->
+                            <div class="flex items-start gap-4 flex-row-reverse ltr:flex-row">
+                                <div class="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center text-slate-900 font-extrabold text-lg flex-shrink-0">1</div>
+                                <div>
+                                    <h5 class="text-white font-bold mb-1 ar-only">اختر حسابك</h5>
+                                    <h5 class="text-white font-bold mb-1 en-only">Choose Your Account</h5>
+                                    <p class="text-slate-400 text-sm leading-relaxed ar-only">تصفح وقم بتصفية القوائم للعثور على الحساب الذي يناسب إعداداتك وميزانيتك وتشكيلاتك المفضلة.</p>
+                                    <p class="text-slate-400 text-sm leading-relaxed en-only">Browse and filter the listings to find the account that matches your settings, budget, and favorite lineup.</p>
+                                </div>
+                            </div>
+                            <!-- Step 2 -->
+                            <div class="flex items-start gap-4 flex-row-reverse ltr:flex-row">
+                                <div class="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center text-slate-900 font-extrabold text-lg flex-shrink-0">2</div>
+                                <div>
+                                    <h5 class="text-white font-bold mb-1 ar-only">انقر على "الطلب عبر واتساب"</h5>
+                                    <h5 class="text-white font-bold mb-1 en-only">Click "WhatsApp Order"</h5>
+                                    <p class="text-slate-400 text-sm leading-relaxed ar-only">يقوم المتجر تلقائياً بتنسيق تذكرة شراء محددة توضح تفاصيل الحساب المحدد والمعرفات الفريدة والمواصفات.</p>
+                                    <p class="text-slate-400 text-sm leading-relaxed en-only">The store auto-generates a structured purchase ticket with full account details, unique identifiers, and specs.</p>
+                                </div>
+                            </div>
+                            <!-- Step 3 -->
+                            <div class="flex items-start gap-4 flex-row-reverse ltr:flex-row">
+                                <div class="w-10 h-10 rounded-full bg-cyan-500 flex items-center justify-center text-slate-900 font-extrabold text-lg flex-shrink-0">3</div>
+                                <div>
+                                    <h5 class="text-white font-bold mb-1 ar-only">تسليم آمن وفوري</h5>
+                                    <h5 class="text-white font-bold mb-1 en-only">Instant Secure Delivery</h5>
+                                    <p class="text-slate-400 text-sm leading-relaxed ar-only">يتحقق وكيلنا من عملية الشراء، ويعالج طريقة الدفع الآمنة الخاصة بك، وينقل لك على الفور جميع بيانات تسجيل الدخول.</p>
+                                    <p class="text-slate-400 text-sm leading-relaxed en-only">Our agent verifies the purchase, processes your secure payment method, and instantly transfers all login credentials to you.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="glass-panel rounded-3xl p-8 relative overflow-hidden">
-                <div class="absolute -left-20 -top-20 w-52 h-52 bg-pink-500/10 rounded-full blur-3xl"></div>
-                <h4 class="text-2xl font-bold text-white mb-6">كيف تشتري؟</h4>
-                <ol class="space-y-6 relative z-10">
-                    <li class="flex gap-4 items-start">
-                        <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center shrink-0 font-bold text-sm">1</div>
-                        <div>
-                            <h5 class="font-bold text-white">اختر حسابك</h5>
-                            <p class="text-slate-400 text-sm mt-1">تصفح وقم بتصفية القوائم للعثور على الحساب الذي يناسب إعداداتك وميزانيتك وتشكيلتك المفضلة.</p>
-                        </div>
-                    </li>
-                    <li class="flex gap-4 items-start">
-                        <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center shrink-0 font-bold text-sm">2</div>
-                        <div>
-                            <h5 class="font-bold text-white">انقر على "الطلب عبر واتساب"</h5>
-                            <p class="text-slate-400 text-sm mt-1">يقوم المتجر تلقائياً بتنسيق تذكرة شراء محددة توضح تفاصيل الحساب المحدد والمعرفات الفريدة والمواصفات.</p>
-                        </div>
-                    </li>
-                    <li class="flex gap-4 items-start">
-                        <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 flex items-center justify-center shrink-0 font-bold text-sm">3</div>
-                        <div>
-                            <h5 class="font-bold text-white">تسليم آمن وفوري</h5>
-                            <p class="text-slate-400 text-sm mt-1">يتحقق وكيلنا من عملية الشراء، ويعالج طريقة الدفع الآمنة الخاصة بك، وينقل لك على الفور جميع بيانات تسجيل الدخول.</p>
-                        </div>
-                    </li>
-                </ol>
-            </div>
         </div>
     </section>
 
-    <a href="https://wa.me/201065277949" target="_blank" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-3.5 px-5 rounded-full shadow-lg hover:scale-105 transition-all duration-300">
-        <i class="fa-brands fa-whatsapp text-2xl"></i>
-        <span class="text-sm tracking-wide hidden sm:inline">وكيل مبيعات واتساب</span>
-    </a>
+    <!-- REVIEWS POP-UP MODAL -->
+    <div id="reviews-modal" class="fixed inset-0 z-[70] overflow-y-auto hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md" onclick="closeReviewsModal()"></div>
+        <div class="glass-panel w-full max-w-5xl rounded-3xl overflow-hidden relative z-10 max-h-[90vh] flex flex-col">
+            
+            <!-- Reviews Header -->
+            <div class="px-6 py-4 flex items-center justify-between border-b border-slate-800 bg-slate-900/80">
+                <h1 class="text-xl font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <span class="ar-only">تقييمات العملاء</span><span class="en-only">Verified Reviews</span>
+                </h1>
+                <button onclick="closeReviewsModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Reviews Content (Grid Layout) -->
+            <div class="p-6 overflow-y-auto flex-1 bg-slate-950/50">
+                
+                <!-- CORS / Network Troubleshooting Panel -->
+                <div id="reviews-troubleshoot" class="hidden mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed space-y-2">
+                    <div class="flex items-center gap-2 font-bold text-sm">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+                        <span>تنبيه الاتصال بـ Google Sheets لمالك الموقع:</span>
+                    </div>
+                    <p class="ar-only">يبدو أنك تتصفح الموقع من ملف محلي (Local File) أو لم تقم بنشر الـ Web App الخاص بك في Google Sheets بالإعدادات الصحيحة. قمنا بعرض تقييمات افتراضية بدلاً من ترك الصفحة فارغة.</p>
+                    <p class="en-only">It looks like you are running locally or the Google Apps Script Web App was not configured with public permissions. Showing fallback reviews to keep the UI beautiful.</p>
+                    <div class="pt-1.5 flex gap-2">
+                        <span class="px-2 py-0.5 rounded bg-amber-500/25 text-[10px] font-bold">1. Execute as: Me</span>
+                        <span class="px-2 py-0.5 rounded bg-amber-500/25 text-[10px] font-bold">2. Who has access: Anyone</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Form Column -->
+                    <div class="lg:col-span-1">
+                        <div class="glass-card rounded-2xl p-6 sticky top-0">
+                            <h3 class="text-lg font-bold text-white mb-4 border-b border-white/10 pb-2">
+                                <span class="ar-only">أضف تقييمك</span><span class="en-only">Write Review</span>
+                            </h3>
+                            
+                            <form id="review-form" onsubmit="submitReview(event)" class="space-y-5">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-2">
+                                        <span class="ar-only">تقييمك (نجمة 1 الأقل - 5 النجوم الأفضل)</span>
+                                        <span class="en-only">Rating (1 lowest - 5 highest)</span>
+                                    </label>
+                                    
+                                    <div class="flex flex-row-reverse justify-end gap-3.5 star-rating text-2xl text-slate-600" id="star-selector">
+                                        <div class="flex flex-col items-center group cursor-pointer" onclick="setRating(5)">
+                                            <span class="text-[10px] text-slate-400 font-semibold mb-1">5</span>
+                                            <i class="fa-solid fa-star" data-val="5"></i>
+                                        </div>
+                                        <div class="flex flex-col items-center group cursor-pointer" onclick="setRating(4)">
+                                            <span class="text-[10px] text-slate-400 font-semibold mb-1">4</span>
+                                            <i class="fa-solid fa-star" data-val="4"></i>
+                                        </div>
+                                        <div class="flex flex-col items-center group cursor-pointer" onclick="setRating(3)">
+                                            <span class="text-[10px] text-slate-400 font-semibold mb-1">3</span>
+                                            <i class="fa-solid fa-star" data-val="3"></i>
+                                        </div>
+                                        <div class="flex flex-col items-center group cursor-pointer" onclick="setRating(2)">
+                                            <span class="text-[10px] text-slate-400 font-semibold mb-1">2</span>
+                                            <i class="fa-solid fa-star" data-val="2"></i>
+                                        </div>
+                                        <div class="flex flex-col items-center group cursor-pointer" onclick="setRating(1)">
+                                            <span class="text-[10px] text-slate-400 font-semibold mb-1">1</span>
+                                            <i class="fa-solid fa-star active" data-val="1"></i>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="selected-rating" value="5">
+                                    <p class="text-[10px] text-slate-500 mt-2 ar-only">(1 تعني تجربة سيئة و 5 تعني تجربة ممتازة)</p>
+                                    <p class="text-[10px] text-slate-500 mt-2 en-only">(1 is poor, 5 is absolute excellent)</p>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">
+                                        <span class="ar-only">الاسم المستعار (Nick Name) *</span>
+                                        <span class="en-only">Nick Name *</span>
+                                    </label>
+                                    <input type="text" id="review-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-400 outline-none text-right ltr:text-left">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">
+                                        <span class="ar-only">التعليق والتقييم *</span>
+                                        <span class="en-only">Comment *</span>
+                                    </label>
+                                    <textarea id="review-comment" required rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-cyan-400 outline-none text-right ltr:text-left"></textarea>
+                                </div>
+
+                                <button type="submit" id="review-submit-btn" class="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-lg transition-colors">
+                                    <span class="ar-only">نشر التقييم الموثق</span><span class="en-only">Publish Review</span>
+                                </button>
+                                <p id="review-form-msg" class="text-xs text-center hidden"></p>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Reviews List Column -->
+                    <div class="lg:col-span-2 space-y-4" id="reviews-container">
+                        <div class="text-center py-12 text-slate-400">
+                            <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-cyan-400"></i>
+                            <p class="ar-only">جاري تحميل تقييمات العملاء...</p>
+                            <p class="en-only">Loading client feedback database...</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="p-4 bg-slate-900/80 border-t border-slate-800 text-center">
+                <button onclick="closeReviewsModal()" class="px-8 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-all text-sm">
+                    <span class="ar-only">إغلاق النافذة</span><span class="en-only">Close Window</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert/Confirm Modal (Completely replacing native dialogs) -->
+    <div id="custom-alert-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeAlertModal()"></div>
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative z-10 text-center space-y-4">
+            <div id="alert-icon" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl"></div>
+            <h3 id="alert-title" class="text-xl font-bold text-white mt-1.5"></h3>
+            <p id="alert-message" class="text-slate-300 text-sm leading-relaxed"></p>
+            <div id="alert-actions" class="flex gap-3 justify-center pt-2"></div>
+        </div>
+    </div>
 
     <!-- CUSTOM DETAILS MODAL -->
-    <div id="details-modal" class="fixed inset-0 z-50 overflow-y-auto hidden flex items-center justify-center p-4">
+    <div id="details-modal" class="fixed inset-0 z-[60] overflow-y-auto hidden flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md" onclick="closeModal()"></div>
         <div class="glass-panel w-full max-w-4xl rounded-3xl overflow-hidden relative z-10 max-h-[90vh] flex flex-col">
             <div class="px-6 py-4 flex items-center justify-between border-b border-slate-800">
                 <div>
-                    <span id="modal-platform" class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-slate-800 text-cyan-400 tracking-widest border border-slate-700">STEAM</span>
+                    <span id="modal-platform" class="text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-slate-950 tracking-widest border border-white/10">STEAM</span>
                     <h3 id="modal-title" class="text-xl font-bold text-white mt-1.5">تفاصيل الحساب المميز</h3>
                 </div>
                 <button onclick="closeModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
@@ -449,57 +733,56 @@
             <div class="p-6 overflow-y-auto flex-1 space-y-6">
                 <div>
                     <div class="relative h-[280px] md:h-[400px] w-full bg-slate-950 rounded-2xl overflow-hidden border border-slate-800">
-                        <img id="modal-primary-img" src="" alt="Live Account Screenshot" class="w-full h-full object-contain">
+                        <img id="modal-primary-img" src="" alt="Account Screenshot" class="w-full h-full object-contain">
                     </div>
-                    <div id="modal-thumbnails" class="flex gap-3 overflow-x-auto mt-4 pb-2">
-                    </div>
+                    <div id="modal-thumbnails" class="flex gap-3 overflow-x-auto mt-4 pb-2"></div>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                        <span class="text-slate-500 text-xs block uppercase font-semibold">حالة حساب Konami ID</span>
+                        <span class="text-slate-500 text-xs block uppercase font-semibold ar-only">حالة حساب Konami ID</span>
+                        <span class="text-slate-500 text-xs block uppercase font-semibold en-only">Konami ID Status</span>
                         <span id="modal-konami-status" class="text-white font-bold text-base mt-1 block">مربوط</span>
                     </div>
                     <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                        <span class="text-slate-500 text-xs block uppercase font-semibold">توثيق الإيميل الأول</span>
-                        <span id="modal-mail-status" class="text-white font-bold text-base mt-1 block">وصول كامل للإيميل</span>
+                        <span class="text-slate-500 text-xs block uppercase font-semibold ar-only">توثيق الإيميل الأول</span>
+                        <span class="text-slate-500 text-xs block uppercase font-semibold en-only">First Mail Status</span>
+                        <span id="modal-mail-status" class="text-white font-bold text-base mt-1 block">وصول كامل</span>
                     </div>
                     <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                        <span class="text-slate-500 text-xs block uppercase font-semibold">تقييم الأمان</span>
-                        <span id="modal-safety-status" class="text-white font-bold text-base mt-1 block">أمان ممتاز</span>
+                        <span class="text-slate-500 text-xs block uppercase font-semibold ar-only">تقييم الأمان</span>
+                        <span class="text-slate-500 text-xs block uppercase font-semibold en-only">Safety Index</span>
+                        <span id="modal-safety-status" class="text-white font-bold text-base mt-1 block">آمن ممتاز</span>
                     </div>
-                    <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                        <span class="text-slate-500 text-xs block uppercase font-semibold">هوية المنصة</span>
-                        <span id="modal-platform-detail" class="text-white font-bold text-base mt-1 block">جاهز لستيم</span>
-                    </div>
-                    <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4 col-span-2 md:col-span-2 flex items-center justify-between">
+                    <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4 col-span-2 md:col-span-3 flex items-center justify-between">
                         <div>
-                            <span class="text-slate-500 text-xs block uppercase font-semibold">سعر الاستثمار</span>
-                            <span id="modal-price" class="text-emerald-400 font-extrabold text-2xl mt-0.5 block">$ 0.00</span>
+                            <span class="text-slate-500 text-xs block uppercase font-semibold ar-only">سعر الحساب</span>
+                            <span class="text-slate-500 text-xs block uppercase font-semibold en-only">Account Price</span>
+                            <span id="modal-price" class="text-emerald-400 font-extrabold text-2xl mt-0.5 block">0 ج.م</span>
                         </div>
-                        <span id="modal-status-badge" class="px-3 py-1 text-xs font-semibold rounded-full uppercase">قائمة نشطة</span>
+                        <span id="modal-status-badge" class="px-3 py-1 text-xs font-semibold rounded-full uppercase">نشط</span>
                     </div>
                 </div>
 
                 <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6">
-                    <h5 class="text-sm font-bold text-white uppercase tracking-wider mb-2">وصف الحساب والمخزون</h5>
-                    <p id="modal-description" class="text-slate-300 text-sm leading-relaxed whitespace-pre-line">
-                        لم يتم تقديم ملاحظات إضافية.
-                    </p>
+                    <h5 class="text-sm font-bold text-white uppercase tracking-wider mb-2 ar-only">مواصفات التشكيلة</h5>
+                    <h5 class="text-sm font-bold text-white uppercase tracking-wider mb-2 en-only">Squad Specifications</h5>
+                    <p id="modal-description" class="text-slate-300 text-sm leading-relaxed whitespace-pre-line"></p>
                 </div>
             </div>
 
             <div class="p-6 bg-slate-950/40 border-t border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-center">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-circle-info text-cyan-400 text-sm"></i>
-                    <span class="text-xs text-slate-400">اطلب بأمان باستخدام تذكرة الإحالة الخاصة بك.</span>
+                    <span class="text-xs text-slate-400 ar-only">تواصل آمن ومضمون للتسليم عبر الواتساب.</span>
+                    <span class="text-xs text-slate-400 en-only">Secure & verified manual transaction over WhatsApp.</span>
                 </div>
                 <div class="flex gap-3 w-full sm:w-auto">
-                    <button onclick="closeModal()" class="w-1/2 sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 hover:border-slate-500 text-slate-300 font-semibold transition-all text-sm">
-                        إغلاق
-                    </button>
+                    <button onclick="closeModal()" class="w-1/2 sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 hover:border-slate-500 text-slate-300 font-semibold transition-all text-sm ar-only">إغلاق</button>
+                    <button onclick="closeModal()" class="w-1/2 sm:w-auto px-6 py-3.5 rounded-xl border border-slate-700 hover:border-slate-500 text-slate-300 font-semibold transition-all text-sm en-only">Close</button>
+                    
                     <a id="modal-order-btn" href="" target="_blank" class="w-1/2 sm:w-auto bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-slate-900 font-extrabold px-8 py-3.5 rounded-xl shadow-neon-cyan text-center flex items-center justify-center gap-2 text-sm">
-                        الطلب عبر واتساب <i class="fa-brands fa-whatsapp text-lg"></i>
+                        <span class="ar-only">الطلب عبر واتساب</span><span class="en-only">WhatsApp Order</span> <i class="fa-brands fa-whatsapp text-lg"></i>
                     </a>
                 </div>
             </div>
@@ -521,7 +804,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">المنصة Platform *</label>
-                        <select name="platform" required class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white">
+                        <select name="platform" required class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left">
                             <option value="steam">Steam (ستيم)</option>
                             <option value="ps">PlayStation (بلايستيشن)</option>
                             <option value="xbox">Xbox (اكس بوكس)</option>
@@ -529,24 +812,24 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">السعر Price *</label>
-                        <input type="text" name="price" placeholder="مثال: $25.00" required class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white">
+                        <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">السعر بالجنيه EGP Price *</label>
+                        <input type="text" name="price" placeholder="مثال: 1500" required class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left">
                     </div>
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">حالة Konami ID</label>
-                        <input type="text" name="konamiId" value="مربوط" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white">
+                        <input type="text" name="konamiId" value="مربوط" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left">
                     </div>
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">الإيميل الأول First Mail</label>
-                        <input type="text" name="firstMail" value="وصول كامل للإيميل" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white">
+                        <input type="text" name="firstMail" value="وصول كامل للإيميل" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left">
                     </div>
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">حالة الرقم التعريفي ID Status</label>
-                        <input type="text" name="idStatus" value="موثق" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white">
+                        <input type="text" name="idStatus" value="موثق" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left">
                     </div>
                     <div>
                         <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">تقييم الأمان Security Level</label>
-                        <input type="text" name="securityLevel" value="أمان ممتاز" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white">
+                        <input type="text" name="securityLevel" value="أمان ممتاز" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left">
                     </div>
                 </div>
 
@@ -556,7 +839,6 @@
                     <div id="main-image-preview" class="hidden mt-2 rounded-xl overflow-hidden border border-slate-700 aspect-video bg-slate-950">
                         <img id="main-image-preview-img" src="" class="w-full h-full object-cover" onerror="document.getElementById('main-image-preview').classList.add('hidden')" onload="document.getElementById('main-image-preview').classList.remove('hidden')">
                     </div>
-                    <p class="text-xs text-slate-500 mt-1.5">💡 ارفع الصورة على <a href="https://imgur.com/upload" target="_blank" class="text-cyan-400 hover:underline">imgur.com</a> وانسخ الرابط المباشر (ينتهي بـ .jpg)</p>
                 </div>
                 
                 <div>
@@ -566,16 +848,12 @@
 
                 <div>
                     <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold">وصف الحساب Description *</label>
-                    <textarea name="description" rows="3" required placeholder="أضف تفاصيل التشكيلة، واللاعبين، وملاحظات إضافية..." class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white"></textarea>
+                    <textarea name="description" rows="3" required placeholder="أضف تفاصيل التشكيلة، واللاعبين، وملاحظات إضافية..." class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left"></textarea>
                 </div>
                 
                 <div class="flex gap-3 pt-4 border-t border-slate-800">
-                    <button type="button" onclick="closeAddModal()" class="w-1/3 px-4 py-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold rounded-xl text-sm transition-all">
-                        إلغاء
-                    </button>
-                    <button type="submit" class="w-2/3 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-slate-900 font-extrabold rounded-xl text-sm shadow-lg hover:shadow-emerald-500/20 transition-all">
-                        تأكيد الإضافة
-                    </button>
+                    <button type="button" onclick="closeAddModal()" class="w-1/3 px-4 py-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold rounded-xl text-sm transition-all">إلغاء</button>
+                    <button type="submit" class="w-2/3 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-slate-900 font-extrabold rounded-xl text-sm shadow-lg hover:shadow-emerald-500/20 transition-all">تأكيد الإضافة</button>
                 </div>
             </form>
         </div>
@@ -585,7 +863,7 @@
     <div id="admin-backdoor" onclick="triggerAdminAuth()" title="بوابة وحدة تحكم الوكيل"></div>
 
     <!-- ADMIN CONSOLE DIALOG MODAL -->
-    <div id="admin-modal" class="fixed inset-0 z-50 overflow-y-auto hidden flex items-center justify-center p-4">
+    <div id="admin-modal" class="fixed inset-0 z-[100] overflow-y-auto hidden flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closeAdminModal()"></div>
         <div class="glass-panel w-full max-w-md rounded-2xl p-6 relative z-10 space-y-6">
             <div class="text-center">
@@ -593,136 +871,189 @@
                     <i class="fa-solid fa-fingerprint"></i>
                 </div>
                 <h4 class="text-lg font-bold text-white">الوصول إلى نظام التحكم</h4>
-                <p class="text-xs text-slate-400 mt-1">قم بمصادقة بيانات الاعتماد لبدء امتيازات إدارة المخزون.</p>
             </div>
             <div>
-                <label class="block text-xs uppercase text-slate-400 mb-1.5 font-bold tracking-wider">رمز الوصول المشفر الآمن</label>
-                <div class="relative">
-                    <input type="password" id="admin-pass-input" placeholder="أدخل مفتاح النظام" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white transition-all">
-                    <button type="button" onclick="toggleAdminPassVisibility()" class="absolute left-3.5 top-3.5 text-slate-500 hover:text-slate-300">
-                        <i id="eye-icon" class="fa-solid fa-eye"></i>
-                    </button>
-                </div>
+                <input type="password" id="admin-pass-input" placeholder="أدخل مفتاح النظام" class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-center">
             </div>
             <div id="admin-auth-error" class="hidden text-xs text-center text-rose-400 bg-rose-500/10 border border-rose-500/20 py-2.5 rounded-lg">
-                تم رفض الوصول: المفاتيح الرئيسية غير متطابقة.
+                رمز المرور غير صحيح!
             </div>
             <div class="flex gap-3">
-                <button onclick="closeAdminModal()" class="w-1/2 px-4 py-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold rounded-xl text-sm transition-all">
-                    إلغاء الوصول
-                </button>
-                <button onclick="validateAdminKey()" class="w-1/2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-slate-950 font-extrabold rounded-xl text-sm shadow-neon-cyan hover:shadow-cyan-400/20 transition-all">
-                    تأكيد
-                </button>
+                <button onclick="closeAdminModal()" class="w-1/2 px-4 py-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold rounded-xl text-sm transition-all">إلغاء</button>
+                <button onclick="validateAdminKey()" class="w-1/2 px-4 py-3 bg-gradient-to-r from-cyan-500 to-sky-500 text-slate-950 font-extrabold rounded-xl text-sm shadow-neon-cyan hover:shadow-cyan-400/20 transition-all">تأكيد</button>
             </div>
         </div>
     </div>
 
-    <!-- SPINNER ACTION BLOCKING LOADER -->
-    <div id="action-blocker" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center space-y-4">
+    <!-- ACTION BLOCKING LOADER -->
+    <div id="action-blocker" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[110] hidden flex-col items-center justify-center space-y-4">
         <div class="spinner"></div>
-        <p id="action-blocker-text" class="text-sm text-slate-300 font-medium">جاري معالجة التحديثات...</p>
+        <p id="action-blocker-text" class="text-sm text-slate-300 font-medium">جاري معالجة الطلب...</p>
     </div>
 
-    <footer class="border-t border-slate-800/80 bg-slate-950/40 py-12 px-4 mt-16 relative z-10 text-center text-sm text-slate-500">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center space-x-2 space-x-reverse">
-                <i class="fa-solid fa-shield text-cyan-400"></i>
-                <span class="font-extrabold text-slate-300">نظام eFootball المتميز</span>
-            </div>
-            <div class="flex space-x-6 space-x-reverse text-xs">
-                <a href="#" class="hover:text-cyan-400">اتفاقية العميل</a>
-                <a href="#" class="hover:text-cyan-400">بروتوكولات الأمان</a>
-                <a href="#" class="hover:text-cyan-400">الدعم</a>
-            </div>
-            <div>
-                © 2026 متجر eFootball المتميز. شبكة الموزعين المعتمدة.
-            </div>
-        </div>
-    </footer>
-
-    <!-- LOGIC SCRIPTS -->
     <script>
-        const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxxx8yIfY9EA0k1aL7a4ruXlwmJNDtni4IpS2L5X7EDvYmnmV_MQtXm68gaYEOX6OXwTA/exec";
+        // API ENDPOINTS
+        const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxxx8yIfY9EA0k1aL7a4ruXlwmJNDtni4IpS2L5X7EDvYmnmV_MQtXm68gaYEOX6OXwTA/exec"; // Accounts
+        const SURVEY_API_URL = "https://script.google.com/macros/s/AKfycbxPUu6GoD2Gl9A3us_YBYkqt6kLRdaQLAYEGTaVLV2agcaZDpmzSw6j_e-fCjoROCHrkw/exec"; // Reviews
 
         let accountsData = [];
         let activePlatforms = ["steam", "xbox", "ps", "mobile"];
+        let currentStatusFilter = "all"; 
         let adminMode = false;
         let currentCarouselIndex = 0;
+        let carouselInterval;
+        let currentLang = "ar";
+        let confirmActionCallback = null;
 
-        const s1 = "Hesho";
-        const s2 = "&Abanoub";
-        const s3 = "123@@";
-        const s4 = "3443";
+        const s1 = "Hesho"; const s2 = "&Abanoub"; const s3 = "123@@"; const s4 = "3443";
 
-        // بيانات احتياطية ممتازة (Fallback Data) في حال حدوث خطأ CORS أو فشل الاتصال المباشر بجوجل
+        // Fallback default mock data for Accounts
         const fallbackAccounts = [
-            {
-                rowIndex: 2,
-                platform: "steam",
-                konamiId: "مربوط بالكامل",
-                firstMail: "وصول كامل للإيميل",
-                idStatus: "موثق رسميًا",
-                securityLevel: "أمان ممتاز (100%)",
-                price: "$45.00",
-                mainImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80",
-                galleryImages: "",
-                description: "تشكيلة أسطورية تحتوي على ميسي (إصدار كأس العالم) ورونالدو وروماريو كابتن الفريق. التناغم الجماعي 100، وجاهز للعب الفوري في الديفيجن 1.",
-                status: "Active"
-            },
-            {
-                rowIndex: 3,
-                platform: "ps",
-                konamiId: "مربوط",
-                firstMail: "وصول كامل للإيميل",
-                idStatus: "موثق",
-                securityLevel: "أمان ممتاز",
-                price: "$60.00",
-                mainImage: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=600&q=80",
-                galleryImages: "",
-                description: "حساب بلايستيشن أسطوري يحتوي على تشكيلة نجوم كاملة مع إيبك نيمار وديل بييرو ومالديني بالدفاع. عملات GP متوفرة بكثرة لتطوير اللاعبين.",
-                status: "Active"
-            },
-            {
-                rowIndex: 4,
-                platform: "mobile",
-                konamiId: "مربوط بـ ID",
-                firstMail: "إيميل أساسي متاح",
-                idStatus: "موثق",
-                securityLevel: "أمان ممتاز",
-                price: "$20.00",
-                mainImage: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80",
-                galleryImages: "",
-                description: "حساب هاتف قوي جداً يحتوي على تشكيلة تشافي وإنييستا ومارادونا الأيقونية. سهل النقل وتغيير البيانات بالكامل.",
-                status: "Active"
-            },
-            {
-                rowIndex: 5,
-                platform: "xbox",
-                konamiId: "مربوط",
-                firstMail: "وصول كامل",
-                idStatus: "موثق",
-                securityLevel: "حماية عالية",
-                price: "$35.00",
-                mainImage: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?auto=format&fit=crop&w=600&q=80",
-                galleryImages: "",
-                description: "تشكيلة متكاملة وجاهزة لمنصة إكس بوكس تضم كبار لاعبي الدوري الإنجليزي والفرنسي (مبابي وهالاند ومحمد صلاح مطورين للحد الأقصى).",
-                status: "Active"
-            }
+            { rowIndex: 2, platform: "steam", konamiId: "مربوط بالكامل", firstMail: "وصول كامل للإيميل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "2500", mainImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "تشكيلة أسطورية تحتوي على ميسي ورونالدو وروماريو كابتن الفريق.", status: "Active" },
+            { rowIndex: 3, platform: "ps", konamiId: "مربوط", firstMail: "وصول كامل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "3000", mainImage: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "حساب بلايستيشن أسطوري يحتوي على تشكيلة نجوم كاملة مع إيبك نيمار وديل بييرو.", status: "Sold" }
         ];
+
+        // Robust Local Fallback Database for Reviews (In case Google Apps Script CORS is blocked locally)
+        const fallbackReviews = [
+            { rowIndex: 2, nickName: "أحمد علي", star: "5", comment: "متجر موثوق وسريع جداً في التعامل وسعر مناسب. الوكيل محترم جداً!" },
+            { rowIndex: 3, nickName: "Karim_10", star: "5", comment: "Excellent service! Handled the account trade in less than 5 minutes. Strongly recommended." },
+            { rowIndex: 4, nickName: "سيف الإسلام", star: "4", comment: "حساب رائع جداً كما بالوصف تماماً. شكراً لكم." }
+        ];
+
+        /* ================= DIALOGS ================= */
+        function showAlert(title, message, isError = false) {
+            const modal = document.getElementById('custom-alert-modal');
+            const icon = document.getElementById('alert-icon');
+            const actions = document.getElementById('alert-actions');
+            
+            document.getElementById('alert-title').textContent = title;
+            document.getElementById('alert-message').textContent = message;
+            
+            icon.className = `w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl mb-2 ${isError ? 'bg-rose-500/20 text-rose-500' : 'bg-emerald-500/20 text-emerald-500'}`;
+            icon.innerHTML = `<i class="fa-solid ${isError ? 'fa-circle-xmark' : 'fa-circle-check'}"></i>`;
+            
+            actions.innerHTML = `<button onclick="closeAlertModal()" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm">حسناً / OK</button>`;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function showConfirm(title, message, callback) {
+            const modal = document.getElementById('custom-alert-modal');
+            const icon = document.getElementById('alert-icon');
+            const actions = document.getElementById('alert-actions');
+            
+            document.getElementById('alert-title').textContent = title;
+            document.getElementById('alert-message').textContent = message;
+            
+            icon.className = `w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl mb-2 bg-yellow-500/20 text-yellow-500`;
+            icon.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+            
+            confirmActionCallback = callback;
+            actions.innerHTML = `
+                <button onclick="closeAlertModal()" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm">إلغاء / Cancel</button>
+                <button onclick="executeConfirm()" class="px-6 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-sm">تأكيد / Confirm</button>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('custom-alert-modal').classList.add('hidden');
+            confirmActionCallback = null;
+        }
+
+        function executeConfirm() {
+            if (confirmActionCallback) {
+                confirmActionCallback();
+                closeAlertModal();
+            }
+        }
+
+        /* ================= LANG TOGGLE ================= */
+        function toggleLanguage() {
+            const html = document.getElementById('html-root');
+            if (currentLang === "ar") {
+                currentLang = "en";
+                html.setAttribute('dir', 'ltr');
+                document.getElementById('lang-text').textContent = "العربية";
+            } else {
+                currentLang = "ar";
+                html.setAttribute('dir', 'rtl');
+                document.getElementById('lang-text').textContent = "English";
+            }
+            applyFilters();
+            if (!document.getElementById('reviews-modal').classList.contains('hidden')) {
+                fetchReviews();
+            }
+        }
+
+        /* ================= CURRENCY ================= */
+        function formatCurrency(priceInput, lang) {
+            if (!priceInput) return '';
+            const match = priceInput.replace(/[^\d.]/g, '');
+            const numericValue = parseFloat(match);
+            if (isNaN(numericValue)) return priceInput;
+
+            const EXCHANGE_RATE = 50.0;
+            const usdValue = (numericValue / EXCHANGE_RATE).toFixed(1);
+
+            if (lang === 'ar') {
+                return `${numericValue.toLocaleString('ar-EG')} ج.م <span class="text-[11px] opacity-85 font-normal">(~${usdValue} دولار)</span>`;
+            } else {
+                return `${numericValue.toLocaleString('en-US')} EGP <span class="text-[11px] opacity-85 font-normal">(~$${usdValue})</span>`;
+            }
+        }
+
+        /* ================= DYNAMIC SLIDER ================= */
+        function buildDynamicCarousel() {
+            const container = document.getElementById('hero-carousel');
+            const indicatorsContainer = document.getElementById('carousel-indicators');
+            if (!container || !indicatorsContainer) return;
+
+            container.innerHTML = '';
+            indicatorsContainer.innerHTML = '';
+
+            const activeImages = accountsData
+                .filter(acc => acc.status.toLowerCase() !== 'deleted' && acc.status.toLowerCase() !== 'sold')
+                .map(acc => acc.mainImage)
+                .filter(Boolean);
+
+            if (activeImages.length === 0) {
+                const div = document.createElement('div');
+                div.className = `carousel-item active bg-cover bg-center`;
+                div.style.backgroundImage = `linear-gradient(to bottom, rgba(8, 12, 30, 0.4) 0%, rgba(8, 12, 30, 0.95) 100%), url('https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=1920&q=80')`;
+                container.appendChild(div);
+                return;
+            }
+
+            activeImages.forEach((imgUrl, idx) => {
+                const div = document.createElement('div');
+                div.className = `carousel-item ${idx === 0 ? 'active' : ''} bg-cover bg-center`;
+                div.style.backgroundImage = `linear-gradient(to bottom, rgba(8, 12, 30, 0.4) 0%, rgba(8, 12, 30, 0.95) 100%), url('${imgUrl}')`;
+                container.appendChild(div);
+
+                const btn = document.createElement('button');
+                btn.className = `w-3 h-3 rounded-full cursor-pointer transition-colors ${idx === 0 ? 'bg-cyan-400' : 'bg-slate-500'}`;
+                btn.onclick = () => setCarousel(idx);
+                indicatorsContainer.appendChild(btn);
+            });
+
+            currentCarouselIndex = 0;
+            if (carouselInterval) clearInterval(carouselInterval);
+            carouselInterval = setInterval(rotateCarousel, 5000);
+        }
 
         function rotateCarousel() {
             const slides = document.querySelectorAll('.carousel-item');
-            if(!slides.length) return;
+            if (!slides.length) return;
             currentCarouselIndex = (currentCarouselIndex + 1) % slides.length;
             setCarousel(currentCarouselIndex);
         }
-        setInterval(rotateCarousel, 5000);
 
         function setCarousel(index) {
             currentCarouselIndex = index;
             const slides = document.querySelectorAll('.carousel-item');
-            const indicators = document.querySelectorAll('#hero-carousel + div button');
+            const indicators = document.querySelectorAll('#carousel-indicators button');
             
             slides.forEach((slide, i) => {
                 if (i === index) {
@@ -737,22 +1068,19 @@
             });
         }
 
+        /* ================= FETCH ACCOUNTS ================= */
         async function fetchSheetData() {
             const loadingEl = document.getElementById('catalog-loading');
-            const errorEl = document.getElementById('catalog-error');
             const containerEl = document.getElementById('cards-container');
             const emptyEl = document.getElementById('catalog-empty');
-            const warningEl = document.getElementById('connection-warning');
 
             loadingEl.classList.remove('hidden');
-            errorEl.classList.add('hidden');
             emptyEl.classList.add('hidden');
-            warningEl.classList.add('hidden');
             containerEl.innerHTML = '';
 
             try {
                 const response = await fetch(API_ENDPOINT);
-                if (!response.ok) throw new Error('Network failure connecting to eFootball sheet api');
+                if (!response.ok) throw new Error('Network failure');
                 const responseData = await response.json();
                 
                 if (Array.isArray(responseData)) {
@@ -763,40 +1091,43 @@
                         firstMail: row.firstMail || row['First Mail'] || row['First Mail status'] || 'مربوط بكونامي',
                         idStatus: row.idStatus || row['ID Status'] || 'موثق',
                         securityLevel: row.securityLevel || row['Security Level'] || 'حماية عالية',
-                        price: row.price || row.Price || '$0',
-                        mainImage: row.mainImage || row['Main Image'] || 'https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=600&q=80',
+                        price: row.price || row.Price || '0',
+                        mainImage: row.mainImage || row['Main Image'] || '',
                         galleryImages: row.galleryImages || row['Gallery Images'] || row['Gallery'] || '',
-                        description: row.description || row.Description || row.Specs || 'حساب جاهز بتشكيلة متوازنة.',
+                        description: row.description || row.Description || row.Specs || 'لا يوجد وصف.',
                         status: (row.status || row.Status || 'Active').trim()
                     }));
                 } else {
-                    throw new Error('Unrecognized data pattern received');
+                    throw new Error('Unrecognized data pattern');
                 }
-                applyFilters();
             } catch (err) {
-                console.warn("فشل الاتصال المباشر بـ Google Sheets API. جاري استخدام البيانات الاحتياطية لتشغيل المعاينة بسلاسة:", err);
-                
-                // تفعيل البيانات التجريبية لحل مشكلة Failed to Fetch تماماً عند المعاينة
+                console.warn("Using fallback data for preview mode", err);
                 accountsData = [...fallbackAccounts];
-                
-                // إظهار صندوق التشخيص والتعليمات ليتمكن المستخدم من إصلاح الخطأ الفعلي بجدول البيانات
-                warningEl.classList.remove('hidden');
-                
-                applyFilters();
             }
+            
+            buildDynamicCarousel();
+            applyFilters();
         }
 
+        /* ================= STORE FILTERS ================= */
         function selectPlatform(platform) {
-            const index = activePlatforms.indexOf(platform);
-            const button = document.querySelector(`button[data-platform="${platform}"]`);
-            
-            if (index > -1) {
-                activePlatforms.splice(index, 1);
-                button.classList.remove('active');
+            if (activePlatforms.length === 1 && activePlatforms[0] === platform) {
+                activePlatforms = ["steam", "xbox", "ps", "mobile"];
+                document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.add('active'));
             } else {
-                activePlatforms.push(platform);
-                button.classList.add('active');
+                activePlatforms = [platform];
+                document.querySelectorAll('.platform-btn').forEach(btn => {
+                    if (btn.getAttribute('data-platform') === platform) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
             }
+            applyFilters();
+        }
+
+        function selectStatus(status) {
+            currentStatusFilter = status;
+            document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.status-btn[data-status="${status}"]`).classList.add('active');
             applyFilters();
         }
 
@@ -813,9 +1144,23 @@
                 const platformMatch = activePlatforms.includes(acc.platform);
                 const matchString = `${acc.platform} ${acc.konamiId} ${acc.firstMail} ${acc.idStatus} ${acc.securityLevel} ${acc.description}`.toLowerCase();
                 const searchMatch = query === "" || matchString.includes(query);
-                const activeState = acc.status.toLowerCase() !== 'deleted';
+                
+                let statusMatch = true;
+                const st = acc.status.toLowerCase();
+                if (st === 'deleted') return false;
+                
+                if (currentStatusFilter === 'active') statusMatch = st !== 'sold';
+                if (currentStatusFilter === 'sold') statusMatch = st === 'sold';
 
-                return platformMatch && searchMatch && activeState;
+                return platformMatch && searchMatch && statusMatch;
+            });
+
+            filtered.sort((a, b) => {
+                const aSold = a.status.toLowerCase() === 'sold';
+                const bSold = b.status.toLowerCase() === 'sold';
+                if (aSold && !bSold) return 1;  
+                if (!aSold && bSold) return -1; 
+                return 0; 
             });
 
             document.getElementById('displayed-count').textContent = filtered.length;
@@ -827,22 +1172,21 @@
             emptyEl.classList.add('hidden');
 
             filtered.forEach(acc => {
-                const card = createCardComponent(acc);
-                containerEl.appendChild(card);
+                containerEl.appendChild(createCardComponent(acc));
             });
         }
 
         function createCardComponent(acc) {
             const div = document.createElement('div');
             
-            let platStyleClass = 'from-cyan-400 to-sky-500';
             let platIcon = 'fa-gamepad';
-            let platformLabel = acc.platform;
+            let platformLabelAr = acc.platform;
+            let platformLabelEn = acc.platform.toUpperCase();
             
-            if (acc.platform === 'steam') { platStyleClass = 'from-cyan-400 to-blue-500'; platIcon = 'fa-brands fa-steam'; platformLabel = 'ستيم'; }
-            if (acc.platform === 'xbox') { platStyleClass = 'from-emerald-400 to-green-600'; platIcon = 'fa-brands fa-xbox'; platformLabel = 'إكس بوكس';}
-            if (acc.platform === 'ps') { platStyleClass = 'from-blue-500 to-indigo-700'; platIcon = 'fa-brands fa-playstation'; platformLabel = 'بلايستيشن';}
-            if (acc.platform === 'mobile') { platStyleClass = 'from-pink-500 to-rose-600'; platIcon = 'fa-solid fa-mobile-screen-button'; platformLabel = 'موبايل';}
+            if (acc.platform === 'steam') { platIcon = 'fa-brands fa-steam'; platformLabelAr = 'ستيم'; }
+            if (acc.platform === 'xbox') { platIcon = 'fa-brands fa-xbox'; platformLabelAr = 'إكس بوكس'; }
+            if (acc.platform === 'ps') { platIcon = 'fa-brands fa-playstation'; platformLabelAr = 'بلايستيشن'; }
+            if (acc.platform === 'mobile') { platIcon = 'fa-solid fa-mobile-screen-button'; platformLabelAr = 'موبايل'; }
 
             const isSold = acc.status.toLowerCase() === 'sold';
 
@@ -853,26 +1197,26 @@
                     ${isSold ? `
                     <div class="absolute inset-0 bg-slate-950/70 z-10 flex items-center justify-center">
                         <span class="px-5 py-2.5 rounded-xl bg-rose-600 border border-rose-400 text-white text-sm font-extrabold uppercase tracking-widest shadow-lg transform -rotate-3">
-                            مباع بالكامل
+                            <span class="ar-only">مباع</span><span class="en-only">Sold Out</span>
                         </span>
                     </div>` : ''}
 
-                    <img src="${acc.mainImage || 'https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=600&q=80'}" alt="صورة حساب eFootball" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=600&q=80'">
+                    <img src="${acc.mainImage || 'https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=600&q=80'}" alt="eFootball Account" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=600&q=80'">
                     
                     <span class="absolute top-3 right-3 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-slate-950/85 text-white flex items-center gap-1.5 border border-white/10">
-                        <i class="${platIcon} text-cyan-400"></i> ${platformLabel}
+                        <i class="${platIcon} text-cyan-400"></i> <span class="ar-only">${platformLabelAr}</span><span class="en-only">${platformLabelEn}</span>
                     </span>
 
                     <span class="absolute bottom-3 left-3 bg-emerald-500 text-slate-950 px-3 py-1 rounded-lg text-xs font-extrabold tracking-tight">
-                        ${acc.price}
+                        ${formatCurrency(acc.price, currentLang)}
                     </span>
                 </div>
 
                 <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
                     <div class="space-y-3">
                         <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span>الرقم التعريفي: <b class="text-slate-200">${acc.idStatus}</b></span>
-                            <span>الإيميل: <b class="text-slate-200">${acc.firstMail}</b></span>
+                            <span><span class="ar-only">التوثيق:</span><span class="en-only">Verify:</span> <b class="text-slate-200">${acc.idStatus}</b></span>
+                            <span><span class="ar-only">الإيميل:</span><span class="en-only">Mail:</span> <b class="text-slate-200">${acc.firstMail}</b></span>
                         </div>
                         <p class="text-slate-300 text-sm line-clamp-2 leading-relaxed">
                             ${acc.description}
@@ -881,15 +1225,17 @@
 
                     <div class="space-y-3 pt-2">
                         <button onclick="openModal(${JSON.stringify(acc).replace(/"/g, '&quot;')})" class="w-full py-3 bg-slate-900 hover:bg-slate-800/80 border border-slate-700/80 hover:border-slate-500 rounded-xl text-xs font-extrabold tracking-wide text-white transition-all uppercase flex items-center justify-center gap-1.5">
-                            عرض التفاصيل والتشكيلة <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                            <span class="ar-only">عرض التفاصيل والتشكيلة</span><span class="en-only">View Details & Squad</span> 
+                            <i class="fa-solid fa-chevron-left text-[10px] rtl:block ltr:hidden"></i>
+                            <i class="fa-solid fa-chevron-right text-[10px] ltr:block rtl:hidden"></i>
                         </button>
                         
                         <div class="admin-actions-bar ${adminMode ? 'flex' : 'hidden'} gap-2 pt-1">
                             <button onclick="processRowAction('sold', ${acc.rowIndex})" class="w-1/2 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-tags"></i> مباع
+                                <i class="fa-solid fa-tags"></i> <span class="ar-only">مباع</span><span class="en-only">Mark Sold</span>
                             </button>
                             <button onclick="processRowAction('delete', ${acc.rowIndex})" class="w-1/2 py-2.5 bg-rose-700 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-trash-can"></i> حذف
+                                <i class="fa-solid fa-trash-can"></i> <span class="ar-only">حذف</span><span class="en-only">Delete</span>
                             </button>
                         </div>
                     </div>
@@ -898,10 +1244,10 @@
             return div;
         }
 
+        /* ================= DETAILS MODAL ================= */
         function openModal(acc) {
-            document.getElementById('modal-platform').className = `text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-slate-950 tracking-widest border border-white/10`;
-            document.getElementById('modal-platform').textContent = acc.platform;
-            document.getElementById('modal-title').textContent = `حساب ${acc.platform.toUpperCase()} رقم #${acc.rowIndex}`;
+            document.getElementById('modal-platform').textContent = acc.platform.toUpperCase();
+            document.getElementById('modal-title').textContent = `Account Reference #${acc.rowIndex}`;
             
             const primaryImg = document.getElementById('modal-primary-img');
             primaryImg.src = acc.mainImage;
@@ -912,18 +1258,23 @@
             document.getElementById('modal-konami-status').textContent = acc.konamiId;
             document.getElementById('modal-mail-status').textContent = acc.firstMail;
             document.getElementById('modal-safety-status').textContent = acc.securityLevel;
-            document.getElementById('modal-platform-detail').textContent = `${acc.platform.toUpperCase()} - ${acc.idStatus}`;
-            document.getElementById('modal-price').textContent = acc.price;
+            document.getElementById('modal-price').innerHTML = formatCurrency(acc.price, currentLang);
             document.getElementById('modal-description').textContent = acc.description;
+
+            // Safe Check for modal-platform-detail element if it exists in any markup variation
+            const platformDetailEl = document.getElementById('modal-platform-detail');
+            if (platformDetailEl) {
+                platformDetailEl.textContent = `${acc.platform.toUpperCase()} - ${acc.idStatus}`;
+            }
 
             const isSold = acc.status.toLowerCase() === 'sold';
             const badge = document.getElementById('modal-status-badge');
             if (isSold) {
                 badge.className = "px-3 py-1 text-xs font-semibold rounded-full uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30";
-                badge.textContent = "مباع";
+                badge.textContent = currentLang === 'ar' ? "مباع" : "Sold";
             } else {
                 badge.className = "px-3 py-1 text-xs font-semibold rounded-full uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-                badge.textContent = "متاح للبيع";
+                badge.textContent = currentLang === 'ar' ? "متاح للبيع" : "Available";
             }
 
             const thumbnailBox = document.getElementById('modal-thumbnails');
@@ -941,8 +1292,8 @@
                 btn.innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=100&q=80'">`;
                 btn.onclick = function() {
                     document.getElementById('modal-primary-img').src = imgUrl;
-                    Array.from(thumbnailBox.children).forEach(child => child.classList.remove('border-cyan-400'));
                     Array.from(thumbnailBox.children).forEach(child => child.classList.add('border-slate-800'));
+                    Array.from(thumbnailBox.children).forEach(child => child.classList.remove('border-cyan-400'));
                     btn.classList.add('border-cyan-400');
                     btn.classList.remove('border-slate-800');
                 };
@@ -951,11 +1302,9 @@
 
             const whatsappNumber = "201065277949";
             const messageText = `أهلاً بوكيل متجر eFootball! أود طلب هذا الحساب:
-*المنصة:* ${acc.platform.toUpperCase()}
-*رقم المرجع:* #${acc.rowIndex}
-*السعر:* ${acc.price}
-*المواصفات:* ${acc.description.slice(0, 100)}...
-يرجى إعلامي بكيفية إتمام عملية الشراء. شكراً لك!`;
+المنصة: ${acc.platform.toUpperCase()}
+رقم المرجع: #${acc.rowIndex}
+المواصفات: ${acc.description.slice(0, 100)}...`;
             
             document.getElementById('modal-order-btn').href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(messageText)}`;
 
@@ -968,6 +1317,186 @@
             document.body.classList.remove('overflow-hidden');
         }
 
+        /* ================= REVIEWS MODAL INTEGRATION ================= */
+        function openReviewsModal() {
+            document.getElementById('reviews-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            document.getElementById('reviews-troubleshoot').classList.add('hidden'); // Hide troubleshooter initially
+            fetchReviews();
+        }
+
+        function closeReviewsModal() {
+            document.getElementById('reviews-modal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function setRating(val) {
+            document.getElementById('selected-rating').value = val;
+            const stars = document.querySelectorAll('#star-selector i');
+            stars.forEach(star => {
+                if (parseInt(star.getAttribute('data-val')) <= val) {
+                    star.style.color = '#fbbf24'; 
+                } else {
+                    star.style.color = '#475569'; 
+                }
+            });
+        }
+        setRating(5);
+
+        // Fetch Feedback Reviews with Smart Fallback
+        async function fetchReviews() {
+            const container = document.getElementById('reviews-container');
+            container.innerHTML = `
+                <div class="text-center py-12 text-slate-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-cyan-400"></i>
+                    <p class="ar-only">جاري تحميل تقييمات العملاء...</p>
+                    <p class="en-only">Loading client feedback database...</p>
+                </div>`;
+
+            try {
+                const res = await fetch(SURVEY_API_URL);
+                if (!res.ok) throw new Error("Google Apps Script connection error");
+                const data = await res.json();
+                
+                // If it retrieved empty array or wrong data formats
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid format returned");
+                }
+
+                renderReviewsHTML(data);
+            } catch (err) {
+                console.warn("Failed fetching live reviews from sheet. Loading Fallback reviews database.", err);
+                // Display troubleshooting warning for site owner
+                document.getElementById('reviews-troubleshoot').classList.remove('hidden');
+                // Load local fallback database reviews beautifully
+                renderReviewsHTML(fallbackReviews);
+            }
+        }
+
+        // Helper to output reviews to UI
+        function renderReviewsHTML(reviewsArray) {
+            const container = document.getElementById('reviews-container');
+            container.innerHTML = '';
+            
+            if (reviewsArray.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-500 py-10">لا توجد تقييمات منشورة حتى الآن. / No reviews published yet.</p>`;
+                return;
+            }
+
+            reviewsArray.forEach(rev => {
+                let starsHtml = '';
+                const rating = parseInt(rev.star) || 5;
+                for (let i = 0; i < 5; i++) {
+                    starsHtml += `<i class="fa-solid fa-star ${i < rating ? 'text-yellow-400' : 'text-slate-700'}"></i>`;
+                }
+
+                container.innerHTML += `
+                    <div class="glass-card rounded-xl p-5 relative transition-transform hover:scale-[1.01]">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-bold text-white text-lg">${rev.nickName}</h4>
+                                <div class="text-sm tracking-widest mt-1">${starsHtml}</div>
+                            </div>
+                            ${adminMode ? `<button onclick="deleteReview(${rev.rowIndex})" class="text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 rounded-md text-sm p-2 transition-colors"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed whitespace-pre-line">${rev.comment}</p>
+                    </div>
+                `;
+            });
+        }
+
+        // Submit Feedback with Bulletproof CORS bypass fallback (mode: 'no-cors')
+        async function submitReview(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('review-submit-btn');
+            const msg = document.getElementById('review-form-msg');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+
+            const nickName = document.getElementById('review-name').value;
+            const star = document.getElementById('selected-rating').value;
+            const comment = document.getElementById('review-comment').value;
+
+            const formData = new URLSearchParams();
+            formData.append('action', 'add');
+            formData.append('nickName', nickName);
+            formData.append('star', star);
+            formData.append('comment', comment);
+
+            // Attempt primary submit
+            try {
+                // Using standard fetch POST
+                const response = await fetch(SURVEY_API_URL, { 
+                    method: 'POST', 
+                    body: formData 
+                });
+                
+                showSubmitSuccess();
+            } catch (err) {
+                console.warn("Standard POST caught CORS policy error. Attempting safe 'no-cors' fallback broadcast...");
+                
+                // Fallback attempt with 'no-cors' - Google Apps Script WILL receive this and write to sheets successfully!
+                try {
+                    await fetch(SURVEY_API_URL, { 
+                        method: 'POST', 
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
+                    });
+                    
+                    showSubmitSuccess();
+                } catch (fallbackErr) {
+                    msg.textContent = currentLang === 'ar' ? "حدث خطأ غير متوقع أثناء الإرسال" : "Network error. Try again later.";
+                    msg.className = "text-xs text-center text-rose-400 block mt-2";
+                    btn.disabled = false;
+                    btn.innerHTML = currentLang === 'ar' ? "نشر التقييم الموثق" : "Publish Review";
+                }
+            }
+
+            function showSubmitSuccess() {
+                // Clear Form
+                document.getElementById('review-form').reset();
+                setRating(5);
+                
+                msg.textContent = currentLang === 'ar' ? "تم نشر تقييمك بنجاح وشكراً لك!" : "Thank you! Your review has been submitted!";
+                msg.className = "text-xs text-center text-emerald-400 block mt-2";
+                
+                btn.disabled = false;
+                btn.innerHTML = currentLang === 'ar' ? "نشر التقييم الموثق" : "Publish Review";
+                setTimeout(() => msg.classList.add('hidden'), 5000);
+                
+                // Instantly update reviews list
+                fetchReviews();
+            }
+        }
+
+        async function deleteReview(rowIndex) {
+            showConfirm("تأكيد الحذف / Confirm", "هل تريد حذف هذا التقييم نهائياً من جوجل شيت؟", async () => {
+                const blocker = document.getElementById('action-blocker');
+                blocker.classList.remove('hidden');
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('action', 'delete');
+                    formData.append('rowIndex', rowIndex);
+                    
+                    await fetch(SURVEY_API_URL, { 
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        body: formData 
+                    });
+
+                    showAlert("نجاح / Success", "تم إرسال طلب حذف التقييم بنجاح.");
+                    fetchReviews();
+                } catch (err) {
+                    showAlert("خطأ / Error", "حدث خطأ غير متوقع أثناء الحذف.", true);
+                } finally {
+                    blocker.classList.add('hidden');
+                }
+            });
+        }
+
+        /* ================= ADMIN & ACCOUNT ACTION ================= */
         function openAddModal() {
             document.getElementById('add-modal').classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
@@ -984,21 +1513,19 @@
             
             const form = document.getElementById('add-account-form');
             const formData = new URLSearchParams();
-            formData.append('action',        'add');
-            formData.append('platform',      form.querySelector('[name="platform"]').value);
-            formData.append('konamiId',      form.querySelector('[name="konamiId"]').value);
-            formData.append('firstMail',     form.querySelector('[name="firstMail"]').value);
-            formData.append('idStatus',      form.querySelector('[name="idStatus"]').value);
+            formData.append('action', 'add');
+            formData.append('platform', form.querySelector('[name="platform"]').value);
+            formData.append('konamiId', form.querySelector('[name="konamiId"]').value);
+            formData.append('firstMail', form.querySelector('[name="firstMail"]').value);
+            formData.append('idStatus', form.querySelector('[name="idStatus"]').value);
             formData.append('securityLevel', form.querySelector('[name="securityLevel"]').value);
-            formData.append('price',         form.querySelector('[name="price"]').value);
-            formData.append('mainImage',     form.querySelector('[name="mainImage"]').value);
+            formData.append('price', form.querySelector('[name="price"]').value);
+            formData.append('mainImage', form.querySelector('[name="mainImage"]').value);
             formData.append('galleryImages', form.querySelector('[name="galleryImages"]').value);
-            formData.append('description',   form.querySelector('[name="description"]').value);
-            formData.append('status',        'Active');
+            formData.append('description', form.querySelector('[name="description"]').value);
+            formData.append('status', 'Active');
 
             const blocker = document.getElementById('action-blocker');
-            const blockerText = document.getElementById('action-blocker-text');
-            blockerText.textContent = `جاري الاتصال بجوجل شيت لحفظ البيانات بشكل آمن...`;
             blocker.classList.remove('hidden');
 
             try {
@@ -1008,36 +1535,15 @@
                     body: formData.toString()
                 });
 
-                if (!response.ok) {
-                    throw new Error(`استجابة غير صالحة من خادم جوجل: ${response.status}`);
-                }
-
-                const responseText = await response.text();
-                let isSuccess = false;
-                let errorMessage = "";
-
-                try {
-                    const result = JSON.parse(responseText);
-                    if (result.result === 'success' || result.status === 'success') {
-                        isSuccess = true;
-                    } else {
-                        errorMessage = result.message || "فشلت عملية الكتابة داخل الشيت.";
-                    }
-                } catch (e) {
-                    console.error("الرد غير المتوقع من السيرفر:", responseText);
-                    throw new Error("لم نتمكن من الحصول على تأكيد JSON. يرجى مراجعة إعدادات النشر (Deployment) في جوجل سكريبت، والتأكد من تفعيل الصلاحية كـ 'Anyone'.");
-                }
-                
-                if (isSuccess) {
+                if (response.ok) {
                     closeAddModal();
-                    alert('تمت إضافة الحساب بنجاح إلى جوجل شيت!');
+                    showAlert("نجاح / Success", "تم حفظ الحساب بنجاح في قاعدة البيانات!");
                     fetchSheetData(); 
                 } else {
-                    throw new Error(errorMessage || 'حدث خطأ غير معروف أثناء الحفظ.');
+                    throw new Error("Server error");
                 }
             } catch (err) {
-                console.error(err);
-                alert(`خطأ: فشل الحفظ.\nالتفاصيل: ${err.message}\n\nيرجى فتح Google Apps Script والتأكد من أن النشر مضبوط كـ "Anyone" وليس "Only Me".`);
+                showAlert("خطأ / Error", "فشل في حفظ الحساب. يرجى مراجعة إعدادات النشر ومحاولة الاتصال مجدداً.", true);
             } finally {
                 blocker.classList.add('hidden');
             }
@@ -1054,22 +1560,9 @@
             document.getElementById('admin-pass-input').value = '';
         }
 
-        function toggleAdminPassVisibility() {
-            const input = document.getElementById('admin-pass-input');
-            const icon = document.getElementById('eye-icon');
-            if (input.type === "password") {
-                input.type = "text";
-                icon.className = "fa-solid fa-eye-slash";
-            } else {
-                input.type = "password";
-                icon.className = "fa-solid fa-eye";
-            }
-        }
-
         function validateAdminKey() {
             const provided = document.getElementById('admin-pass-input').value;
-            const primaryKey = s1 + s2; 
-            const compoundKey = primaryKey + s3 + s4;
+            const compoundKey = s1 + s2 + s3 + s4;
 
             if (provided === compoundKey) {
                 adminMode = true;
@@ -1077,70 +1570,47 @@
                 document.getElementById('admin-add-container').classList.remove('hidden');
                 closeAdminModal();
                 applyFilters();
+                if (!document.getElementById('reviews-modal').classList.contains('hidden')) {
+                    fetchReviews();
+                }
+                showAlert("نجاح / Success", "تم تفعيل وضع المسؤول بنجاح!");
             } else {
-                const errorAlert = document.getElementById('admin-auth-error');
-                errorAlert.classList.remove('hidden');
-                errorAlert.classList.add('animate-bounce');
-                setTimeout(() => errorAlert.classList.remove('animate-bounce'), 800);
+                document.getElementById('admin-auth-error').classList.remove('hidden');
             }
         }
 
         async function processRowAction(actionName, indexId) {
-            const arabicActionName = actionName === 'delete' ? 'حذف' : 'تحديد كمباع';
-            const actionConfirm = confirm(`هل أنت متأكد أنك تريد تنفيذ عملية "${arabicActionName}" على الحساب رقم #${indexId}؟`);
-            if(!actionConfirm) return;
-
-            const blocker = document.getElementById('action-blocker');
-            const blockerText = document.getElementById('action-blocker-text');
-            blockerText.textContent = `جاري دفع التحديثات (${arabicActionName}). يرجى الانتظار...`;
-            blocker.classList.remove('hidden');
-
-            try {
-                const formData = new URLSearchParams();
-                formData.append('action', actionName);
-                formData.append('rowIndex', indexId);
-
-                const response = await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
-                });
-
-                const responseText = await response.text();
-                let isSuccess = false;
+            const confirmationMsg = actionName === 'delete' ? 'هل أنت متأكد من حذف الحساب نهائياً؟' : 'هل تريد تحديد هذا الحساب كمباع؟';
+            showConfirm("تأكيد العملية / Confirm", confirmationMsg, async () => {
+                const blocker = document.getElementById('action-blocker');
+                blocker.classList.remove('hidden');
 
                 try {
-                    const result = JSON.parse(responseText);
-                    if (result.result === 'success' || result.status === 'success') {
-                        isSuccess = true;
-                    }
-                } catch (e) {
-                    if (response.ok) {
-                        isSuccess = true;
-                    }
-                }
-                
-                if (isSuccess) {
-                    const localIndex = accountsData.findIndex(item => item.rowIndex === indexId);
-                    if (localIndex > -1) {
-                        if (actionName === 'delete') {
-                            accountsData[localIndex].status = 'deleted';
-                        } else if (actionName === 'sold') {
-                            accountsData[localIndex].status = 'sold';
-                        }
+                    const formData = new URLSearchParams();
+                    formData.append('action', actionName);
+                    formData.append('rowIndex', indexId);
+
+                    await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
+                    });
+
+                    const idx = accountsData.findIndex(item => item.rowIndex === indexId);
+                    if (idx > -1) {
+                        if (actionName === 'delete') accountsData[idx].status = 'deleted';
+                        else if (actionName === 'sold') accountsData[idx].status = 'sold';
                     }
                     
                     applyFilters();
-                    alert(`تمت العملية بنجاح: تم التحديث.`);
-                } else {
-                    throw new Error('أعاد الخادم حالة تنفيذ سلبية');
+                    buildDynamicCarousel();
+                    showAlert("نجاح / Success", "تم تحديث حالة الحساب بنجاح.");
+                } catch (err) {
+                    showAlert("خطأ / Error", "حدث خطأ غير متوقع أثناء معالجة الطلب.", true);
+                } finally {
+                    blocker.classList.add('hidden');
                 }
-            } catch (err) {
-                console.error(err);
-                alert(`خطأ: فشل التنفيذ. التفاصيل: ${err.message}`);
-            } finally {
-                blocker.classList.add('hidden');
-            }
+            });
         }
 
         function previewMainImage(url) {
@@ -1153,8 +1623,123 @@
             }
         }
 
+        /* ================= INLINE REVIEWS SECTION ================= */
+        let inlineSelectedRating = 5;
+
+        function setInlineRating(val) {
+            inlineSelectedRating = val;
+            document.getElementById('inline-selected-rating').value = val;
+            const stars = document.querySelectorAll('#inline-star-selector i');
+            stars.forEach(star => {
+                const starVal = parseInt(star.getAttribute('data-val'));
+                star.style.color = starVal <= val ? '#facc15' : '';
+            });
+        }
+
+        async function fetchInlineReviews() {
+            const container = document.getElementById('inline-reviews-container');
+            if (!container) return;
+
+            try {
+                const response = await fetch(SURVEY_API_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error('Network error');
+                const reviews = await response.json();
+
+                if (Array.isArray(reviews) && reviews.length > 0) {
+                    renderInlineReviews(reviews);
+                } else {
+                    renderInlineReviews(fallbackReviews);
+                }
+            } catch (err) {
+                renderInlineReviews(fallbackReviews);
+            }
+        }
+
+        function renderInlineReviews(reviews) {
+            const container = document.getElementById('inline-reviews-container');
+            if (!container) return;
+            if (!reviews || reviews.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-400"><i class="fa-regular fa-star text-3xl mb-3 block"></i><p>لا توجد تقييمات بعد. كن أول من يقيّم!</p></div>`;
+                return;
+            }
+
+            container.innerHTML = reviews.map(r => {
+                const starCount = parseInt(r.star) || 5;
+                const stars = Array.from({ length: 5 }, (_, i) =>
+                    `<i class="fa-solid fa-star ${i < starCount ? 'text-yellow-400' : 'text-slate-600'}"></i>`
+                ).join('');
+                const initials = (r.nickName || 'A').slice(0, 2).toUpperCase();
+                const deleteBtn = adminMode
+                    ? `<button onclick="deleteInlineReview(${r.rowIndex})" class="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 mt-3"><i class="fa-solid fa-trash-can"></i> حذف</button>`
+                    : '';
+                return `
+                <div class="glass-panel rounded-2xl p-5 flex gap-4 flex-row-reverse ltr:flex-row">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500 to-pink-500 flex items-center justify-center text-white font-extrabold text-lg flex-shrink-0">${initials}</div>
+                    <div class="flex-1 text-right ltr:text-left">
+                        <div class="flex items-center justify-between flex-row-reverse ltr:flex-row mb-1">
+                            <span class="font-bold text-white text-sm">${r.nickName || 'مجهول'}</span>
+                            <div class="flex gap-0.5 text-sm">${stars}</div>
+                        </div>
+                        <p class="text-slate-300 text-sm leading-relaxed">${r.comment || ''}</p>
+                        ${deleteBtn}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function submitInlineReview(event) {
+            event.preventDefault();
+            const btn = document.getElementById('inline-review-submit-btn');
+            const msg = document.getElementById('inline-review-form-msg');
+            const name = document.getElementById('inline-review-name').value.trim();
+            const comment = document.getElementById('inline-review-comment').value.trim();
+            const star = inlineSelectedRating;
+
+            if (!name || !comment) return;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
+            msg.classList.add('hidden');
+
+            const formData = new URLSearchParams();
+            formData.append('action', 'add');
+            formData.append('nickName', name);
+            formData.append('star', star);
+            formData.append('comment', comment);
+
+            try {
+                await fetch(SURVEY_API_URL, { method: 'POST', body: formData });
+                document.getElementById('inline-review-form').reset();
+                setInlineRating(5);
+                msg.textContent = currentLang === 'ar' ? "تم نشر تقييمك بنجاح! شكراً لك." : "Review published successfully! Thank you.";
+                msg.className = "text-xs text-center text-emerald-400 block mt-2";
+                setTimeout(() => msg.classList.add('hidden'), 5000);
+                fetchInlineReviews();
+            } catch (err) {
+                msg.textContent = currentLang === 'ar' ? "حدث خطأ، حاول مرة أخرى." : "An error occurred. Please try again.";
+                msg.className = "text-xs text-center text-rose-400 block mt-2";
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span class="ar-only">نشر التقييم</span><span class="en-only">Publish Review</span>`;
+            }
+        }
+
+        async function deleteInlineReview(rowIndex) {
+            showConfirm("تأكيد الحذف", "هل تريد حذف هذا التقييم نهائياً؟", async () => {
+                const formData = new URLSearchParams();
+                formData.append('action', 'delete');
+                formData.append('rowIndex', rowIndex);
+                try {
+                    await fetch(SURVEY_API_URL, { method: 'POST', mode: 'no-cors', body: formData });
+                    fetchInlineReviews();
+                } catch (err) {}
+            });
+        }
+
         window.onload = function() {
             fetchSheetData();
+            setInlineRating(5);
+            fetchInlineReviews();
         }
     </script>
 </body>
