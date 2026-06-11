@@ -214,6 +214,18 @@
         html[dir="rtl"] .en-only { display: none !important; }
         html[dir="ltr"] .ar-only { display: none !important; }
         html[dir="ltr"] { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        /* CSS Animation for Audio Visualizer Bars */
+        @keyframes bounceWave {
+            0%, 100% { height: 4px; }
+            50% { height: 18px; }
+        }
+        .music-bar {
+            animation: bounceWave 0.8s ease-in-out infinite;
+        }
+        .music-bar:nth-child(2) { animation-delay: 0.15s; }
+        .music-bar:nth-child(3) { animation-delay: 0.3s; }
+        .music-bar:nth-child(4) { animation-delay: 0.45s; }
     </style>
 </head>
 <body class="relative">
@@ -931,6 +943,30 @@
         </div>
     </div>
 
+    <!-- NEW ADDITION: PREMIUM NEON GLASS AUDIO BACKGROUND PLAYER WIDGET -->
+    <div id="ambient-player" class="fixed bottom-4 right-4 z-[90] glass-panel px-4 py-3.5 rounded-2xl flex items-center gap-3.5 shadow-glass-shadow border-cyan-400/20 hover:border-cyan-400/50 transition-all select-none duration-300">
+        <!-- Visualizer waves inside a beautiful transparent circle -->
+        <div class="w-10 h-10 rounded-full bg-slate-900/60 border border-white/10 flex items-center justify-center gap-[2px] px-2 overflow-hidden" id="audio-visualizer">
+            <span class="w-[3px] h-2 bg-cyan-400 rounded-full music-bar" style="animation-play-state: paused;"></span>
+            <span class="w-[3px] h-3.5 bg-cyan-400 rounded-full music-bar" style="animation-play-state: paused;"></span>
+            <span class="w-[3px] h-4 bg-pink-500 rounded-full music-bar" style="animation-play-state: paused;"></span>
+            <span class="w-[3px] h-2 bg-pink-500 rounded-full music-bar" style="animation-play-state: paused;"></span>
+        </div>
+        <div class="flex flex-col text-right">
+            <span class="text-[10px] uppercase font-extrabold tracking-wider text-cyan-400" id="now-playing-title">موسيقى الخلفية</span>
+            <span class="text-[8px] text-slate-400 w-24 truncate" id="now-playing-file">اضغط للبدء</span>
+        </div>
+        <!-- Player Action Control Buttons -->
+        <div class="flex items-center gap-1.5">
+            <button onclick="toggleBackgroundMusic()" id="btn-play-pause" class="w-8 h-8 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-400 flex items-center justify-center transition-all text-xs" title="تشغيل / إيقاف">
+                <i class="fa-solid fa-play"></i>
+            </button>
+            <button onclick="nextMusicTrack()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-white/5 text-slate-300 flex items-center justify-center transition-all text-xs" title="الأغنية التالية">
+                <i class="fa-solid fa-forward-step"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- ACTION BLOCKING LOADER -->
     <div id="action-blocker" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[110] hidden flex-col items-center justify-center space-y-4">
         <div class="spinner"></div>
@@ -966,6 +1002,78 @@
             { rowIndex: 3, nickName: "Karim_10", star: "5", comment: "Excellent service! Handled the account trade in less than 5 minutes. Strongly recommended." },
             { rowIndex: 4, nickName: "سيف الإسلام", star: "4", comment: "حساب رائع جداً كما بالوصف تماماً. شكراً لكم." }
         ];
+
+        /* ================= BACKGROUND AUDIO SYSTEM ================= */
+        // الأغاني الثلاث التي تم طلبها
+        const audioPlaylist = [
+            { name: "Sports Football Soccer", file: "prettyjohn1-sports-football-soccer-music-499975.mp3" },
+            { name: "The Mountain Sport", file: "the_mountain-sport-football-496555.mp3" },
+            { name: "Champions League Anthem", file: "Champions_League_anthem.ogg.mp3" }
+        ];
+        
+        let currentMusicIndex = 0;
+        let bgAudio = new Audio();
+        bgAudio.volume = 0.35; // تم الضبط على 35% ليكون صوت الخلفية هادئ ومناسب
+
+        // إعداد الصوت ومتابعة الأحداث
+        function initMusicPlayer() {
+            bgAudio.src = audioPlaylist[currentMusicIndex].file;
+            bgAudio.addEventListener('ended', () => {
+                nextMusicTrack(); // تشغيل الأغنية التالية تلقائياً عند انتهاء الأغنية الحالية
+            });
+            bgAudio.addEventListener('play', updateMusicUIState);
+            bgAudio.addEventListener('pause', updateMusicUIState);
+            
+            document.getElementById('now-playing-file').textContent = audioPlaylist[currentMusicIndex].name;
+        }
+
+        function toggleBackgroundMusic() {
+            if (bgAudio.paused) {
+                bgAudio.play().catch(err => {
+                    console.log("Audio play blocked by browser. User interaction needed.");
+                });
+            } else {
+                bgAudio.pause();
+            }
+        }
+
+        function nextMusicTrack() {
+            currentMusicIndex = (currentMusicIndex + 1) % audioPlaylist.length;
+            bgAudio.src = audioPlaylist[currentMusicIndex].file;
+            document.getElementById('now-playing-file').textContent = audioPlaylist[currentMusicIndex].name;
+            bgAudio.play().catch(e => {});
+        }
+
+        function updateMusicUIState() {
+            const visualizerBars = document.querySelectorAll('#audio-visualizer .music-bar');
+            const playPauseBtn = document.getElementById('btn-play-pause');
+            
+            if (bgAudio.paused) {
+                // إيقاف تموج البارات البصرية
+                visualizerBars.forEach(bar => {
+                    bar.style.animationPlayState = 'paused';
+                });
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+                playPauseBtn.className = "w-8 h-8 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-400 flex items-center justify-center transition-all text-xs";
+            } else {
+                // تفعيل التموج البصري عند التشغيل
+                visualizerBars.forEach(bar => {
+                    bar.style.animationPlayState = 'running';
+                });
+                playPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                playPauseBtn.className = "w-8 h-8 rounded-lg bg-pink-500/10 hover:bg-pink-500/20 border border-pink-400/30 text-pink-500 flex items-center justify-center transition-all text-xs";
+            }
+        }
+
+        // تفادي حظر التشغيل التلقائي من المتصفحات عبر ربطه بلمس الشاشة أو الضغط لأول مرة
+        function handleFirstUserInteraction() {
+            if (bgAudio.paused) {
+                toggleBackgroundMusic();
+            }
+            // إزالة المستمعين فور حدوث أول تفاعل لمنع التشغيل والإيقاف المتكرر
+            document.removeEventListener('click', handleFirstUserInteraction);
+            document.removeEventListener('touchstart', handleFirstUserInteraction);
+        }
 
         /* ================= DIALOGS ================= */
         function showAlert(title, message, isError = false) {
@@ -1894,6 +2002,11 @@
             fetchSheetData();
             setInlineRating(5);
             fetchInlineReviews();
+            
+            // تهيئة مشغل الموسيقى وتفعيل تفاعل المستخدم الأول للتشغيل التلقائي
+            initMusicPlayer();
+            document.addEventListener('click', handleFirstUserInteraction);
+            document.addEventListener('touchstart', handleFirstUserInteraction);
         }
     </script>
 </body>
