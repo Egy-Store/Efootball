@@ -321,89 +321,100 @@
     <!-- MAIN PLATFORM SELECTOR / FILTERS -->
     <section class="max-w-7xl mx-auto px-4 py-12 relative z-10" id="store-section">
         
-        <!-- STATUS FILTERS (BIG SQUARES) -->
-        <div class="mb-12">
-            <h3 class="text-xl font-bold text-white mb-6 text-center">
+        <!-- ======================= AD BANNER SLIDER (NEW) ======================= -->
+        <div id="ad-banner-container" class="hidden w-full mb-10 rounded-2xl overflow-hidden relative shadow-glass-shadow border border-white/10 group bg-slate-900" style="aspect-ratio: 1920 / 500;">
+            <div id="ad-slides-wrapper" class="w-full h-full relative">
+                <!-- Slides will be injected here via JS -->
+            </div>
+            <!-- Optional indicators for the ad banner -->
+            <div id="ad-indicators-wrapper" class="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 z-20 transition-opacity opacity-0 group-hover:opacity-100">
+            </div>
+        </div>
+        <!-- ====================================================================== -->
+
+        <!-- STATUS FILTERS (BIG SQUARES) - SMALLER SIZE -->
+        <div class="mb-8">
+            <h3 class="text-lg font-bold text-white mb-4 text-center">
                 <i class="fa-solid fa-filter text-cyan-400"></i>
                 <span class="ar-only">تصفية حسب حالة الحساب</span>
                 <span class="en-only">Filter by Account Status</span>
             </h3>
-            <div class="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
-                <button data-status="all" onclick="selectStatus('all')" class="status-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+            <div class="grid grid-cols-3 gap-3 max-w-2xl mx-auto">
+                <button data-status="all" onclick="selectStatus('all')" class="status-btn active rounded-xl p-4 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-purple-400 transition-all">
-                        <i class="fa-solid fa-layer-group text-2xl text-purple-400"></i>
+                    <div class="w-11 h-11 rounded-full bg-slate-800/80 flex items-center justify-center mb-2 border border-slate-700 group-hover:border-purple-400 transition-all">
+                        <i class="fa-solid fa-layer-group text-xl text-purple-400"></i>
                     </div>
-                    <h3 class="font-bold text-lg text-white ar-only">الكل</h3>
-                    <h3 class="font-bold text-lg text-white en-only">All</h3>
-                    <p class="text-[10px] text-slate-400 mt-1 ar-only">كل المعروض</p>
-                    <p class="text-[10px] text-slate-400 mt-1 en-only">Full Stock</p>
+                    <h3 class="font-bold text-base text-white ar-only">الكل</h3>
+                    <h3 class="font-bold text-base text-white en-only">All</h3>
+                    <p class="text-[9px] text-slate-400 mt-0.5 ar-only">كل المعروض</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5 en-only">Full Stock</p>
                 </button>
                 
-                <button data-status="active" onclick="selectStatus('active')" class="status-btn rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+                <button data-status="active" onclick="selectStatus('active')" class="status-btn rounded-xl p-4 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-emerald-400 transition-all">
-                        <i class="fa-solid fa-check-circle text-2xl text-emerald-400"></i>
+                    <div class="w-11 h-11 rounded-full bg-slate-800/80 flex items-center justify-center mb-2 border border-slate-700 group-hover:border-emerald-400 transition-all">
+                        <i class="fa-solid fa-check-circle text-xl text-emerald-400"></i>
                     </div>
-                    <h3 class="font-bold text-lg text-white ar-only">لسى متباعش</h3>
-                    <h3 class="font-bold text-lg text-white en-only">Active</h3>
-                    <p class="text-[10px] text-slate-400 mt-1 ar-only">حسابات متاحة</p>
-                    <p class="text-[10px] text-slate-400 mt-1 en-only">Available Accounts</p>
+                    <h3 class="font-bold text-base text-white ar-only">لسى متباعش</h3>
+                    <h3 class="font-bold text-base text-white en-only">Active</h3>
+                    <p class="text-[9px] text-slate-400 mt-0.5 ar-only">حسابات متاحة</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5 en-only">Available</p>
                 </button>
 
-                <button data-status="sold" onclick="selectStatus('sold')" class="status-btn rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+                <button data-status="sold" onclick="selectStatus('sold')" class="status-btn rounded-xl p-4 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-b from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div class="w-14 h-14 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-rose-400 transition-all">
-                        <i class="fa-solid fa-tags text-2xl text-rose-400"></i>
+                    <div class="w-11 h-11 rounded-full bg-slate-800/80 flex items-center justify-center mb-2 border border-slate-700 group-hover:border-rose-400 transition-all">
+                        <i class="fa-solid fa-tags text-xl text-rose-400"></i>
                     </div>
-                    <h3 class="font-bold text-lg text-white ar-only">مباع</h3>
-                    <h3 class="font-bold text-lg text-white en-only">Sold</h3>
-                    <p class="text-[10px] text-slate-400 mt-1 ar-only">حسابات تم بيعها</p>
-                    <p class="text-[10px] text-slate-400 mt-1 en-only">Sold Out</p>
+                    <h3 class="font-bold text-base text-white ar-only">مباع</h3>
+                    <h3 class="font-bold text-base text-white en-only">Sold</h3>
+                    <p class="text-[9px] text-slate-400 mt-0.5 ar-only">تم بيعها</p>
+                    <p class="text-[9px] text-slate-400 mt-0.5 en-only">Sold Out</p>
                 </button>
             </div>
         </div>
 
-        <!-- PLATFORM FILTERS -->
-        <div class="text-center mb-10">
-            <h2 class="text-3xl font-bold tracking-tight text-white mb-2 ar-only">تصفية حسب منصة اللعب</h2>
-            <h2 class="text-3xl font-bold tracking-tight text-white mb-2 en-only">Filter by Platform</h2>
-            <p class="text-slate-400 ar-only">اضغط على المنصة لتصفية حصرية</p>
-            <p class="text-slate-400 en-only">Click on a platform for exclusive view</p>
+        <!-- PLATFORM FILTERS - SMALLER SIZE -->
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold tracking-tight text-white mb-1 ar-only">تصفية حسب منصة اللعب</h2>
+            <h2 class="text-2xl font-bold tracking-tight text-white mb-1 en-only">Filter by Platform</h2>
+            <p class="text-sm text-slate-400 ar-only">اضغط على المنصة لتصفية حصرية</p>
+            <p class="text-sm text-slate-400 en-only">Click on a platform for exclusive view</p>
         </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
-            <button data-platform="steam" onclick="selectPlatform('steam')" class="platform-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-10">
+            <button data-platform="steam" onclick="selectPlatform('steam')" class="platform-btn active rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-cyan-400 transition-all">
-                    <i class="fa-brands fa-steam text-3xl text-cyan-400"></i>
+                <div class="w-12 h-12 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-cyan-400 transition-all">
+                    <i class="fa-brands fa-steam text-2xl text-cyan-400"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white ar-only">ستيم (كمبيوتر)</h3>
-                <h3 class="font-bold text-lg text-white en-only">Steam (PC)</h3>
+                <h3 class="font-bold text-base text-white ar-only">ستيم</h3>
+                <h3 class="font-bold text-base text-white en-only">Steam</h3>
             </button>
-            <button data-platform="xbox" onclick="selectPlatform('xbox')" class="platform-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+            <button data-platform="xbox" onclick="selectPlatform('xbox')" class="platform-btn active rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-b from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-emerald-400 transition-all">
-                    <i class="fa-brands fa-xbox text-3xl text-emerald-500"></i>
+                <div class="w-12 h-12 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-emerald-400 transition-all">
+                    <i class="fa-brands fa-xbox text-2xl text-emerald-500"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white ar-only">إكس بوكس لايف</h3>
-                <h3 class="font-bold text-lg text-white en-only">Xbox Live</h3>
+                <h3 class="font-bold text-base text-white ar-only">إكس بوكس</h3>
+                <h3 class="font-bold text-base text-white en-only">Xbox</h3>
             </button>
-            <button data-platform="ps" onclick="selectPlatform('ps')" class="platform-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+            <button data-platform="ps" onclick="selectPlatform('ps')" class="platform-btn active rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-blue-500 transition-all">
-                    <i class="fa-brands fa-playstation text-3xl text-blue-400"></i>
+                <div class="w-12 h-12 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-blue-500 transition-all">
+                    <i class="fa-brands fa-playstation text-2xl text-blue-400"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white ar-only">بلايستيشن</h3>
-                <h3 class="font-bold text-lg text-white en-only">PlayStation</h3>
+                <h3 class="font-bold text-base text-white ar-only">بلايستيشن</h3>
+                <h3 class="font-bold text-base text-white en-only">PlayStation</h3>
             </button>
-            <button data-platform="mobile" onclick="selectPlatform('mobile')" class="platform-btn active rounded-2xl p-6 flex flex-col items-center justify-center text-center relative group overflow-hidden">
+            <button data-platform="mobile" onclick="selectPlatform('mobile')" class="platform-btn active rounded-xl p-4 md:p-5 flex flex-col items-center justify-center text-center relative group overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-b from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 rounded-full bg-slate-800/80 flex items-center justify-center mb-4 border border-slate-700 group-hover:border-pink-500 transition-all">
-                    <i class="fa-solid fa-mobile-screen-button text-3xl text-pink-400"></i>
+                <div class="w-12 h-12 rounded-full bg-slate-800/80 flex items-center justify-center mb-3 border border-slate-700 group-hover:border-pink-500 transition-all">
+                    <i class="fa-solid fa-mobile-screen-button text-2xl text-pink-400"></i>
                 </div>
-                <h3 class="font-bold text-lg text-white ar-only">موبايل</h3>
-                <h3 class="font-bold text-lg text-white en-only">Mobile</h3>
+                <h3 class="font-bold text-base text-white ar-only">موبايل</h3>
+                <h3 class="font-bold text-base text-white en-only">Mobile</h3>
             </button>
         </div>
 
@@ -515,7 +526,7 @@
         </div>
     </section>
 
-    <!-- ===== GUARANTEES + HOW TO BUY SECTION (from Image 1) ===== -->
+    <!-- ===== GUARANTEES + HOW TO BUY SECTION ===== -->
     <section class="max-w-7xl mx-auto px-4 py-16 relative z-10">
         <div class="glass-panel rounded-3xl p-8 md:p-12">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -877,7 +888,6 @@
                     <textarea name="description" rows="3" required placeholder="أضف تفاصيل التشكيلة، واللاعبين، وملاحظات إضافية..." class="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left"></textarea>
                 </div>
 
-                <!-- NEW ADDITION: NOTE FIELD IN CREATION MODAL -->
                 <div>
                     <label class="block text-xs uppercase text-amber-400 mb-1.5 font-bold">📝 ملاحظة المشرف الخاصة بالحساب (تحفظ محلياً على جهازك فقط)</label>
                     <textarea name="adminNote" rows="2" placeholder="أدخل اسم العميل الأصلي، رقم التليفون، أو ملاحظات خاصة بك تود الرجوع إليها لاحقاً..." class="w-full bg-slate-950/80 border border-amber-500/30 focus:border-amber-400 focus:outline-none rounded-xl px-4 py-3 text-sm text-white text-right ltr:text-left"></textarea>
@@ -943,9 +953,8 @@
         </div>
     </div>
 
-    <!-- NEW ADDITION: PREMIUM NEON GLASS AUDIO BACKGROUND PLAYER WIDGET -->
+    <!-- PREMIUM NEON GLASS AUDIO BACKGROUND PLAYER WIDGET -->
     <div id="ambient-player" class="fixed bottom-4 right-4 z-[90] glass-panel px-4 py-3.5 rounded-2xl flex items-center gap-3.5 shadow-glass-shadow border-cyan-400/20 hover:border-cyan-400/50 transition-all select-none duration-300">
-        <!-- Visualizer waves inside a beautiful transparent circle -->
         <div class="w-10 h-10 rounded-full bg-slate-900/60 border border-white/10 flex items-center justify-center gap-[2px] px-2 overflow-hidden" id="audio-visualizer">
             <span class="w-[3px] h-2 bg-cyan-400 rounded-full music-bar" style="animation-play-state: paused;"></span>
             <span class="w-[3px] h-3.5 bg-cyan-400 rounded-full music-bar" style="animation-play-state: paused;"></span>
@@ -956,7 +965,6 @@
             <span class="text-[10px] uppercase font-extrabold tracking-wider text-cyan-400" id="now-playing-title">موسيقى الخلفية</span>
             <span class="text-[8px] text-slate-400 w-24 truncate" id="now-playing-file">اضغط للبدء</span>
         </div>
-        <!-- Player Action Control Buttons -->
         <div class="flex items-center gap-1.5">
             <button onclick="toggleBackgroundMusic()" id="btn-play-pause" class="w-8 h-8 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-400 flex items-center justify-center transition-all text-xs" title="تشغيل / إيقاف">
                 <i class="fa-solid fa-play"></i>
@@ -988,23 +996,91 @@
         let confirmActionCallback = null;
         let activeNoteRowIndex = null;
 
-        const s1 = ""; const s2 = ""; const s3 = ""; const s4 = ""; // Firebase Auth مستخدم بدلها
-
         // Fallback default mock data for Accounts
         const fallbackAccounts = [
             { rowIndex: 2, platform: "steam", konamiId: "مربوط بالكامل", firstMail: "وصول كامل للإيميل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "2500", mainImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "تشكيلة أسطورية تحتوي على ميسي ورونالدو وروماريو كابتن الفريق.", status: "Active" },
             { rowIndex: 3, platform: "ps", konamiId: "مربوط", firstMail: "وصول كامل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "3000", mainImage: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "حساب بلايستيشن أسطوري يحتوي على تشكيلة نجوم كاملة مع إيبك نيمار وديل بييرو.", status: "Sold" }
         ];
 
-        // Robust Local Fallback Database for Reviews (In case Google Apps Script CORS is blocked locally)
+        // Robust Local Fallback Database for Reviews
         const fallbackReviews = [
             { rowIndex: 2, nickName: "أحمد علي", star: "5", comment: "متجر موثوق وسريع جداً في التعامل وسعر مناسب. الوكيل محترم جداً!" },
             { rowIndex: 3, nickName: "Karim_10", star: "5", comment: "Excellent service! Handled the account trade in less than 5 minutes. Strongly recommended." },
             { rowIndex: 4, nickName: "سيف الإسلام", star: "4", comment: "حساب رائع جداً كما بالوصف تماماً. شكراً لكم." }
         ];
 
+        /* ================= DYNAMIC AD BANNER SYSTEM (NEW) ================= */
+        let adBannerSlides = [];
+        let currentAdBannerIndex = 0;
+        let loadAttempts = 0;
+
+        function checkInitAdSlider() {
+            loadAttempts++;
+            if (loadAttempts === 10) { // Check completed for all 10 possible images
+                if (adBannerSlides.length > 0) {
+                    // Sort numerically based on filename order
+                    adBannerSlides.sort((a, b) => a.id - b.id);
+                    document.getElementById('ad-banner-container').classList.remove('hidden');
+                    
+                    // Show first valid slide
+                    adBannerSlides[0].el.classList.remove('opacity-0');
+                    adBannerSlides[0].el.classList.add('opacity-100');
+
+                    // If more than one, start rotating
+                    if (adBannerSlides.length > 1) {
+                        const indicatorsWrapper = document.getElementById('ad-indicators-wrapper');
+                        
+                        // Create indicators
+                        adBannerSlides.forEach((_, idx) => {
+                            const dot = document.createElement('div');
+                            dot.className = `w-2 h-2 rounded-full transition-colors duration-300 ${idx === 0 ? 'bg-cyan-400' : 'bg-white/30'}`;
+                            dot.id = `ad-dot-${idx}`;
+                            indicatorsWrapper.appendChild(dot);
+                        });
+
+                        setInterval(() => {
+                            // Hide current
+                            adBannerSlides[currentAdBannerIndex].el.classList.remove('opacity-100');
+                            adBannerSlides[currentAdBannerIndex].el.classList.add('opacity-0');
+                            document.getElementById(`ad-dot-${currentAdBannerIndex}`).classList.replace('bg-cyan-400', 'bg-white/30');
+                            
+                            // Move to next
+                            currentAdBannerIndex = (currentAdBannerIndex + 1) % adBannerSlides.length;
+                            
+                            // Show next
+                            adBannerSlides[currentAdBannerIndex].el.classList.remove('opacity-0');
+                            adBannerSlides[currentAdBannerIndex].el.classList.add('opacity-100');
+                            document.getElementById(`ad-dot-${currentAdBannerIndex}`).classList.replace('bg-white/30', 'bg-cyan-400');
+                        }, 4000); // Change image every 4 seconds
+                    }
+                }
+            }
+        }
+
+        function initAdBanners() {
+            const wrapper = document.getElementById('ad-slides-wrapper');
+            for (let i = 1; i <= 10; i++) {
+                const imgName = `Untitled design (${i}).jpg`;
+                const img = new Image();
+                img.src = imgName;
+                
+                img.onload = () => {
+                    const slideDiv = document.createElement('div');
+                    slideDiv.className = "absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out opacity-0";
+                    slideDiv.style.backgroundImage = `url('${imgName}')`;
+                    wrapper.appendChild(slideDiv);
+                    adBannerSlides.push({ id: i, el: slideDiv });
+                    checkInitAdSlider();
+                };
+                
+                img.onerror = () => {
+                    // Image not found, simply ignore and check completion
+                    checkInitAdSlider();
+                };
+            }
+        }
+
         /* ================= BACKGROUND AUDIO SYSTEM ================= */
-        // الأغاني الثلاث التي تم طلبها
         const audioPlaylist = [
             { name: "Sports Football Soccer", file: "prettyjohn1-sports-football-soccer-music-499975.mp3" },
             { name: "The Mountain Sport", file: "the_mountain-sport-football-496555.mp3" },
@@ -1013,13 +1089,12 @@
         
         let currentMusicIndex = 0;
         let bgAudio = new Audio();
-        bgAudio.volume = 0.35; // تم الضبط على 35% ليكون صوت الخلفية هادئ ومناسب
+        bgAudio.volume = 0.35; 
 
-        // إعداد الصوت ومتابعة الأحداث
         function initMusicPlayer() {
             bgAudio.src = audioPlaylist[currentMusicIndex].file;
             bgAudio.addEventListener('ended', () => {
-                nextMusicTrack(); // تشغيل الأغنية التالية تلقائياً عند انتهاء الأغنية الحالية
+                nextMusicTrack(); 
             });
             bgAudio.addEventListener('play', updateMusicUIState);
             bgAudio.addEventListener('pause', updateMusicUIState);
@@ -1049,14 +1124,12 @@
             const playPauseBtn = document.getElementById('btn-play-pause');
             
             if (bgAudio.paused) {
-                // إيقاف تموج البارات البصرية
                 visualizerBars.forEach(bar => {
                     bar.style.animationPlayState = 'paused';
                 });
                 playPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
                 playPauseBtn.className = "w-8 h-8 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-400 flex items-center justify-center transition-all text-xs";
             } else {
-                // تفعيل التموج البصري عند التشغيل
                 visualizerBars.forEach(bar => {
                     bar.style.animationPlayState = 'running';
                 });
@@ -1065,12 +1138,10 @@
             }
         }
 
-        // تفادي حظر التشغيل التلقائي من المتصفحات عبر ربطه بلمس الشاشة أو الضغط لأول مرة
         function handleFirstUserInteraction() {
             if (bgAudio.paused) {
                 toggleBackgroundMusic();
             }
-            // إزالة المستمعين فور حدوث أول تفاعل لمنع التشغيل والإيقاف المتكرر
             document.removeEventListener('click', handleFirstUserInteraction);
             document.removeEventListener('touchstart', handleFirstUserInteraction);
         }
@@ -1159,7 +1230,7 @@
             }
         }
 
-        /* ================= DYNAMIC SLIDER ================= */
+        /* ================= DYNAMIC MAIN CAROUSEL ================= */
         function buildDynamicCarousel() {
             const container = document.getElementById('hero-carousel');
             const indicatorsContainer = document.getElementById('carousel-indicators');
@@ -1403,7 +1474,6 @@
                                 </button>
                             </div>
                             
-                            <!-- MODERN BUTTON POPUP FOR NOTE VIEW/EDIT -->
                             <button id="note-btn-${acc.rowIndex}" onclick="openNoteModal(${acc.rowIndex})" class="w-full py-2.5 ${noteBtnClass} rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 mt-1 relative">
                                 <i class="fa-solid fa-note-sticky text-sm"></i>
                                 <span>ملاحظة المشرف / Admin Note</span>
@@ -1705,7 +1775,6 @@
 
         /* ================= ADMIN & ACCOUNT ACTION ================= */
         function openAddModal() {
-            // EXPLICIT COMPLETE RESET (To ensure fresh empty state and prevent lingering data/images)
             const form = document.getElementById('add-account-form');
             form.reset();
             document.getElementById('main-image-preview').classList.add('hidden');
@@ -1759,7 +1828,6 @@
                         }
                     } catch(e) {}
 
-                    // Save the typed note under the newly generated index in local storage
                     if (noteText) {
                         localStorage.setItem('efb_note_' + nextRowIndex, noteText);
                     }
@@ -1819,7 +1887,6 @@
         }
 
         function duplicateAccount(acc) {
-            // Open modal manually and fill data (without resetting, since it's a duplication request)
             document.getElementById('add-modal').classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
             
@@ -1834,7 +1901,6 @@
             form.querySelector('[name="galleryImages"]').value = acc.galleryImages;
             form.querySelector('[name="description"]').value = acc.description;
 
-            // Fill duplicated note if any exists in localstorage
             const existingNote = localStorage.getItem('efb_note_' + acc.rowIndex) || '';
             form.querySelector('[name="adminNote"]').value = existingNote;
             
@@ -1999,11 +2065,13 @@
         }
 
         window.onload = function() {
+            // تشغيل محرك البانرات الإعلانية التلقائي (من 1 إلى 10)
+            initAdBanners();
+            
             fetchSheetData();
             setInlineRating(5);
             fetchInlineReviews();
             
-            // تهيئة مشغل الموسيقى وتفعيل تفاعل المستخدم الأول للتشغيل التلقائي
             initMusicPlayer();
             document.addEventListener('click', handleFirstUserInteraction);
             document.addEventListener('touchstart', handleFirstUserInteraction);
