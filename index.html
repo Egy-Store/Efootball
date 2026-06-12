@@ -226,6 +226,47 @@
         .music-bar:nth-child(2) { animation-delay: 0.15s; }
         .music-bar:nth-child(3) { animation-delay: 0.3s; }
         .music-bar:nth-child(4) { animation-delay: 0.45s; }
+
+        /* Facebook Flash Button */
+        .fb-flash-btn {
+            position: relative;
+            overflow: visible;
+        }
+        .fb-ring {
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2.5px solid #1877F2;
+            animation: fbFlash 1.4s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes fbFlash {
+            0%   { opacity: 1; transform: scale(1); }
+            50%  { opacity: 0; transform: scale(1.55); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Price Badge - Glowing Pill */
+        .price-pill {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 900;
+            padding: 6px 18px;
+            border-radius: 999px;
+            letter-spacing: 0.02em;
+            box-shadow: 0 0 16px rgba(16,185,129,0.65), 0 0 6px rgba(16,185,129,0.4);
+            white-space: nowrap;
+            line-height: 1.3;
+        }
+        .price-pill .price-sub {
+            font-size: 0.72rem;
+            font-weight: 500;
+            opacity: 0.88;
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body class="relative">
@@ -271,12 +312,17 @@
                 </span>
             </nav>
 
-            <div class="flex items-center space-x-3 space-x-reverse">
+            <div class="flex items-center space-x-3 space-x-reverse gap-2">
                 <button onclick="openReviewsModal()" class="md:hidden text-yellow-400 hover:text-yellow-300 text-lg mx-2">
                     <i class="fa-solid fa-star"></i>
                 </button>
+                <!-- Facebook Flash Icon -->
+                <a href="https://www.facebook.com/share/g/1EMiTKocQd/" target="_blank" class="fb-flash-btn relative flex items-center justify-center w-10 h-10 rounded-full bg-[#1877F2] hover:bg-[#1565d8] transition-all shadow-lg" title="صفحتنا على فيسبوك">
+                    <i class="fa-brands fa-facebook-f text-white text-lg"></i>
+                    <span class="fb-ring"></span>
+                </a>
                 <a href="https://wa.me/201065277949" target="_blank" class="glass-panel px-4 py-2 rounded-lg text-sm font-semibold hover:border-cyan-400 hover:text-cyan-300 transition-all flex items-center gap-2">
-                    <i class="fa-brands fa-whatsapp text-emerald-400"></i> <span class="ar-only">تواصل مع الوكيل</span><span class="en-only">Contact Agent</span>
+                    <i class="fa-brands fa-whatsapp text-emerald-400"></i> <span class="ar-only">للاعلان تواصل معنا هنا</span><span class="en-only">Contact Us Here</span>
                 </a>
             </div>
         </div>
@@ -437,6 +483,22 @@
                     </button>
                 </div>
                 
+                <!-- Sort & Price Filter -->
+                <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <select id="sort-select" onchange="applyFilters()" class="bg-slate-900/60 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-xl px-3 py-2.5 text-sm text-white transition-all cursor-pointer appearance-none" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%2300f0ff%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: left 8px center; background-size: 16px; padding-left: 28px;">
+                        <option value="default" class="ar-only">الترتيب الافتراضي</option>
+                        <option value="oldest" class="ar-only">الأقدم أولاً</option>
+                        <option value="newest" class="ar-only">الأحدث أولاً</option>
+                        <option value="price_asc" class="ar-only">الأقل سعراً</option>
+                        <option value="price_desc" class="ar-only">الأكثر سعراً</option>
+                    </select>
+                    <div class="flex gap-1 items-center">
+                        <input type="number" id="price-min" oninput="applyFilters()" placeholder="سعر من" class="w-24 bg-slate-900/60 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-all text-right">
+                        <span class="text-slate-400 text-xs">—</span>
+                        <input type="number" id="price-max" oninput="applyFilters()" placeholder="إلى" class="w-24 bg-slate-900/60 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-all text-right">
+                    </div>
+                </div>
+
                 <div class="relative w-full sm:w-64">
                     <input type="text" id="search-input" oninput="applyFilters()" placeholder="بحث..." class="w-full bg-slate-900/60 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 transition-all text-right ltr:text-left">
                     <i class="fa-solid fa-search absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
@@ -1362,9 +1424,14 @@
             const containerEl = document.getElementById('cards-container');
             const emptyEl = document.getElementById('catalog-empty');
             const loadingEl = document.getElementById('catalog-loading');
+            const sortVal = (document.getElementById('sort-select') || {}).value || 'default';
+            const priceMin = parseFloat((document.getElementById('price-min') || {}).value) || 0;
+            const priceMax = parseFloat((document.getElementById('price-max') || {}).value) || Infinity;
             
             loadingEl.classList.add('hidden');
             containerEl.innerHTML = '';
+
+            const getPrice = acc => parseFloat((acc.price || '0').replace(/[^\d.]/g, '')) || 0;
 
             const filtered = accountsData.filter(acc => {
                 const platformMatch = activePlatforms.includes(acc.platform);
@@ -1378,15 +1445,25 @@
                 if (currentStatusFilter === 'active') statusMatch = st !== 'sold';
                 if (currentStatusFilter === 'sold') statusMatch = st === 'sold';
 
-                return platformMatch && searchMatch && statusMatch;
+                const p = getPrice(acc);
+                const priceMatch = p >= priceMin && p <= priceMax;
+
+                return platformMatch && searchMatch && statusMatch && priceMatch;
             });
 
             filtered.sort((a, b) => {
                 const aSold = a.status.toLowerCase() === 'sold';
                 const bSold = b.status.toLowerCase() === 'sold';
-                if (aSold && !bSold) return 1;  
-                if (!aSold && bSold) return -1; 
-                return 0; 
+                if (sortVal === 'default') {
+                    if (aSold && !bSold) return 1;  
+                    if (!aSold && bSold) return -1; 
+                    return 0;
+                }
+                if (sortVal === 'oldest') return a.rowIndex - b.rowIndex;
+                if (sortVal === 'newest') return b.rowIndex - a.rowIndex;
+                if (sortVal === 'price_asc') return getPrice(a) - getPrice(b);
+                if (sortVal === 'price_desc') return getPrice(b) - getPrice(a);
+                return 0;
             });
 
             document.getElementById('displayed-count').textContent = filtered.length;
@@ -1437,10 +1514,6 @@
                     <span class="absolute top-3 right-3 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider bg-slate-950/85 text-white flex items-center gap-1.5 border border-white/10">
                         <i class="${platIcon} text-cyan-400"></i> <span class="ar-only">${platformLabelAr}</span><span class="en-only">${platformLabelEn}</span>
                     </span>
-
-                    <span class="absolute bottom-3 left-3 bg-emerald-500 text-slate-950 px-3 py-1 rounded-lg text-xs font-extrabold tracking-tight">
-                        ${formatCurrency(acc.price, currentLang)}
-                    </span>
                 </div>
 
                 <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
@@ -1455,6 +1528,9 @@
                     </div>
 
                     <div class="space-y-3 pt-2">
+                        <div class="flex justify-center">
+                            <span class="price-pill">${formatCurrency(acc.price, currentLang)}</span>
+                        </div>
                         <button onclick="openModal(${JSON.stringify(acc).replace(/"/g, '&quot;')})" class="w-full py-3 bg-slate-900 hover:bg-slate-800/80 border border-slate-700/80 hover:border-slate-500 rounded-xl text-xs font-extrabold tracking-wide text-white transition-all uppercase flex items-center justify-center gap-1.5">
                             <span class="ar-only">عرض التفاصيل والتشكيلة</span><span class="en-only">View Details & Squad</span> 
                             <i class="fa-solid fa-chevron-left text-[10px] rtl:block ltr:hidden"></i>
