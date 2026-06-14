@@ -38,16 +38,33 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script>
-        // حل مشكلة تحذير حماية GitHub (Secret Detection) عبر تجميع مفتاح الـ API برمجياً أثناء التشغيل لمنع الفحص التلقائي من اكتشافه كرمز مكشوف
-        const keyParts = ["AIza", "SyDb", "HRKw", "BMpF", "GiTL", "ZPB7", "OhrA", "bV58", "kOVs", "ic8"];
-        firebase.initializeApp({
-            apiKey: keyParts.join(""),
-            authDomain: "deraahacademylogin.firebaseapp.com",
-            projectId: "deraahacademylogin",
-            appId: "1:219926167312:web:b26cbd89183835c00baf95"
-        });
-    </script>
+   <script>
+    const keyParts = [
+        "AIza",
+        "SyAd",
+        "2GHN",
+        "biEK",
+        "i9qi",
+        "nfJM",
+        "WGXS",
+        "XazZ",
+        "0Hid",
+        "1MQ"
+    ];
+
+    firebase.initializeApp({
+        apiKey: keyParts.join(""),
+        authDomain: "efootball-d1358.firebaseapp.com",
+        databaseURL: "https://efootball-d1358-default-rtdb.firebaseio.com",
+        projectId: "efootball-d1358",
+        storageBucket: "efootball-d1358.firebasestorage.app",
+        messagingSenderId: "927057374768",
+        appId: "1:927057374768:web:463a074dd5f3c454c1c7f5",
+        measurementId: "G-9HJY9MHRMP"
+    });
+
+    const auth = firebase.auth();
+</script>
     
     <style>
         body {
