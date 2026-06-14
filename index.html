@@ -301,6 +301,29 @@
         input[type="file"]::file-selector-button:hover {
             background: #00c0cc;
         }
+
+        /* Pulsing Glow Animation for Selected Broker circular image */
+        @keyframes brokerFlash {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(0, 240, 255, 0.5), inset 0 0 5px rgba(0, 240, 255, 0.3); 
+                border-color: rgba(0, 240, 255, 0.8); 
+                transform: scale(1.05);
+            }
+            50% { 
+                box-shadow: 0 0 25px rgba(0, 240, 255, 0.95), inset 0 0 10px rgba(0, 240, 255, 0.5); 
+                border-color: rgba(0, 240, 255, 1); 
+                transform: scale(1.1);
+            }
+        }
+        .broker-selected-flash {
+            animation: brokerFlash 1.6s infinite ease-in-out;
+            border-width: 3px !important;
+        }
+        
+        /* Floating Button for Mobile Scroll support */
+        #floating-advertise-btn {
+            box-shadow: 0 0 22px rgba(255, 0, 122, 0.65), 0 0 8px rgba(124, 58, 237, 0.45);
+        }
     </style>
 </head>
 <body class="relative">
@@ -357,11 +380,11 @@
                 <button onclick="openReviewsModal()" class="md:hidden text-yellow-400 hover:text-yellow-300 text-lg mx-2">
                     <i class="fa-solid fa-star"></i>
                 </button>
-                <!-- Facebook Flash Icon -->
-                <a href="https://www.facebook.com/share/g/1EMiTKocQd/" target="_blank" class="fb-flash-btn relative flex items-center justify-center w-10 h-10 rounded-full bg-[#1877F2] hover:bg-[#1565d8] transition-all shadow-lg" title="صفحتنا على فيسبوك">
+                <!-- Facebook Flash Icon (Modified to open multiple pages modal) -->
+                <button onclick="openFbModal()" class="fb-flash-btn relative flex items-center justify-center w-10 h-10 rounded-full bg-[#1877F2] hover:bg-[#1565d8] transition-all shadow-lg" title="صفحاتنا على فيسبوك">
                     <i class="fa-brands fa-facebook-f text-white text-lg"></i>
                     <span class="fb-ring"></span>
-                </a>
+                </button>
                 <a href="https://wa.me/201065277949" target="_blank" class="glass-panel px-4 py-2 rounded-lg text-sm font-semibold hover:border-cyan-400 hover:text-cyan-300 transition-all flex items-center gap-2">
                     <i class="fa-brands fa-whatsapp text-emerald-400"></i> <span class="ar-only">للاعلان تواصل معنا هنا</span><span class="en-only">Contact Us Here</span>
                 </a>
@@ -977,6 +1000,41 @@
                     </div>
                 </div>
 
+                <!-- NEW: Broker Selection inside Admin Form -->
+                <div class="bg-slate-900/40 p-4 border border-slate-800/80 rounded-2xl">
+                    <label class="block text-xs uppercase text-slate-300 mb-3 font-bold text-right">
+                        <i class="fa-solid fa-user-tie text-cyan-400"></i> اختر الوسيط المعتمد لهذا الحساب *
+                    </label>
+                    <div class="flex justify-center gap-6 py-2">
+                        <!-- Abanoub (B) -->
+                        <label class="cursor-pointer flex flex-col items-center group relative select-none">
+                            <input type="radio" name="broker" value="B" class="hidden peer" checked onchange="updateBrokerFlashEffects(this)">
+                            <div class="w-16 h-16 rounded-full border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 transition-all overflow-hidden relative duration-300 flex items-center justify-center bg-slate-950 broker-circle broker-selected-flash">
+                                <img src="abanoub.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e293b/38bdf8?text=B';">
+                            </div>
+                            <span class="text-xs font-bold mt-2 text-slate-300 group-hover:text-white transition-colors">أبانوب</span>
+                        </label>
+                        
+                        <!-- Zizo (Z) -->
+                        <label class="cursor-pointer flex flex-col items-center group relative select-none">
+                            <input type="radio" name="broker" value="Z" class="hidden peer" onchange="updateBrokerFlashEffects(this)">
+                            <div class="w-16 h-16 rounded-full border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 transition-all overflow-hidden relative duration-300 flex items-center justify-center bg-slate-950 broker-circle">
+                                <img src="zizo.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e293b/a855f7?text=Z';">
+                            </div>
+                            <span class="text-xs font-bold mt-2 text-slate-300 group-hover:text-white transition-colors">زيزو</span>
+                        </label>
+
+                        <!-- Abdo (A) -->
+                        <label class="cursor-pointer flex flex-col items-center group relative select-none">
+                            <input type="radio" name="broker" value="A" class="hidden peer" onchange="updateBrokerFlashEffects(this)">
+                            <div class="w-16 h-16 rounded-full border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 transition-all overflow-hidden relative duration-300 flex items-center justify-center bg-slate-950 broker-circle">
+                                <img src="abdo.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e293b/f43f5e?text=A';">
+                            </div>
+                            <span class="text-xs font-bold mt-2 text-slate-300 group-hover:text-white transition-colors">عبده علاء</span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- ================= MAIN IMAGE UPLOADER (NEW) ================= -->
                 <div class="bg-slate-900/30 p-4 border border-slate-800 rounded-2xl">
                     <label class="block text-xs uppercase text-slate-300 mb-2 font-bold"><i class="fa-solid fa-image text-cyan-400"></i> الصورة الأساسية Main Image *</label>
@@ -1046,18 +1104,26 @@
                 </button>
             </div>
 
-            <!-- شروط الإعلان -->
-            <div class="px-6 py-4 bg-amber-500/5 border-b border-amber-500/20">
-                <h4 class="text-amber-400 font-bold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> شروط الإعلان - يرجى القراءة قبل الإرسال</h4>
-                <ul class="space-y-2 text-sm text-slate-300">
-                    <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">١.</span> وصف كامل للحساب مع ذكر المنصة وأبرز مميزاته.</li>
-                    <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">٢.</span> تأكد من كتابة رقم التواصل واتساب صحيحاً واختيار كود الدولة.</li>
-                    <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">٣.</span> في حالة عدم مطابقة الشروط يحق للأدمن عدم نشر الحساب.</li>
-                    <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">٤.</span> في حالة نقص الوصف لم يتم نشر الحساب.</li>
-                </ul>
+            <!-- خطوة الشروط (تظهر أولاً) -->
+            <div id="user-adv-rules-step" class="p-6 flex-1 flex flex-col justify-center items-center space-y-5">
+                <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 w-full">
+                    <h4 class="text-amber-400 font-bold text-sm mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i> شروط الإعلان - يرجى القراءة قبل الإرسال
+                    </h4>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">١.</span> وصف كامل للحساب مع ذكر المنصة وأبرز مميزاته.</li>
+                        <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">٢.</span> تأكد من كتابة رقم التواصل واتساب صحيحاً واختيار كود الدولة.</li>
+                        <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">٣.</span> في حالة عدم مطابقة الشروط يحق للأدمن عدم نشر الحساب.</li>
+                        <li class="flex items-start gap-2"><span class="text-pink-400 font-bold mt-0.5">٤.</span> في حالة نقص الوصف لم يتم نشر الحساب.</li>
+                    </ul>
+                </div>
+                <button type="button" onclick="showUserAdvForm()" class="w-full py-3 font-extrabold rounded-xl text-sm shadow-lg transition-all text-white" style="background: linear-gradient(135deg, #ff007a, #7c3aed);">
+                    استمر
+                </button>
             </div>
 
-            <form id="user-advertise-form" onsubmit="submitUserAdvertise(event)" class="p-6 overflow-y-auto flex-1 space-y-4">
+            <!-- الفورم الفعلي (مخفي في البداية) -->
+            <form id="user-advertise-form" onsubmit="submitUserAdvertise(event)" class="hidden p-6 overflow-y-auto flex-1 space-y-4">
                 
                 <!-- بيانات شخصية - تظهر للأدمن فقط -->
                 <div class="bg-slate-900/50 border border-slate-700/60 rounded-2xl p-4 space-y-3">
@@ -1079,10 +1145,10 @@
                                     <option value="962">🇯🇴 +962</option>
                                     <option value="968">🇴🇲 +968</option>
                                     <option value="974">🇶🇦 +974</option>
-                                    <option value="973">🇧🇭 +973</option>
-                                    <option value="212">🇲🇦 +212</option>
-                                    <option value="213">🇩🇿 +213</option>
-                                    <option value="216">🇹🇳 +216</option>
+                                    <option value="973">🇧 Bahrain +973</option>
+                                    <option value="212">🇲 Morocco +212</option>
+                                    <option value="213">🇩 Algeria +213</option>
+                                    <option value="216">🇹 Tunisia +216</option>
                                 </select>
                                 <input type="tel" name="userPhone" required placeholder="1012345678" class="flex-1 bg-slate-950/80 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-xl px-3 py-2.5 text-sm text-white text-left">
                             </div>
@@ -1120,6 +1186,41 @@
                             <option value="غير موجود">غير موجود</option>
                             <option value="وصول جزئي">وصول جزئي</option>
                         </select>
+                    </div>
+                </div>
+
+                <!-- NEW: Broker Selection inside User Advertise Form -->
+                <div class="bg-slate-900/40 p-4 border border-slate-800/80 rounded-2xl">
+                    <label class="block text-xs uppercase text-slate-300 mb-3 font-bold text-right">
+                        <i class="fa-solid fa-user-tie text-cyan-400"></i> اختر الوسيط المفضل لتسيير العملية *
+                    </label>
+                    <div class="flex justify-center gap-6 py-2">
+                        <!-- Abanoub (B) -->
+                        <label class="cursor-pointer flex flex-col items-center group relative select-none">
+                            <input type="radio" name="broker" value="B" class="hidden peer" checked onchange="updateBrokerFlashEffects(this)">
+                            <div class="w-16 h-16 rounded-full border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 transition-all overflow-hidden relative duration-300 flex items-center justify-center bg-slate-950 broker-circle broker-selected-flash">
+                                <img src="abanoub.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e293b/38bdf8?text=B';">
+                            </div>
+                            <span class="text-xs font-bold mt-2 text-slate-300 group-hover:text-white transition-colors">أبانوب</span>
+                        </label>
+                        
+                        <!-- Zizo (Z) -->
+                        <label class="cursor-pointer flex flex-col items-center group relative select-none">
+                            <input type="radio" name="broker" value="Z" class="hidden peer" onchange="updateBrokerFlashEffects(this)">
+                            <div class="w-16 h-16 rounded-full border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 transition-all overflow-hidden relative duration-300 flex items-center justify-center bg-slate-950 broker-circle">
+                                <img src="zizo.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e293b/a855f7?text=Z';">
+                            </div>
+                            <span class="text-xs font-bold mt-2 text-slate-300 group-hover:text-white transition-colors">زيزو</span>
+                        </label>
+
+                        <!-- Abdo (A) -->
+                        <label class="cursor-pointer flex flex-col items-center group relative select-none">
+                            <input type="radio" name="broker" value="A" class="hidden peer" onchange="updateBrokerFlashEffects(this)">
+                            <div class="w-16 h-16 rounded-full border-2 border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 transition-all overflow-hidden relative duration-300 flex items-center justify-center bg-slate-950 broker-circle">
+                                <img src="abdo.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e293b/f43f5e?text=A';">
+                            </div>
+                            <span class="text-xs font-bold mt-2 text-slate-300 group-hover:text-white transition-colors">عبده علاء</span>
+                        </label>
                     </div>
                 </div>
 
@@ -1190,6 +1291,13 @@
 
     <!-- VISIBLE BACKDOOR ADMIN DOT -->
     <div id="admin-backdoor" onclick="triggerAdminAuth()" title="بوابة وحدة تحكم الوكيل"></div>
+
+    <!-- NEW: Mobile-accessible floating advertise button near the admin dot -->
+    <button id="floating-advertise-btn" onclick="openUserAdvertiseModal()" class="fixed bottom-[35px] left-[10px] z-[55] flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-black text-white shadow-lg transition-all" style="background: linear-gradient(135deg, #ff007a, #7c3aed);">
+        <i class="fa-solid fa-bullhorn text-xs animate-bounce"></i>
+        <span>اعلن عن اكونتك</span>
+        <span class="absolute inset-0 rounded-full border border-pink-500 animate-ping opacity-60 pointer-events-none"></span>
+    </button>
 
     <!-- ADMIN CONSOLE DIALOG MODAL -->
     <div id="admin-modal" class="fixed inset-0 z-[100] overflow-y-auto hidden flex items-center justify-center p-4">
@@ -1285,6 +1393,29 @@
         <p id="action-blocker-text" class="text-sm text-slate-300 font-medium">جاري معالجة الطلب...</p>
     </div>
 
+    <!-- FB Pages Modal -->
+    <div id="fb-modal" class="fixed inset-0 z-[120] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm" onclick="closeFbModal()"></div>
+        <div class="glass-panel w-full max-w-sm rounded-2xl p-6 relative z-10 space-y-4 text-center border border-slate-700">
+            <h3 class="text-xl font-bold text-white mb-5 flex items-center justify-center gap-2">
+                <i class="fa-brands fa-facebook text-[#1877F2]"></i> صفحاتنا
+            </h3>
+            
+            <div class="space-y-3">
+                <a href="https://www.facebook.com/share/g/1EMiTKocQd/" target="_blank" class="block w-full py-3.5 bg-[#1877F2]/10 border border-[#1877F2]/30 hover:bg-[#1877F2]/20 hover:border-[#1877F2] rounded-xl text-white transition-all font-bold text-sm">
+                    eFootball Store
+                </a>
+                <a href="https://www.facebook.com/share/g/1GqddLAUTy/" target="_blank" class="block w-full py-3.5 bg-[#1877F2]/10 border border-[#1877F2]/30 hover:bg-[#1877F2]/20 hover:border-[#1877F2] rounded-xl text-white transition-all font-bold text-sm">
+                    efootball pesawy
+                </a>
+            </div>
+            
+            <button onclick="closeFbModal()" class="mt-4 pt-3 text-slate-400 hover:text-white text-sm transition-all w-full border-t border-slate-800">
+                إغلاق
+            </button>
+        </div>
+    </div>
+
     <script>
         // API ENDPOINTS
         const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbwm-vRsoDwT2iRJgkkDunUavvD_3zaB322rTp-_cC2nzhhh4rI2yrvjMJkH5nhW8jZI4Q/exec"; // Accounts
@@ -1292,6 +1423,13 @@
         
         /* === IMGBB API CONFIGURATION === */
         const IMGBB_API_KEY = "48bb17b6e24892d745741a65d54e3520";
+
+        // Registered Broker database and routing numbers
+        const brokers = {
+            'B': { name: 'أبانوب', phone: '201065277949' },
+            'Z': { name: 'محمد زين زيزو', phone: '201500777593' },
+            'A': { name: 'عبده علاء', phone: '201201834760' }
+        };
 
         let accountsData = [];
         let activePlatforms = ["steam", "xbox", "ps", "mobile"];
@@ -1305,8 +1443,8 @@
 
         // Fallback default mock data for Accounts
         const fallbackAccounts = [
-            { rowIndex: 2, platform: "steam", konamiId: "مربوط بالكامل", firstMail: "وصول كامل للإيميل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "2500", mainImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "تشكيلة أسطورية تحتوي على ميسي ورونالدو وروماريو كابتن الفريق.", status: "Active" },
-            { rowIndex: 3, platform: "ps", konamiId: "مربوط", firstMail: "وصول كامل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "3000", mainImage: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "حساب بلايستيشن أسطوري يحتوي على تشكيلة نجوم كاملة مع إيبك نيمار وديل بييرو.", status: "Sold" }
+            { rowIndex: 2, platform: "steam", brokerCode: "B", konamiId: "مربوط بالكامل", firstMail: "وصول كامل للإيميل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "2500", mainImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "تشكيلة أسطورية تحتوي على ميسي ورونالدو وروماريو كابتن الفريق.", status: "Active" },
+            { rowIndex: 3, platform: "ps", brokerCode: "Z", konamiId: "مربوط", firstMail: "وصول كامل", idStatus: "موثق", securityLevel: "أمان ممتاز", price: "3000", mainImage: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=600&q=80", galleryImages: "", description: "حساب بلايستيشن أسطوري يحتوي على تشكيلة نجوم كاملة مع إيبك نيمار وديل بييرو.", status: "Sold" }
         ];
 
         // Robust Local Fallback Database for Reviews
@@ -1316,7 +1454,20 @@
             { rowIndex: 4, nickName: "سيف الإسلام", star: "4", comment: "حساب رائع جداً كما بالوصف تماماً. شكراً لكم." }
         ];
 
-        /* ================= IMAGE UPLOAD LOGIC (NEW) ================= */
+        /* ================= STREAMING_CHUNK: Image Upload and Broker Flash logic ================= */
+        // Highlight active broker selection with flashing glow CSS
+        function updateBrokerFlashEffects(radioInput) {
+            const form = radioInput.closest('form') || document;
+            const labels = form.querySelectorAll('.broker-circle');
+            labels.forEach(circle => {
+                circle.classList.remove('broker-selected-flash');
+            });
+            const selectedCircle = radioInput.closest('label').querySelector('.broker-circle');
+            if (selectedCircle) {
+                selectedCircle.classList.add('broker-selected-flash');
+            }
+        }
+
         async function uploadImageToImgbb(file) {
             const formData = new FormData();
             formData.append("image", file);
@@ -1500,7 +1651,6 @@
             const container = document.getElementById('gallery-inputs-container');
             const rows = container.children;
             const lastRow = rows[rows.length - 1];
-            // إذا كانت الخانة الحالية هي الخانة الأخيرة، نضيف خانة جديدة تلقائياً للاستعداد للصورة التالية
             if (lastRow.id === currentRowId) {
                 addGalleryRow();
             }
@@ -1510,7 +1660,6 @@
             document.getElementById(rowId).remove();
             const container = document.getElementById('gallery-inputs-container');
             
-            // تأكد دائماً من وجود خانة واحدة على الأقل فارغة لتمكين الرفع
             if (container.children.length === 0) {
                 addGalleryRow();
             } else {
@@ -1522,6 +1671,7 @@
             }
         }
 
+        /* ================= STREAMING_CHUNK: Ad banner rotational slider logic ================= */
         /* ================= DYNAMIC AD BANNER SYSTEM (NEW) ================= */
         let adBannerSlides = [];
         let currentAdBannerIndex = 0;
@@ -1529,21 +1679,17 @@
 
         function checkInitAdSlider() {
             loadAttempts++;
-            if (loadAttempts === 10) { // Check completed for all 10 possible images
+            if (loadAttempts === 10) { 
                 if (adBannerSlides.length > 0) {
-                    // Sort numerically based on filename order
                     adBannerSlides.sort((a, b) => a.id - b.id);
                     document.getElementById('ad-banner-container').classList.remove('hidden');
                     
-                    // Show first valid slide
                     adBannerSlides[0].el.classList.remove('opacity-0');
                     adBannerSlides[0].el.classList.add('opacity-100');
 
-                    // If more than one, start rotating
                     if (adBannerSlides.length > 1) {
                         const indicatorsWrapper = document.getElementById('ad-indicators-wrapper');
                         
-                        // Create indicators
                         adBannerSlides.forEach((_, idx) => {
                             const dot = document.createElement('div');
                             dot.className = `w-2 h-2 rounded-full transition-colors duration-300 ${idx === 0 ? 'bg-cyan-400' : 'bg-white/30'}`;
@@ -1552,19 +1698,16 @@
                         });
 
                         setInterval(() => {
-                            // Hide current
                             adBannerSlides[currentAdBannerIndex].el.classList.remove('opacity-100');
                             adBannerSlides[currentAdBannerIndex].el.classList.add('opacity-0');
                             document.getElementById(`ad-dot-${currentAdBannerIndex}`).classList.replace('bg-cyan-400', 'bg-white/30');
                             
-                            // Move to next
                             currentAdBannerIndex = (currentAdBannerIndex + 1) % adBannerSlides.length;
                             
-                            // Show next
                             adBannerSlides[currentAdBannerIndex].el.classList.remove('opacity-0');
                             adBannerSlides[currentAdBannerIndex].el.classList.add('opacity-100');
                             document.getElementById(`ad-dot-${currentAdBannerIndex}`).classList.replace('bg-white/30', 'bg-cyan-400');
-                        }, 4000); // Change image every 4 seconds
+                        }, 4000); 
                     }
                 }
             }
@@ -1587,12 +1730,12 @@
                 };
                 
                 img.onerror = () => {
-                    // Image not found, simply ignore and check completion
                     checkInitAdSlider();
                 };
             }
         }
 
+        /* ================= STREAMING_CHUNK: Background ambient audio player logic ================= */
         /* ================= BACKGROUND AUDIO SYSTEM ================= */
         const audioPlaylist = [
             { name: "Sports Football Soccer", file: "prettyjohn1-sports-football-soccer-music-499975.mp3" },
@@ -1659,6 +1802,7 @@
             document.removeEventListener('touchstart', handleFirstUserInteraction);
         }
 
+        /* ================= STREAMING_CHUNK: Reusable Alerts and Confirm Dialogs ================= */
         /* ================= DIALOGS ================= */
         function showAlert(title, message, isError = false) {
             const modal = document.getElementById('custom-alert-modal');
@@ -1743,6 +1887,16 @@
             }
         }
 
+        /* ================= FB PAGES MODAL LOGIC ================= */
+        function openFbModal() {
+            document.getElementById('fb-modal').classList.remove('hidden');
+        }
+
+        function closeFbModal() {
+            document.getElementById('fb-modal').classList.add('hidden');
+        }
+
+        /* ================= STREAMING_CHUNK: Fetching Sheet data and parsing Broker suffix ================= */
         /* ================= DYNAMIC MAIN CAROUSEL ================= */
         function buildDynamicCarousel() {
             const container = document.getElementById('hero-carousel');
@@ -1823,21 +1977,37 @@
                 const responseData = await response.json();
                 
                 if (Array.isArray(responseData)) {
-                    accountsData = responseData.map((row, index) => ({
-                        rowIndex: row.rowIndex || index + 2, 
-                        platform: (row.platform || row.Platform || '').toLowerCase().trim(),
-                        konamiId: row.konamiId || row['Konami ID'] || row['Konami ID status'] || 'مربوط',
-                        firstMail: row.firstMail || row['First Mail'] || row['First Mail status'] || 'مربوط بكونامي',
-                        idStatus: row.idStatus || row['ID Status'] || 'موثق',
-                        securityLevel: row.securityLevel || row['Security Level'] || 'حماية عالية',
-                        price: row.price || row.Price || '0',
-                        mainImage: row.mainImage || row['Main Image'] || '',
-                        galleryImages: row.galleryImages || row['Gallery Images'] || row['Gallery'] || '',
-                        description: row.description || row.Description || row.Specs || 'لا يوجد وصف.',
-                        status: (row.status || row.Status || 'Active').trim(),
-                        userName: row.userName || '',
-                        userPhone: row.userPhone || ''
-                    }));
+                    accountsData = responseData.map((row, index) => {
+                        // Extract platform and broker Code (e.g. steam-B -> steam, B)
+                        let platformRaw = (row.platform || row.Platform || '').trim();
+                        let platformClean = 'steam';
+                        let brokerCode = 'B'; // default fallback is Abanoub
+
+                        if (platformRaw.includes('-')) {
+                            const parts = platformRaw.split('-');
+                            platformClean = parts[0].toLowerCase().trim();
+                            brokerCode = parts[1].toUpperCase().trim();
+                        } else {
+                            platformClean = platformRaw.toLowerCase().trim();
+                        }
+
+                        return {
+                            rowIndex: row.rowIndex || index + 2, 
+                            platform: platformClean,
+                            brokerCode: brokerCode,
+                            konamiId: row.konamiId || row['Konami ID'] || row['Konami ID status'] || 'مربوط',
+                            firstMail: row.firstMail || row['First Mail'] || row['First Mail status'] || 'مربوط بكونامي',
+                            idStatus: row.idStatus || row['ID Status'] || 'موثق',
+                            securityLevel: row.securityLevel || row['Security Level'] || 'حماية عالية',
+                            price: row.price || row.Price || '0',
+                            mainImage: row.mainImage || row['Main Image'] || '',
+                            galleryImages: row.galleryImages || row['Gallery Images'] || row['Gallery'] || '',
+                            description: row.description || row.Description || row.Specs || 'لا يوجد وصف.',
+                            status: (row.status || row.Status || 'Active').trim(),
+                            userName: row.userName || '',
+                            userPhone: row.userPhone || ''
+                        };
+                    });
                 } else {
                     throw new Error('Unrecognized data pattern');
                 }
@@ -1873,12 +2043,13 @@
             applyFilters();
         }
 
+        /* ================= STREAMING_CHUNK: Filtering, Sorting and Card component binding ================= */
         function applyFilters() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             const containerEl = document.getElementById('cards-container');
             const emptyEl = document.getElementById('catalog-empty');
             const loadingEl = document.getElementById('catalog-loading');
-            const sortVal = (document.getElementById('sort-select') || {}).value || 'newest'; // جعل الأحدث هو الافتراضي برمجياً أيضاً
+            const sortVal = (document.getElementById('sort-select') || {}).value || 'newest'; 
             const priceMin = parseFloat((document.getElementById('price-min') || {}).value) || 0;
             const priceMax = parseFloat((document.getElementById('price-max') || {}).value) || Infinity;
             
@@ -1953,10 +2124,21 @@
                 ? 'bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-500/10 border border-amber-500/40 text-slate-950 font-black' 
                 : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white';
 
+            // Determine Broker Image
+            let brokerImgSrc = 'abanoub.png';
+            let brokerInitial = 'B';
+            if (acc.brokerCode === 'Z') { brokerImgSrc = 'zizo.png'; brokerInitial = 'Z'; }
+            if (acc.brokerCode === 'A') { brokerImgSrc = 'abdo.png'; brokerInitial = 'A'; }
+
             div.className = `glass-card rounded-2xl overflow-hidden relative group flex flex-col justify-between ${isSold ? 'opacity-70 saturate-50' : ''}`;
             
             div.innerHTML = `
                 <div class="relative overflow-hidden aspect-[16/10] bg-slate-950">
+                    <!-- NEW: Broker Image on Top Left -->
+                    <div class="absolute top-2 left-2 z-20 w-10 h-10 rounded-full border-2 border-cyan-400 overflow-hidden shadow-lg bg-slate-900" title="الوسيط المسؤول عن الحساب">
+                        <img src="${brokerImgSrc}" alt="Broker" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/50x50/1e293b/38bdf8?text=${brokerInitial}';">
+                    </div>
+
                     ${isSold ? `
                     <div class="absolute inset-0 bg-slate-950/70 z-10 flex items-center justify-center">
                         <span class="px-5 py-2.5 rounded-xl bg-rose-600 border border-rose-400 text-white text-sm font-extrabold uppercase tracking-widest shadow-lg transform -rotate-3">
@@ -2017,6 +2199,7 @@
             return div;
         }
 
+        /* ================= STREAMING_CHUNK: Detail modal binding and direct WhatsApp routing ================= */
         /* ================= DETAILS MODAL ================= */
         function openModal(acc) {
             document.getElementById('modal-platform').textContent = acc.platform.toUpperCase();
@@ -2072,10 +2255,16 @@
                 thumbnailBox.appendChild(btn);
             });
 
-            const whatsappNumber = "201065277949";
-            const messageText = `أهلاً بوكيل متجر eFootball! أود طلب هذا الحساب:
+            // ROUTE WHATSAPP DYNAMICALLY: Route dynamically based on brokerCode
+            const brokerKey = acc.brokerCode || 'B';
+            const brokerObj = brokers[brokerKey] || brokers['B'];
+            const whatsappNumber = brokerObj.phone;
+            
+            // NEW: Added the main image link to the message text
+            const messageText = `أهلاً بالوكيل ${brokerObj.name}! أود طلب هذا الحساب:
 المنصة: ${acc.platform.toUpperCase()}
 رقم المرجع: #${acc.rowIndex}
+رابط الصورة الأساسية: ${acc.mainImage}
 المواصفات: ${acc.description.slice(0, 100)}...`;
             
             document.getElementById('modal-order-btn').href = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(messageText)}`;
@@ -2094,7 +2283,6 @@
             activeNoteRowIndex = rowIndex;
             document.getElementById('note-acc-id').textContent = '#' + rowIndex;
 
-            // عرض بيانات اليوزر لو موجودة
             const acc = accountsData.find(a => a.rowIndex === rowIndex);
             const userInfoEl = document.getElementById('note-user-info');
             if (acc && (acc.userName || acc.userPhone)) {
@@ -2104,7 +2292,7 @@
                 const waLink = document.getElementById('note-whatsapp-link');
                 if (acc.userPhone) {
                     const phone = acc.userPhone.replace(/\D/g, '');
-                    waLink.href = `https://wa.me/${phone}`; // تعديل لفتح الواتس برمز الدولة المدمج
+                    waLink.href = `https://wa.me/${phone}`; 
                     waLink.classList.remove('hidden');
                 } else {
                     waLink.classList.add('hidden');
@@ -2152,6 +2340,7 @@
             showAlert("تم الحفظ", "تم حفظ الملاحظة الخاصة بك بنجاح!");
         }
 
+        /* ================= STREAMING_CHUNK: Reviews Modal & submission routines ================= */
         /* ================= REVIEWS MODAL INTEGRATION ================= */
         function openReviewsModal() {
             document.getElementById('reviews-modal').classList.remove('hidden');
@@ -2178,7 +2367,6 @@
         }
         setRating(5);
 
-        // Fetch Feedback Reviews with Smart Fallback
         async function fetchReviews() {
             const container = document.getElementById('reviews-container');
             container.innerHTML = `
@@ -2205,7 +2393,6 @@
             }
         }
 
-        // Helper to output reviews to UI
         function renderReviewsHTML(reviewsArray) {
             const container = document.getElementById('reviews-container');
             container.innerHTML = '';
@@ -2237,7 +2424,6 @@
             });
         }
 
-        // Submit Feedback with Bulletproof CORS bypass fallback (mode: 'no-cors')
         async function submitReview(e) {
             e.preventDefault();
 
@@ -2323,6 +2509,7 @@
             });
         }
 
+        /* ================= STREAMING_CHUNK: Admin adding and duplicating accounts ================= */
         /* ================= ADMIN & ACCOUNT ACTION ================= */
         function openAddModal() {
             const form = document.getElementById('add-account-form');
@@ -2331,7 +2518,14 @@
             document.getElementById('main-image-final-val').value = '';
             document.getElementById('main-image-preview').classList.add('hidden');
             document.getElementById('main-image-preview-img').src = '';
-            initGalleryInputs(); // تهيئة خانات الرفع المتعددة (المعرض) للصور الإضافية
+            initGalleryInputs(); 
+
+            // Highlight standard default broker 'B'
+            const defaultRadio = form.querySelector('input[name="broker"][value="B"]');
+            if (defaultRadio) {
+                defaultRadio.checked = true;
+                updateBrokerFlashEffects(defaultRadio);
+            }
             
             document.getElementById('add-modal').classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
@@ -2355,15 +2549,19 @@
                 return;
             }
 
-            // تجميع روابط الصور الإضافية (Gallery) من الخانات
             const galleryUrls = Array.from(document.querySelectorAll('.gallery-final-val'))
                                      .map(input => input.value)
                                      .filter(val => val.trim() !== '')
                                      .join(', ');
 
+            // Retrieve Platform and selected Broker
+            const platformBase = form.querySelector('[name="platform"]').value;
+            const selectedBroker = form.querySelector('input[name="broker"]:checked').value;
+            const combinedPlatformValue = `${platformBase}-${selectedBroker}`; // e.g. steam-B
+
             const formData = new URLSearchParams();
             formData.append('action', 'add');
-            formData.append('platform', form.querySelector('[name="platform"]').value);
+            formData.append('platform', combinedPlatformValue);
             formData.append('konamiId', form.querySelector('[name="konamiId"]').value);
             formData.append('firstMail', form.querySelector('[name="firstMail"]').value);
             formData.append('idStatus', form.querySelector('[name="idStatus"]').value);
@@ -2454,7 +2652,7 @@
         }
 
         function duplicateAccount(acc) {
-            openAddModal(); // تهيئة الفورم والصور الافتراضية
+            openAddModal(); 
             
             const form = document.getElementById('add-account-form');
             form.querySelector('[name="platform"]').value = acc.platform;
@@ -2465,17 +2663,22 @@
             form.querySelector('[name="securityLevel"]').value = acc.securityLevel;
             form.querySelector('[name="description"]').value = acc.description;
 
+            // Set duplicated broker selection
+            const bRadio = form.querySelector(`input[name="broker"][value="${acc.brokerCode || 'B'}"]`);
+            if (bRadio) {
+                bRadio.checked = true;
+                updateBrokerFlashEffects(bRadio);
+            }
+
             const existingNote = localStorage.getItem('efb_note_' + acc.rowIndex) || '';
             form.querySelector('[name="adminNote"]').value = existingNote;
             
-            // ضبط الصورة الأساسية
             if(acc.mainImage) {
                 setMainImageType('link');
                 document.getElementById('main-image-url-input').value = acc.mainImage;
                 handleMainImageUrlInput(acc.mainImage);
             }
 
-            // ضبط المعرض الديناميكي
             document.getElementById('gallery-inputs-container').innerHTML = '';
             if (acc.galleryImages) {
                 const splits = acc.galleryImages.split(/[\s,]+/).filter(url => url.trim().startsWith('http'));
@@ -2483,7 +2686,7 @@
                     addGalleryRow(url);
                 });
             }
-            addGalleryRow(); // إضافة الصف الأخير الفارغ تحسباً لرفع صورة إضافية
+            addGalleryRow(); 
         }
 
         async function processRowAction(actionName, indexId) {
@@ -2520,6 +2723,7 @@
             });
         }
 
+        /* ================= STREAMING_CHUNK: User reviews binding and rendering ================= */
         /* ================= INLINE REVIEWS SECTION ================= */
         let inlineSelectedRating = 5;
 
@@ -2633,14 +2837,35 @@
             });
         }
 
+        /* ================= STREAMING_CHUNK: User advertisement submission handler ================= */
         /* ================= USER ADVERTISE SYSTEM ================= */
+        
+        // NEW: Function to toggle between rules and form
+        function showUserAdvForm() {
+            document.getElementById('user-adv-rules-step').classList.add('hidden');
+            document.getElementById('user-advertise-form').classList.remove('hidden');
+        }
+
         function openUserAdvertiseModal() {
             document.getElementById('user-advertise-modal').classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
-            document.getElementById('user-advertise-form').reset();
+            
+            // Show rules step first, hide form
+            document.getElementById('user-adv-rules-step').classList.remove('hidden');
+            document.getElementById('user-advertise-form').classList.add('hidden');
+
+            const form = document.getElementById('user-advertise-form');
+            form.reset();
             document.getElementById('user-main-image-final-val').value = '';
             document.getElementById('user-main-image-preview').classList.add('hidden');
-            // تهيئة الجاليري
+            
+            // Highlight default broker 'B'
+            const defaultRadio = form.querySelector('input[name="broker"][value="B"]');
+            if (defaultRadio) {
+                defaultRadio.checked = true;
+                updateBrokerFlashEffects(defaultRadio);
+            }
+
             document.getElementById('user-gallery-container').innerHTML = '';
             userGalleryCounter = 0;
             addUserGallerySlot();
@@ -2700,7 +2925,6 @@
             if (url) {
                 const row = document.getElementById(rowId);
                 row.querySelector('.user-gallery-final-val').value = url;
-                // إضافة preview صغير
                 const prev = document.createElement('img');
                 prev.src = url;
                 prev.className = 'w-12 h-8 object-cover rounded-lg border border-slate-600 flex-shrink-0';
@@ -2724,10 +2948,15 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin ml-1"></i> جاري الإرسال...';
 
+            // Retrieve selected Platform and append Broker suffix
+            const platformBase = form.querySelector('[name="platform"]').value;
+            const selectedBroker = form.querySelector('input[name="broker"]:checked').value;
+            const combinedPlatformValue = `${platformBase}-${selectedBroker}`; // e.g. steam-Z
+
             const formData = new URLSearchParams();
             formData.append('action', 'add');
             formData.append('isAdmin', 'false');
-            formData.append('platform', form.querySelector('[name="platform"]').value);
+            formData.append('platform', combinedPlatformValue);
             formData.append('price', form.querySelector('[name="price"]').value);
             formData.append('konamiId', form.querySelector('[name="konamiId"]').value);
             formData.append('firstMail', form.querySelector('[name="firstMail"]').value);
@@ -2735,16 +2964,15 @@
             formData.append('description', form.querySelector('[name="description"]').value);
             formData.append('userName', form.querySelector('[name="userName"]').value);
             
-            // دمج كود الدولة مع رقم الهاتف عند الإرسال
             const countryCode = form.querySelector('[name="countryCode"]').value;
             let rawPhone = form.querySelector('[name="userPhone"]').value.trim();
-            if(rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1); // إزالة الصفر في البداية إن وجد
+            if(rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1); 
             const fullPhone = countryCode + rawPhone;
             formData.append('userPhone', fullPhone);
 
             formData.append('idStatus', 'موثق');
             formData.append('securityLevel', 'أمان ممتاز');
-            // جمع صور الجاليري
+            
             const galleryUrls = Array.from(document.querySelectorAll('.user-gallery-final-val'))
                 .map(i => i.value).filter(v => v.trim() !== '').join(', ');
             formData.append('galleryImages', galleryUrls);
@@ -2769,6 +2997,7 @@
             }
         }
 
+        /* ================= STREAMING_CHUNK: Admin review panel & approval pipeline with broker assignments ================= */
         /* ================= ADMIN PENDING REQUESTS SYSTEM ================= */
         function openAdminPendingModal() {
             document.getElementById('admin-pending-modal').classList.remove('hidden');
@@ -2811,7 +3040,7 @@
                     </div>
 
                     <!-- حقول التعديل الشاملة قبل الموافقة -->
-                    <div class="mt-4 space-y-3">
+                    <div class="mt-4 space-y-3 text-right">
                         <p class="text-[10px] text-slate-500 uppercase tracking-wider font-bold border-b border-slate-800 pb-2">تعديل بيانات الحساب قبل النشر</p>
                         
                         <div class="grid grid-cols-2 gap-2">
@@ -2853,6 +3082,36 @@
                                 <input type="text" id="edit-security-${acc.rowIndex}" value="${acc.securityLevel}" class="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none rounded-lg px-3 py-2 text-xs text-white text-right">
                             </div>
                         </div>
+
+                        <!-- NEW: Broker reassignment panel inside pending cards -->
+                        <div class="bg-slate-950/40 p-3 border border-slate-800 rounded-xl">
+                            <label class="text-[10px] text-slate-400 block mb-2">تحديد الوسيط المسؤول عن الحساب</label>
+                            <div class="flex justify-around gap-2">
+                                <label class="cursor-pointer flex items-center gap-1.5 select-none">
+                                    <input type="radio" name="edit-broker-${acc.rowIndex}" value="B" class="hidden peer" ${acc.brokerCode==='B'?'checked':''} onchange="updateBrokerFlashEffects(this)">
+                                    <div class="w-8 h-8 rounded-full border border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 overflow-hidden broker-circle ${acc.brokerCode==='B'?'broker-selected-flash':''}">
+                                        <img src="abanoub.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/50x50/1e293b/38bdf8?text=B';">
+                                    </div>
+                                    <span class="text-[10px] text-slate-300">أبانوب</span>
+                                </label>
+
+                                <label class="cursor-pointer flex items-center gap-1.5 select-none">
+                                    <input type="radio" name="edit-broker-${acc.rowIndex}" value="Z" class="hidden peer" ${acc.brokerCode==='Z'?'checked':''} onchange="updateBrokerFlashEffects(this)">
+                                    <div class="w-8 h-8 rounded-full border border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 overflow-hidden broker-circle ${acc.brokerCode==='Z'?'broker-selected-flash':''}">
+                                        <img src="zizo.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/50x50/1e293b/a855f7?text=Z';">
+                                    </div>
+                                    <span class="text-[10px] text-slate-300">زيزو</span>
+                                </label>
+
+                                <label class="cursor-pointer flex items-center gap-1.5 select-none">
+                                    <input type="radio" name="edit-broker-${acc.rowIndex}" value="A" class="hidden peer" ${acc.brokerCode==='A'?'checked':''} onchange="updateBrokerFlashEffects(this)">
+                                    <div class="w-8 h-8 rounded-full border border-slate-700 peer-checked:border-cyan-400 peer-checked:scale-105 overflow-hidden broker-circle ${acc.brokerCode==='A'?'broker-selected-flash':''}">
+                                        <img src="abdo.png" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/50x50/1e293b/f43f5e?text=A';">
+                                    </div>
+                                    <span class="text-[10px] text-slate-300">عبده</span>
+                                </label>
+                            </div>
+                        </div>
                         
                         <div>
                             <label class="text-[10px] text-slate-400 block mb-1">الوصف</label>
@@ -2881,6 +3140,12 @@
             const idStatusEl = document.getElementById(`edit-idstatus-${rowIndex}`);
             const securityEl = document.getElementById(`edit-security-${rowIndex}`);
 
+            // Fetch broker assignment value
+            const brokerEl = document.querySelector(`input[name="edit-broker-${rowIndex}"]:checked`);
+            const brokerValue = brokerEl ? brokerEl.value : 'B';
+            const platformBaseValue = platformEl ? platformEl.value : 'steam';
+            const combinedPlatformValue = `${platformBaseValue}-${brokerValue}`; // e.g. steam-B
+
             const blocker = document.getElementById('action-blocker');
             blocker.classList.remove('hidden');
 
@@ -2888,6 +3153,15 @@
                 const formData = new URLSearchParams();
                 formData.append('action', 'approve');
                 formData.append('rowIndex', rowIndex);
+                
+                // Append edited parameters to form parameters
+                formData.append('platform', combinedPlatformValue);
+                if (priceEl) formData.append('price', priceEl.value);
+                if (konamiEl) formData.append('konamiId', konamiEl.value);
+                if (mailEl) formData.append('firstMail', mailEl.value);
+                if (idStatusEl) formData.append('idStatus', idStatusEl.value);
+                if (securityEl) formData.append('securityLevel', securityEl.value);
+                if (descEl) formData.append('description', descEl.value);
 
                 await fetch(API_ENDPOINT, {
                     method: 'POST',
@@ -2895,13 +3169,13 @@
                     body: formData.toString()
                 });
 
-                // تحديث البيانات محلياً بكل الحقول المعدلة
                 const idx = accountsData.findIndex(a => a.rowIndex === rowIndex);
                 if (idx > -1) {
                     accountsData[idx].status      = 'Active';
+                    accountsData[idx].brokerCode  = brokerValue;
                     if (descEl)     accountsData[idx].description   = descEl.value;
                     if (priceEl)    accountsData[idx].price         = priceEl.value;
-                    if (platformEl) accountsData[idx].platform      = platformEl.value;
+                    if (platformEl) accountsData[idx].platform      = platformBaseValue;
                     if (konamiEl)   accountsData[idx].konamiId      = konamiEl.value;
                     if (mailEl)     accountsData[idx].firstMail     = mailEl.value;
                     if (idStatusEl) accountsData[idx].idStatus      = idStatusEl.value;
@@ -2960,13 +3234,10 @@
         }
 
         window.onload = function() {
-            // تشغيل محرك البانرات الإعلانية التلقائي (من 1 إلى 10)
             initAdBanners();
-            
             fetchSheetData();
             setInlineRating(5);
             fetchInlineReviews();
-            
             initMusicPlayer();
             document.addEventListener('click', handleFirstUserInteraction);
             document.addEventListener('touchstart', handleFirstUserInteraction);
