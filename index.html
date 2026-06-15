@@ -374,6 +374,39 @@
                     <i class="fa-solid fa-user-shield ml-1"></i> <span class="ar-only">جلسة المسؤول</span><span class="en-only">Admin Active</span>
                     <button onclick="adminLogout()" title="تسجيل خروج" class="mr-1 hover:text-white transition-colors"><i class="fa-solid fa-right-from-bracket"></i></button>
                 </span>
+
+                <!-- ===== زراير البطولة - تظهر للأدمن فقط ===== -->
+                <div id="tournament-admin-btns" class="hidden items-center gap-2">
+                    <!-- زر البطولة - dropdown -->
+                    <div class="relative" id="tournament-dropdown-wrapper">
+                        <button onclick="toggleTournamentDropdown()" class="flex items-center gap-2 px-3 py-2 rounded-xl font-extrabold text-sm text-white transition-all border border-yellow-500/40 hover:border-yellow-400" style="background: linear-gradient(135deg, #92400e, #78350f); box-shadow: 0 0 14px rgba(234,179,8,0.25);">
+                            <i class="fa-solid fa-trophy text-yellow-400"></i>
+                            <span>البطولة</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-yellow-400" id="tournament-chevron"></i>
+                        </button>
+                        <!-- Dropdown Menu -->
+                        <div id="tournament-dropdown" class="hidden absolute top-full mt-2 right-0 w-52 glass-panel rounded-2xl overflow-hidden border border-yellow-500/20 z-50 shadow-xl">
+                            <button onclick="tournamentAction('start')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-yellow-500/10 transition-all border-b border-slate-800/60">
+                                <span class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center"><i class="fa-solid fa-play text-emerald-400 text-xs"></i></span>
+                                ابدأ البطولة
+                            </button>
+                            <button onclick="tournamentAction('stop')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-red-500/10 transition-all border-b border-slate-800/60">
+                                <span class="w-7 h-7 rounded-lg bg-rose-500/20 border border-rose-500/30 flex items-center justify-center"><i class="fa-solid fa-stop text-rose-400 text-xs"></i></span>
+                                إيقاف البطولة
+                            </button>
+                            <button onclick="tournamentAction('register')" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-cyan-500/10 transition-all">
+                                <span class="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center"><i class="fa-solid fa-user-plus text-cyan-400 text-xs"></i></span>
+                                بدأ التسجيل
+                            </button>
+                        </div>
+                    </div>
+                    <!-- زر صفحة البطولة -->
+                    <a href="tournament.html" target="_blank" class="flex items-center gap-2 px-3 py-2 rounded-xl font-extrabold text-sm text-white transition-all border border-cyan-500/40 hover:border-cyan-400" style="background: linear-gradient(135deg, #164e63, #0e7490); box-shadow: 0 0 14px rgba(0,240,255,0.2);">
+                        <i class="fa-solid fa-ranking-star text-cyan-400"></i>
+                        <span>صفحة البطولة</span>
+                    </a>
+                </div>
+                <!-- =========================================== -->
             </nav>
 
             <div class="flex items-center space-x-3 space-x-reverse gap-2">
@@ -3269,6 +3302,312 @@
             initMusicPlayer();
             document.addEventListener('click', handleFirstUserInteraction);
             document.addEventListener('touchstart', handleFirstUserInteraction);
+            // Tournament init
+            initTournamentPopup();
+        }
+    </script>
+
+    <!-- ============================================================ -->
+    <!-- ===== TOURNAMENT POPUP - بوب أب البطولة للزوار ===== -->
+    <!-- ============================================================ -->
+    <div id="tournament-popup" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm"></div>
+        <div class="relative z-10 glass-panel rounded-3xl p-8 max-w-sm w-full text-center border border-yellow-500/30 shadow-2xl" style="box-shadow: 0 0 60px rgba(234,179,8,0.2);">
+            <!-- Close Button -->
+            <button onclick="closeTournamentPopup()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                <i class="fa-solid fa-times text-xs"></i>
+            </button>
+            <!-- Trophy Icon -->
+            <div class="w-24 h-24 mx-auto mb-4 relative">
+                <div class="absolute inset-0 rounded-full bg-yellow-500/10 animate-ping"></div>
+                <div class="relative w-full h-full rounded-full bg-gradient-to-b from-yellow-400/20 to-yellow-600/10 border border-yellow-500/30 flex items-center justify-center">
+                    <i class="fa-solid fa-trophy text-5xl text-yellow-400" style="filter: drop-shadow(0 0 20px rgba(234,179,8,0.8));"></i>
+                </div>
+            </div>
+            <h3 class="text-2xl font-extrabold text-white mb-2">🏆 البطولة</h3>
+            <p id="tournament-popup-status" class="text-slate-300 text-sm mb-6 leading-relaxed"></p>
+            <button onclick="goToTournamentPage()" class="w-full py-3.5 font-extrabold text-slate-900 rounded-2xl transition-all text-base" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 25px rgba(245,158,11,0.5);">
+                <i class="fa-solid fa-arrow-left ml-2"></i> اذهب لصفحة البطولة
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== TOURNAMENT START MODAL - ابدأ البطولة ===== -->
+    <!-- ============================================================ -->
+    <div id="tournament-start-modal" class="fixed inset-0 z-[160] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closeTournamentStartModal()"></div>
+        <div class="glass-panel w-full max-w-lg rounded-3xl overflow-hidden relative z-10 border border-yellow-500/25">
+            <div class="px-6 py-4 flex items-center justify-between border-b border-slate-800 bg-gradient-to-r from-yellow-900/20 to-amber-900/20">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-yellow-400"></i> بدء البطولة
+                </h3>
+                <button onclick="closeTournamentStartModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-5">
+                <!-- إحصائيات التسجيل -->
+                <div id="tournament-stats-box" class="glass-panel rounded-2xl p-4 space-y-3">
+                    <p class="text-xs text-slate-400 uppercase font-bold tracking-wider"><i class="fa-solid fa-chart-bar text-cyan-400 ml-1"></i> إحصائيات المسجلين</p>
+                    <div class="grid grid-cols-2 gap-3" id="tournament-stats-grid">
+                        <div class="text-center py-6"><i class="fa-solid fa-circle-notch fa-spin text-cyan-400 text-xl"></i></div>
+                    </div>
+                </div>
+                <!-- نوع البطولة -->
+                <div>
+                    <label class="block text-xs text-slate-400 mb-3 font-bold uppercase tracking-wider">اختر نوع البطولة</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="selectTournamentType('league')" id="btn-type-league" class="tournament-type-btn p-4 rounded-2xl border border-slate-700 hover:border-yellow-500/50 text-white text-sm font-bold flex flex-col items-center gap-2 transition-all bg-slate-900/50 hover:bg-yellow-500/5">
+                            <i class="fa-solid fa-table-list text-yellow-400 text-2xl"></i>
+                            <span>دوري</span>
+                            <span class="text-[10px] text-slate-400">نقاط وترتيب</span>
+                        </button>
+                        <button onclick="selectTournamentType('champions')" id="btn-type-champions" class="tournament-type-btn p-4 rounded-2xl border border-slate-700 hover:border-yellow-500/50 text-white text-sm font-bold flex flex-col items-center gap-2 transition-all bg-slate-900/50 hover:bg-yellow-500/5">
+                            <i class="fa-solid fa-star text-yellow-400 text-2xl"></i>
+                            <span>دوري أبطال</span>
+                            <span class="text-[10px] text-slate-400">مجموعات + ناك أوت</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- خيارات الدوري -->
+                <div id="league-options" class="hidden space-y-3">
+                    <label class="block text-xs text-slate-400 font-bold">عدد اللاعبين في كل دوري</label>
+                    <input type="number" id="league-size-input" min="2" max="50" value="10" class="w-full bg-slate-950 border border-slate-700 focus:border-yellow-400 outline-none rounded-xl px-4 py-3 text-white text-center text-lg font-bold">
+                    <p class="text-xs text-slate-500">مثال: لو عندك 100 مسجل وكتبت 10 → هيعمل 10 دوريات</p>
+                </div>
+                <!-- خيارات المنصة -->
+                <div>
+                    <label class="block text-xs text-slate-400 mb-3 font-bold uppercase tracking-wider">تصفية حسب المنصة (اختياري)</label>
+                    <div class="flex flex-wrap gap-2" id="platform-filter-btns">
+                        <button onclick="togglePlatformFilter(this,'all')" data-pf="all" class="pf-btn active px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-600 text-white bg-slate-800 hover:border-cyan-400 transition-all">الكل</button>
+                        <button onclick="togglePlatformFilter(this,'steam')" data-pf="steam" class="pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 hover:border-cyan-400 transition-all"><i class="fa-brands fa-steam ml-1"></i>Steam</button>
+                        <button onclick="togglePlatformFilter(this,'xbox')" data-pf="xbox" class="pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 hover:border-green-400 transition-all"><i class="fa-brands fa-xbox ml-1 text-green-400"></i>Xbox</button>
+                        <button onclick="togglePlatformFilter(this,'ps')" data-pf="ps" class="pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 hover:border-blue-400 transition-all"><i class="fa-brands fa-playstation ml-1 text-blue-400"></i>PlayStation</button>
+                        <button onclick="togglePlatformFilter(this,'mobile')" data-pf="mobile" class="pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 hover:border-pink-400 transition-all"><i class="fa-solid fa-mobile ml-1 text-pink-400"></i>موبايل</button>
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2 border-t border-slate-800">
+                    <button onclick="closeTournamentStartModal()" class="w-1/3 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl text-sm font-bold">إلغاء</button>
+                    <button onclick="confirmStartTournament()" class="w-2/3 py-3 font-extrabold text-slate-900 rounded-xl text-sm transition-all" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fa-solid fa-flag-checkered ml-2"></i> ابدأ البطولة الآن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ===== TOURNAMENT JS ===== -->
+    <!-- ============================================================ -->
+    <script>
+        const TOURNAMENT_LOG_URL =
+"https://script.google.com/macros/s/AKfycbwkekPcEu9Cjm3qSpK12jjtqjYx9NXgpcPGtIEBGBLN2RVIZIuLjXIshiOjc0yYIXqO/exec";
+
+const TOURNAMENT_PLAYERS_URL =
+"https://script.google.com/macros/s/AKfycbz2wzVonB233aBuHxP9h1b8wk9UIJeKZPQhpnD5nGtO8KVG1-ynXjn0tADq2Wuf1eo/exec";
+        let selectedTournamentType = null;
+        let selectedPlatformFilter = 'all';
+        let tournamentDropdownOpen = false;
+
+        // ===== DROPDOWN =====
+        function toggleTournamentDropdown() {
+            tournamentDropdownOpen = !tournamentDropdownOpen;
+            const dd = document.getElementById('tournament-dropdown');
+            const chevron = document.getElementById('tournament-chevron');
+            dd.classList.toggle('hidden', !tournamentDropdownOpen);
+            chevron.style.transform = tournamentDropdownOpen ? 'rotate(180deg)' : '';
+        }
+
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('tournament-dropdown-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('tournament-dropdown').classList.add('hidden');
+                tournamentDropdownOpen = false;
+                const chevron = document.getElementById('tournament-chevron');
+                if (chevron) chevron.style.transform = '';
+            }
+        });
+
+        // ===== TOURNAMENT ACTIONS =====
+        async function tournamentAction(action) {
+            document.getElementById('tournament-dropdown').classList.add('hidden');
+            tournamentDropdownOpen = false;
+
+            if (action === 'start') {
+                openTournamentStartModal();
+            } else if (action === 'stop') {
+                showConfirm('إيقاف البطولة', 'هل أنت متأكد من إيقاف البطولة؟ سيتم حفظ البيانات الحالية.', async () => {
+                    await logTournamentEvent('STOP');
+                    showAlert('تم الإيقاف', 'تم إيقاف البطولة وحفظ البيانات.', false);
+                });
+            } else if (action === 'register') {
+                showConfirm('بدأ التسجيل', 'هل تريد فتح باب التسجيل للبطولة؟', async () => {
+                    await logTournamentEvent('REGISTER_OPEN');
+                    showAlert('تم فتح التسجيل', 'تم فتح باب التسجيل بنجاح!', false);
+                });
+            }
+        }
+
+        async function logTournamentEvent(eventType, extraData = '') {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ar-EG');
+            const timeStr = now.toLocaleTimeString('ar-EG');
+            try {
+                const params = new URLSearchParams({ action: 'log', event: eventType, date: dateStr, time: timeStr, extra: extraData });
+                await fetch(TOURNAMENT_LOG_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
+            } catch(e) { console.warn('Tournament log error:', e); }
+        }
+
+        // ===== START MODAL =====
+        async function openTournamentStartModal() {
+            document.getElementById('tournament-start-modal').classList.remove('hidden');
+            // تحميل إحصائيات المسجلين
+            await loadTournamentStats();
+        }
+
+        function closeTournamentStartModal() {
+            document.getElementById('tournament-start-modal').classList.add('hidden');
+            selectedTournamentType = null;
+            document.querySelectorAll('.tournament-type-btn').forEach(b => {
+                b.classList.remove('border-yellow-400', 'bg-yellow-500/10');
+                b.classList.add('border-slate-700');
+            });
+            document.getElementById('league-options').classList.add('hidden');
+        }
+
+        async function loadTournamentStats() {
+            const grid = document.getElementById('tournament-stats-grid');
+            grid.innerHTML = '<div class="col-span-2 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin text-cyan-400 text-xl"></i></div>';
+            try {
+                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=stats');
+                const data = await res.json();
+                const total = data.total || 0;
+                const byPlatform = data.byPlatform || {};
+                grid.innerHTML = `
+                    <div class="col-span-2 text-center py-2 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                        <div class="text-3xl font-extrabold text-yellow-400">${total}</div>
+                        <div class="text-xs text-slate-400 mt-1">إجمالي المسجلين</div>
+                    </div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                        <div class="text-lg font-bold text-cyan-400">${byPlatform.steam || 0}</div>
+                        <div class="text-[10px] text-slate-500"><i class="fa-brands fa-steam"></i> Steam</div>
+                    </div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                        <div class="text-lg font-bold text-green-400">${byPlatform.xbox || 0}</div>
+                        <div class="text-[10px] text-slate-500"><i class="fa-brands fa-xbox"></i> Xbox</div>
+                    </div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                        <div class="text-lg font-bold text-blue-400">${byPlatform.ps || 0}</div>
+                        <div class="text-[10px] text-slate-500"><i class="fa-brands fa-playstation"></i> PS</div>
+                    </div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                        <div class="text-lg font-bold text-pink-400">${byPlatform.mobile || 0}</div>
+                        <div class="text-[10px] text-slate-500"><i class="fa-solid fa-mobile"></i> موبايل</div>
+                    </div>
+                `;
+            } catch(e) {
+                grid.innerHTML = '<div class="col-span-2 text-center text-slate-500 text-xs py-2">تعذر تحميل الإحصائيات</div>';
+            }
+        }
+
+        function selectTournamentType(type) {
+            selectedTournamentType = type;
+            document.querySelectorAll('.tournament-type-btn').forEach(b => {
+                b.classList.remove('border-yellow-400', 'bg-yellow-500/10');
+                b.classList.add('border-slate-700');
+            });
+            const btn = document.getElementById('btn-type-' + type);
+            btn.classList.add('border-yellow-400', 'bg-yellow-500/10');
+            btn.classList.remove('border-slate-700');
+            document.getElementById('league-options').classList.toggle('hidden', type !== 'league');
+        }
+
+        function togglePlatformFilter(btn, platform) {
+            document.querySelectorAll('.pf-btn').forEach(b => {
+                b.classList.remove('active', 'border-cyan-400', 'bg-cyan-500/10', 'text-white', 'border-green-400', 'border-blue-400', 'border-pink-400');
+                b.classList.add('border-slate-700', 'text-slate-300');
+            });
+            btn.classList.add('active', 'text-white');
+            btn.classList.remove('border-slate-700', 'text-slate-300');
+            selectedPlatformFilter = platform;
+        }
+
+        async function confirmStartTournament() {
+            if (!selectedTournamentType) {
+                showAlert('تنبيه', 'اختار نوع البطولة أولاً!', true);
+                return;
+            }
+            let extra = `type=${selectedTournamentType},platform=${selectedPlatformFilter}`;
+            if (selectedTournamentType === 'league') {
+                const size = document.getElementById('league-size-input').value || '10';
+                extra += `,leagueSize=${size}`;
+            }
+            const blocker = document.getElementById('action-blocker');
+            blocker.classList.remove('hidden');
+            try {
+                await logTournamentEvent('START', extra);
+                closeTournamentStartModal();
+                showAlert('تم البدء! 🏆', `تم بدء البطولة (${selectedTournamentType === 'league' ? 'دوري' : 'دوري أبطال'}) بنجاح!`, false);
+            } catch(e) {
+                showAlert('خطأ', 'حدث خطأ أثناء بدء البطولة', true);
+            } finally {
+                blocker.classList.add('hidden');
+            }
+        }
+
+        // ===== ADMIN BUTTONS SHOW/HIDE =====
+        // Override adminMode setters to show/hide tournament buttons
+        const _origAdminCheck = window.validateAdminKey;
+        // نستخدم MutationObserver علشان نتابع لما admin-status يظهر
+        const adminStatusObserver = new MutationObserver(() => {
+            const adminStatus = document.getElementById('admin-status');
+            const tournamentBtns = document.getElementById('tournament-admin-btns');
+            if (adminStatus && tournamentBtns) {
+                if (!adminStatus.classList.contains('hidden')) {
+                    tournamentBtns.classList.remove('hidden');
+                    tournamentBtns.classList.add('flex');
+                } else {
+                    tournamentBtns.classList.add('hidden');
+                    tournamentBtns.classList.remove('flex');
+                }
+            }
+        });
+        const adminStatusEl = document.getElementById('admin-status');
+        if (adminStatusEl) adminStatusObserver.observe(adminStatusEl, { attributes: true, attributeFilter: ['class'] });
+
+        // ===== TOURNAMENT POPUP =====
+        async function initTournamentPopup() {
+            // اقرأ آخر حالة من الشيت
+            try {
+                const res = await fetch(TOURNAMENT_LOG_URL + '?action=status');
+                const data = await res.json();
+                const status = data.status; // 'START', 'STOP', 'REGISTER_OPEN'
+                if (status === 'START' || status === 'REGISTER_OPEN') {
+                    const popup = document.getElementById('tournament-popup');
+                    const statusText = document.getElementById('tournament-popup-status');
+                    if (status === 'START') {
+                        statusText.textContent = '🔥 البطولة شغالة دلوقتي! دوس علشان تشوف النتائج والجداول.';
+                    } else {
+                        statusText.textContent = '📋 باب التسجيل مفتوح! سجل دلوقتي قبل ما يقفل.';
+                    }
+                    // شيك لو اليوزر كان دوس X قبل كده في نفس الجلسة
+                    if (!sessionStorage.getItem('tournament_popup_dismissed')) {
+                        popup.classList.remove('hidden');
+                    }
+                }
+            } catch(e) {
+                console.warn('Could not fetch tournament status:', e);
+            }
+        }
+
+        function closeTournamentPopup() {
+            document.getElementById('tournament-popup').classList.add('hidden');
+            sessionStorage.setItem('tournament_popup_dismissed', '1');
+        }
+
+        function goToTournamentPage() {
+            window.location.href = 'tournament.html';
         }
     </script>
 </body>
