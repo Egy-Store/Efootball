@@ -246,6 +246,10 @@
             </div>
 
             <!-- Tournament Content - يتغير حسب النوع -->
+            <div id="live-matches-panel" class="hidden glass-panel rounded-3xl p-5 border border-cyan-500/20">
+                <!-- يتم حقن مباريات الداشبورد المباشرة بـ JS -->
+            </div>
+
             <div id="tournament-content">
                 <!-- يتم حقنه بـ JS -->
             </div>
@@ -307,9 +311,14 @@
                 <div id="admin-tab-players">
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="text-sm font-bold text-slate-300">قائمة المسجلين</h4>
-                        <button onclick="refreshPlayers()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all">
-                            <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="exportWhatsAppNumbers()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-emerald-400 hover:text-white transition-all">
+                                <i class="fa-brands fa-whatsapp ml-1"></i> جروب واتساب
+                            </button>
+                            <button onclick="refreshPlayers()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all">
+                                <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
+                            </button>
+                        </div>
                     </div>
                     <div id="players-list-container">
                         <div class="text-center py-8 text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>
@@ -354,11 +363,11 @@
                         <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-solid fa-filter text-yellow-400 ml-1"></i> تصفية حسب المنصة</h4>
                         <p class="text-xs text-slate-500 mb-3">اختار منصة معينة تبدأ البطولة بيها فقط</p>
                         <div class="flex flex-wrap gap-2 mb-3">
-                            <button onclick="filterByPlatform('all')" class="manual-pf-btn active px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-600 text-white bg-slate-800 transition-all">الكل</button>
-                            <button onclick="filterByPlatform('steam')" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">Steam</button>
-                            <button onclick="filterByPlatform('xbox')" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">Xbox</button>
-                            <button onclick="filterByPlatform('ps')" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">PlayStation</button>
-                            <button onclick="filterByPlatform('mobile')" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">موبايل</button>
+                            <button onclick="filterByPlatform('all', this)" class="manual-pf-btn active px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-600 text-white bg-slate-800 transition-all">الكل</button>
+                            <button onclick="filterByPlatform('steam', this)" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">Steam</button>
+                            <button onclick="filterByPlatform('xbox', this)" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">Xbox</button>
+                            <button onclick="filterByPlatform('ps', this)" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">PlayStation</button>
+                            <button onclick="filterByPlatform('mobile', this)" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">موبايل</button>
                         </div>
                     </div>
                 </div>
@@ -415,17 +424,327 @@
     <script>
         // ===== CONFIG =====
        const TOURNAMENT_LOG_URL =
-"https://script.google.com/macros/s/AKfycbwkekPcEu9Cjm3qSpK12jjtqjYx9NXgpcPGtIEBGBLN2RVIZIuLjXIshiOjc0yYIXqO/exec";
+"https://script.google.com/macros/s/AKfycbw5NJsRysLwIJJIngl2cb1jtkfn13r69nGLpIqv0hZmybo4Mrtx4ZO5y-TOWKfF_p-v/exec";
 
 const TOURNAMENT_PLAYERS_URL =
-"https://script.google.com/macros/s/AKfycbz2wzVonB233aBuHxP9h1b8wk9UIJeKZPQhpnD5nGtO8KVG1-ynXjn0tADq2Wuf1eo/exec";
+"https://script.google.com/macros/s/AKfycbzxJHx2wxxZvbu8vep2o_SBY38ywv-w34xKMPV_fMpDLFlx-rioD97isMzJj9v_HhM/exec";
+
 
         let isAdmin = false;
         let currentTournamentStatus = null;
         let currentTournamentData = {};
         let allPlayers = [];
+        let liveMatches = [];
+        let manualPlatformFilter = 'all';
         let scoreModalData = {};
         let scoreP1 = 0, scoreP2 = 0;
+
+        function normalizeTournamentStatusValue(value) {
+            const raw = String(value || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+            if (['REGISTER', 'REGISTRATION', 'REGISTRATION_OPEN', 'OPEN_REGISTRATION', 'REGISTER_OPEN'].includes(raw)) return 'REGISTER_OPEN';
+            if (['START', 'STARTED', 'ACTIVE', 'RUNNING', 'TOURNAMENT_ACTIVE'].includes(raw)) return 'START';
+            if (['STOP', 'STOPPED', 'IDLE', 'CLOSED', 'END', 'ENDED'].includes(raw)) return 'STOP';
+            return raw;
+        }
+
+        function parseTournamentExtra(extraData = '') {
+            const data = {};
+            String(extraData || '').split(',').forEach(part => {
+                const [rawKey, ...rawValue] = part.split('=');
+                const key = (rawKey || '').trim();
+                const value = rawValue.join('=').trim();
+                if (!key) return;
+                if (key === 'type') data.tournamentType = value;
+                else if (key === 'platform') data.platformFilter = value;
+                else data[key] = value;
+            });
+            return data;
+        }
+
+        function normalizeTournamentState(data = {}) {
+            if (typeof data === 'string') data = { status: data };
+            const status = normalizeTournamentStatusValue(data.status || data.Status || data.event || data.Event);
+            return {
+                ...data,
+                ...parseTournamentExtra(data.extra || data.ExtraData || ''),
+                status,
+                tournamentType: data.tournamentType || data.type || data.Type || parseTournamentExtra(data.extra || '').tournamentType || '',
+                leagueSize: data.leagueSize || data.league_size || '',
+                platformFilter: data.platformFilter || data.platform || data.Platform || 'all'
+            };
+        }
+
+        function getUrlTournamentState() {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.has('status')) return {};
+            return normalizeTournamentState({
+                status: params.get('status'),
+                tournamentType: params.get('type') || '',
+                leagueSize: params.get('leagueSize') || '',
+                platformFilter: params.get('platform') || 'all'
+            });
+        }
+
+        function getStoredTournamentState() {
+            try {
+                return normalizeTournamentState(JSON.parse(localStorage.getItem('efb_tournament_state') || '{}'));
+            } catch(e) {
+                return {};
+            }
+        }
+
+        function getFallbackTournamentState() {
+            const urlState = getUrlTournamentState();
+            if (urlState.status) return urlState;
+            const storedState = getStoredTournamentState();
+            return storedState.status ? storedState : {};
+        }
+
+        function saveTournamentStateFallback(data) {
+            const state = normalizeTournamentState(data);
+            if (!state.status) return;
+            try {
+                localStorage.setItem('efb_tournament_state', JSON.stringify(state));
+            } catch(e) {}
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[char]));
+        }
+
+        function jsArg(value) {
+            return escapeHtml(JSON.stringify(String(value ?? '')));
+        }
+
+        function pick(row, keys, fallback = '') {
+            for (const key of keys) {
+                if (row && row[key] !== undefined && row[key] !== null && row[key] !== '') return row[key];
+            }
+            return fallback;
+        }
+
+        function toNumber(value) {
+            if (value === undefined || value === null || value === '') return 0;
+            const num = Number(String(value).replace(/[^\d.-]/g, ''));
+            return Number.isFinite(num) ? num : 0;
+        }
+
+        function parseMatches(raw) {
+            if (Array.isArray(raw)) return raw;
+            if (typeof raw !== 'string' || !raw.trim()) return [];
+            try {
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch(e) {
+                return [];
+            }
+        }
+
+        function countDraws(matches) {
+            return matches.reduce((total, match) => {
+                const score = String(match.score || match.result || '');
+                const parts = score.match(/(\d+)\D+(\d+)/);
+                return total + (parts && Number(parts[1]) === Number(parts[2]) ? 1 : 0);
+            }, 0);
+        }
+
+        function normalizePlayer(row, index = 0) {
+            const matches = parseMatches(pick(row, ['matches', 'Matches', 'matchesJson', 'MatchesJson'], []));
+            const wins = toNumber(pick(row, ['wins', 'Wins', 'win', 'Win', 'H', 'فوز']));
+            const losses = toNumber(pick(row, ['losses', 'Losses', 'loss', 'Loss', 'I', 'خسارة']));
+            const rawDraws = pick(row, ['draws', 'Draws', 'draw', 'Draw', 'تعادل'], '');
+            const draws = rawDraws === '' ? countDraws(matches) : toNumber(rawDraws);
+            const goalsFor = toNumber(pick(row, ['goalsFor', 'GoalsFor', 'gf', 'GF', 'J', 'له']));
+            const goalsAgainst = toNumber(pick(row, ['goalsAgainst', 'GoalsAgainst', 'ga', 'GA', 'K', 'عليه']));
+            const rawPoints = pick(row, ['points', 'Points', 'pts', 'PTS', 'L', 'نقاط'], '');
+            const playedRaw = pick(row, ['played', 'Played', 'matchesPlayed', 'MatchesPlayed', 'لعب'], '');
+            const played = Math.max(toNumber(playedRaw), wins + draws + losses, matches.length);
+
+            return {
+                rowIndex: toNumber(pick(row, ['rowIndex', 'RowIndex', 'row', 'Row'], index + 2)),
+                name: String(pick(row, ['name', 'Name', 'player', 'Player', 'A', 'الاسم'], `لاعب ${index + 1}`)).trim(),
+                platform: String(pick(row, ['platform', 'Platform', 'B', 'المنصة'], '')).trim().toLowerCase(),
+                timeFrom: pick(row, ['timeFrom', 'TimeFrom', 'C'], ''),
+                timeTo: pick(row, ['timeTo', 'TimeTo', 'D'], ''),
+                phone: pick(row, ['phone', 'Phone', 'whatsapp', 'WhatsApp', 'E'], ''),
+                wins,
+                draws,
+                losses,
+                goalsFor,
+                goalsAgainst,
+                played,
+                points: rawPoints === '' ? (wins * 3) + draws : toNumber(rawPoints),
+                groupNum: toNumber(pick(row, ['groupNum', 'GroupNum', 'group', 'Group', 'M', 'المجموعة'])),
+                status: String(pick(row, ['status', 'Status', 'N', 'الحالة'], 'active')).trim().toLowerCase(),
+                matches
+            };
+        }
+
+        function isActivePlayer(player) {
+            return !['deleted', 'delete', 'removed', 'inactive'].includes(String(player.status || '').toLowerCase());
+        }
+
+        function goalDiff(player) {
+            return (player.goalsFor || 0) - (player.goalsAgainst || 0);
+        }
+
+        function sortStandingsPlayers(players) {
+            return [...players].sort((a, b) =>
+                (b.points || 0) - (a.points || 0) ||
+                goalDiff(b) - goalDiff(a) ||
+                (b.goalsFor || 0) - (a.goalsFor || 0) ||
+                (b.wins || 0) - (a.wins || 0) ||
+                (a.losses || 0) - (b.losses || 0) ||
+                String(a.name).localeCompare(String(b.name), 'ar')
+            );
+        }
+
+        function getPlayersFromPayload(data) {
+            if (Array.isArray(data)) return data;
+            if (Array.isArray(data?.players)) return data.players;
+            if (Array.isArray(data?.data)) return data.data;
+            if (Array.isArray(data?.rows)) return data.rows;
+            if (Array.isArray(data?.groups)) return data.groups.flatMap(group => group.players || []);
+            return [];
+        }
+
+        function buildGroupsFromPlayers(players, type, leagueSize) {
+            const active = players.map(normalizePlayer).filter(isActivePlayer);
+            if (!active.length) return [];
+
+            if (active.some(player => player.groupNum > 0)) {
+                const grouped = active.reduce((acc, player) => {
+                    const key = player.groupNum || 1;
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(player);
+                    return acc;
+                }, {});
+                return Object.keys(grouped)
+                    .sort((a, b) => Number(a) - Number(b))
+                    .map(key => ({ name: key, players: sortStandingsPlayers(grouped[key]) }));
+            }
+
+            const chunkSize = type === 'champions' ? 4 : toNumber(leagueSize);
+            if (!chunkSize || chunkSize >= active.length) {
+                return [{ name: 1, players: sortStandingsPlayers(active) }];
+            }
+
+            const groups = [];
+            for (let i = 0; i < active.length; i += chunkSize) {
+                groups.push({ name: groups.length + 1, players: sortStandingsPlayers(active.slice(i, i + chunkSize)) });
+            }
+            return groups;
+        }
+
+        function normalizeLiveMatch(raw, index = 0) {
+            const score1 = pick(raw, ['score1', 'Score1', 'p1Score'], '');
+            const score2 = pick(raw, ['score2', 'Score2', 'p2Score'], '');
+            return {
+                id: String(pick(raw, ['matchId', 'id', 'ID'], `manual_${index}`)),
+                p1Name: String(pick(raw, ['p1name', 'p1Name', 'p1', 'player1', 'Player1'], 'لاعب 1')),
+                p2Name: String(pick(raw, ['p2name', 'p2Name', 'p2', 'player2', 'Player2'], 'لاعب 2')),
+                p1idx: toNumber(pick(raw, ['p1idx', 'p1RowIndex', 'player1Row', 'row1'])),
+                p2idx: toNumber(pick(raw, ['p2idx', 'p2RowIndex', 'player2Row', 'row2'])),
+                score1,
+                score2,
+                winner: String(pick(raw, ['winner', 'Winner'], '')),
+                status: String(pick(raw, ['status', 'Status'], score1 !== '' && score2 !== '' ? 'scored' : 'active')).toLowerCase(),
+                createdAt: pick(raw, ['createdAt', 'date', 'Date'], '')
+            };
+        }
+
+        function normalizeTournamentPayload(data, type) {
+            const leagueSize = toNumber(data?.leagueSize || data?.league_size || currentTournamentData.leagueSize || currentTournamentData.league_size);
+            const groups = Array.isArray(data?.groups) && data.groups.length
+                ? data.groups.map((group, index) => ({
+                    name: group.name || group.groupName || group.groupNum || index + 1,
+                    players: sortStandingsPlayers((group.players || []).map(normalizePlayer).filter(isActivePlayer))
+                })).filter(group => group.players.length)
+                : buildGroupsFromPlayers(getPlayersFromPayload(data), type, leagueSize);
+
+            const matchesRaw = data?.liveMatches || data?.manualMatches || data?.dashboardMatches || data?.activeMatches || [];
+            return {
+                groups,
+                knockout: data?.knockout || [],
+                liveMatches: Array.isArray(matchesRaw) ? matchesRaw.map(normalizeLiveMatch) : []
+            };
+        }
+
+        async function fetchJson(url, options) {
+            const res = await fetch(url, options);
+            if (!res.ok) throw new Error('Network failure');
+            const text = await res.text();
+            if (!text) return {};
+            try { return JSON.parse(text); } catch(e) { return {}; }
+        }
+
+        async function fetchTournamentBundle() {
+            let data = {};
+            try {
+                data = await fetchJson(TOURNAMENT_PLAYERS_URL + '?action=tournament');
+            } catch(e) {
+                data = {};
+            }
+
+            if (!getPlayersFromPayload(data).length && !(Array.isArray(data.groups) && data.groups.length)) {
+                try {
+                    const listData = await fetchJson(TOURNAMENT_PLAYERS_URL + '?action=list');
+                    data = { ...data, players: getPlayersFromPayload(listData) };
+                } catch(e) {}
+            }
+
+            if (!(data.liveMatches || data.manualMatches || data.dashboardMatches || data.activeMatches)) {
+                try {
+                    const matchesData = await fetchJson(TOURNAMENT_PLAYERS_URL + '?action=matches');
+                    const matches = matchesData.liveMatches || matchesData.manualMatches || matchesData.matches || [];
+                    if (Array.isArray(matches)) data.liveMatches = matches;
+                } catch(e) {}
+            }
+            return data;
+        }
+
+        function renderLiveMatches(matches = []) {
+            const panel = document.getElementById('live-matches-panel');
+            if (!panel) return;
+            liveMatches = matches.map(normalizeLiveMatch);
+            const visible = liveMatches.filter(match => !['deleted', 'cancelled', 'ended'].includes(match.status));
+
+            if (!visible.length) {
+                panel.classList.add('hidden');
+                panel.innerHTML = '';
+                return;
+            }
+
+            panel.classList.remove('hidden');
+            panel.innerHTML = `
+                <div class="flex items-center justify-between gap-3 mb-4">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-satellite-dish text-cyan-400"></i> مباريات الداشبورد
+                    </h3>
+                    <span class="text-[11px] px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">${visible.length} مباشر</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    ${visible.map(match => {
+                        const hasScore = match.score1 !== '' && match.score2 !== '';
+                        const statusText = hasScore ? `${escapeHtml(match.score1)} - ${escapeHtml(match.score2)}` : 'بانتظار النتيجة';
+                        const statusClass = hasScore ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25' : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/25';
+                        return `
+                        <div class="glass-card rounded-2xl p-4 border border-cyan-500/10">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="font-bold text-white truncate flex-1">${escapeHtml(match.p1Name)}</span>
+                                <span class="px-3 py-1 rounded-xl border text-xs font-black ${statusClass}">${statusText}</span>
+                                <span class="font-bold text-white truncate flex-1 text-left">${escapeHtml(match.p2Name)}</span>
+                            </div>
+                            ${isAdmin ? `<button onclick='openScoreModal(${jsArg(match.id)}, ${jsArg(match.p1Name)}, ${jsArg(match.p2Name)}, ${Number(match.p1idx) || 0}, ${Number(match.p2idx) || 0})' class="mt-3 w-full py-2 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/25 text-xs font-black transition-all">
+                                <i class="fa-solid fa-pen-to-square ml-1"></i> ${hasScore ? 'تعديل النتيجة' : 'إدخال النتيجة'}
+                            </button>` : ''}
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
 
         // ===== INIT =====
         window.onload = async function() {
@@ -434,33 +753,51 @@ const TOURNAMENT_PLAYERS_URL =
 
         async function loadTournamentStatus() {
             showState('loading');
+            const fallbackState = getFallbackTournamentState();
             try {
-                const res = await fetch(TOURNAMENT_LOG_URL + '?action=status');
-                const data = await res.json();
-                currentTournamentStatus = data.status;
-                currentTournamentData = data;
-                renderState(data);
+                const res = await fetch(TOURNAMENT_LOG_URL + '?action=status&_=' + Date.now(), { cache: 'no-store' });
+                const data = normalizeTournamentState(await res.json());
+                const finalData = data.status ? data : fallbackState;
+                currentTournamentStatus = finalData.status;
+                currentTournamentData = finalData;
+                saveTournamentStateFallback(finalData);
+                renderState(finalData);
             } catch(e) {
-                showState('idle');
+                if (fallbackState.status) {
+                    currentTournamentStatus = fallbackState.status;
+                    currentTournamentData = fallbackState;
+                    renderState(fallbackState);
+                } else {
+                    showState('idle');
+                }
             }
         }
 
         function renderState(data) {
-            const status = data.status;
+            const state = normalizeTournamentState(data);
+            const status = state.status;
+            currentTournamentStatus = status;
+            currentTournamentData = state;
             updateHeaderBadge(status);
 
             if (!status || status === 'STOP') {
+                renderLiveMatches([]);
                 showState('idle');
             } else if (status === 'REGISTER_OPEN') {
+                renderLiveMatches([]);
                 showState('registration');
             } else if (status === 'START') {
                 showState('tournament');
-                renderTournamentContent(data);
+                renderTournamentContent(state);
+            } else {
+                renderLiveMatches([]);
+                showState('idle');
             }
         }
 
         function updateHeaderBadge(status) {
             const badge = document.getElementById('header-status-badge');
+            status = normalizeTournamentStatusValue(status);
             if (!status || status === 'STOP') {
                 badge.classList.add('hidden');
             } else if (status === 'REGISTER_OPEN') {
@@ -499,20 +836,22 @@ const TOURNAMENT_PLAYERS_URL =
         }
 
         function renderLeague(data, container) {
-            const groups = data.groups || [];
-            if (groups.length === 0) {
+            const payload = normalizeTournamentPayload(data, 'league');
+            if (payload.groups.length === 0) {
                 container.innerHTML = '<div class="text-center py-16 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>جاري تحميل الجداول...</div>';
                 loadLeagueData(container);
                 return;
             }
-            renderLeagueGroups(groups, container);
+            renderLiveMatches(payload.liveMatches);
+            renderLeagueGroups(payload.groups, container);
         }
 
         async function loadLeagueData(container) {
             try {
-                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=tournament');
-                const data = await res.json();
-                renderLeagueGroups(data.groups || [], container);
+                const data = await fetchTournamentBundle();
+                const payload = normalizeTournamentPayload(data, 'league');
+                renderLiveMatches(payload.liveMatches);
+                renderLeagueGroups(payload.groups, container);
             } catch(e) {
                 container.innerHTML = '<div class="text-center py-16 text-slate-500">تعذر تحميل البيانات</div>';
             }
@@ -538,25 +877,31 @@ const TOURNAMENT_PLAYERS_URL =
                                     <th class="text-right">اللاعب</th>
                                     <th>لعب</th>
                                     <th>ف</th>
+                                    <th>ت</th>
                                     <th>خ</th>
+                                    <th>له</th>
+                                    <th>عليه</th>
                                     <th>فارق</th>
                                     <th>نقاط</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${(group.players || []).sort((a,b) => (b.points||0)-(a.points||0)).map((p,pi) => `
+                                ${sortStandingsPlayers(group.players || []).map((p,pi) => `
                                 <tr class="${pi===0 ? 'winner' : ''}">
                                     <td class="text-slate-500 font-bold">${pi+1}</td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <span class="text-white font-bold text-sm">${p.name || '-'}</span>
+                                            <span class="text-white font-bold text-sm">${escapeHtml(p.name || '-')}</span>
                                             <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${getPlatformIcon(p.platform)}</span>
                                         </div>
                                     </td>
-                                    <td class="text-center text-slate-400">${(p.wins||0)+(p.losses||0)}</td>
+                                    <td class="text-center text-slate-400">${p.played || ((p.wins||0)+(p.draws||0)+(p.losses||0))}</td>
                                     <td class="text-center text-emerald-400 font-bold">${p.wins||0}</td>
+                                    <td class="text-center text-cyan-300 font-bold">${p.draws||0}</td>
                                     <td class="text-center text-rose-400 font-bold">${p.losses||0}</td>
-                                    <td class="text-center text-slate-300">${(p.goalsFor||0)-(p.goalsAgainst||0) >= 0 ? '+':'' }${(p.goalsFor||0)-(p.goalsAgainst||0)}</td>
+                                    <td class="text-center text-slate-300">${p.goalsFor||0}</td>
+                                    <td class="text-center text-slate-300">${p.goalsAgainst||0}</td>
+                                    <td class="text-center text-slate-300">${goalDiff(p) >= 0 ? '+':'' }${goalDiff(p)}</td>
                                     <td class="text-center font-extrabold text-yellow-400 text-base">${(p.points||0)}</td>
                                 </tr>
                                 `).join('')}
@@ -580,11 +925,11 @@ const TOURNAMENT_PLAYERS_URL =
                     const p1 = players[i], p2 = players[j];
                     const matchId = `g${gi}_${i}_${j}`;
                     const existing = p1.matches?.find(m => m.opponent === p2.name);
-                    html += `<button onclick="openScoreModal('${matchId}','${p1.name}','${p2.name}',${p1.rowIndex || i},${p2.rowIndex || j})" 
+                    html += `<button onclick='openScoreModal(${jsArg(matchId)}, ${jsArg(p1.name)}, ${jsArg(p2.name)}, ${p1.rowIndex || i}, ${p2.rowIndex || j})' 
                         class="flex items-center justify-between px-3 py-2 rounded-xl border ${existing ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-700 hover:border-yellow-500/40'} text-xs transition-all">
-                        <span class="font-bold text-white truncate">${p1.name}</span>
-                        <span class="text-slate-500 mx-2 flex-shrink-0">${existing ? `${existing.score || '?-?'}` : 'vs'}</span>
-                        <span class="font-bold text-white truncate text-left">${p2.name}</span>
+                        <span class="font-bold text-white truncate">${escapeHtml(p1.name)}</span>
+                        <span class="text-slate-500 mx-2 flex-shrink-0">${existing ? escapeHtml(existing.score || '?-?') : 'vs'}</span>
+                        <span class="font-bold text-white truncate text-left">${escapeHtml(p2.name)}</span>
                     </button>`;
                 }
             }
@@ -605,11 +950,11 @@ const TOURNAMENT_PLAYERS_URL =
 
         async function loadChampionsData(container) {
             try {
-                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=tournament');
-                const data = await res.json();
-                // render groups of 4
-                const groups = data.groups || [];
-                const knockout = data.knockout || [];
+                const data = await fetchTournamentBundle();
+                const payload = normalizeTournamentPayload(data, 'champions');
+                const groups = payload.groups;
+                const knockout = payload.knockout;
+                renderLiveMatches(payload.liveMatches);
 
                 let html = '<div class="space-y-6">';
 
@@ -623,15 +968,21 @@ const TOURNAMENT_PLAYERS_URL =
                                 <span class="text-xs font-bold text-yellow-400">المجموعة ${['A','B','C','D','E','F','G','H'][gi] || gi+1}</span>
                             </div>
                             <table class="w-full standings-table text-xs">
-                                <thead><tr><th class="text-right">اللاعب</th><th>ف</th><th>خ</th><th>نقاط</th></tr></thead>
-                                <tbody>${(g.players||[]).sort((a,b)=>(b.points||0)-(a.points||0)).map((p,pi)=>`
+                                <thead><tr><th class="text-right">اللاعب</th><th>لعب</th><th>ف</th><th>ت</th><th>خ</th><th>فارق</th><th>نقاط</th></tr></thead>
+                                <tbody>${sortStandingsPlayers(g.players||[]).map((p,pi)=>`
                                 <tr class="${pi<2?'winner':''}">
-                                    <td><span class="font-bold text-white">${p.name}</span></td>
+                                    <td><span class="font-bold text-white">${escapeHtml(p.name)}</span></td>
+                                    <td class="text-center text-slate-400">${p.played || ((p.wins||0)+(p.draws||0)+(p.losses||0))}</td>
                                     <td class="text-center text-emerald-400">${p.wins||0}</td>
+                                    <td class="text-center text-cyan-300">${p.draws||0}</td>
                                     <td class="text-center text-rose-400">${p.losses||0}</td>
+                                    <td class="text-center text-slate-300">${goalDiff(p) >= 0 ? '+':''}${goalDiff(p)}</td>
                                     <td class="text-center font-extrabold text-yellow-400">${p.points||0}</td>
                                 </tr>`).join('')}</tbody>
                             </table>
+                            ${isAdmin ? `<div class="px-4 py-3 border-t border-slate-800 bg-slate-900/30">
+                                <div class="grid grid-cols-1 gap-2">${renderGroupMatches(g.players || [], gi)}</div>
+                            </div>` : ''}
                         </div>`;
                     });
                     html += '</div>';
@@ -644,11 +995,11 @@ const TOURNAMENT_PLAYERS_URL =
                     knockout.forEach(m => {
                         html += `<div class="bracket-match glass-card max-w-xs mx-auto">
                             <div class="team ${m.winner===m.p1?'winner':''}">
-                                <span>${m.p1 || 'TBD'}</span>
+                                <span>${escapeHtml(m.p1 || 'TBD')}</span>
                                 <span class="score">${m.score1 ?? '-'}</span>
                             </div>
                             <div class="team ${m.winner===m.p2?'winner':''}">
-                                <span>${m.p2 || 'TBD'}</span>
+                                <span>${escapeHtml(m.p2 || 'TBD')}</span>
                                 <span class="score">${m.score2 ?? '-'}</span>
                             </div>
                         </div>`;
@@ -778,7 +1129,7 @@ const TOURNAMENT_PLAYERS_URL =
             try {
                 const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=list');
                 const data = await res.json();
-                allPlayers = data.players || [];
+                allPlayers = getPlayersFromPayload(data).map(normalizePlayer).filter(isActivePlayer);
                 renderPlayersList(container, allPlayers);
                 populateManualSelects(allPlayers);
             } catch(e) {
@@ -806,10 +1157,10 @@ const TOURNAMENT_PLAYERS_URL =
                             ${players.map((p,i) => `
                             <tr>
                                 <td class="text-slate-500 text-xs">${i+1}</td>
-                                <td><span class="font-bold text-sm text-white">${p.name || '-'}</span></td>
-                                <td><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">${getPlatformIcon(p.platform)} ${p.platform || '-'}</span></td>
-                                <td class="text-xs text-slate-400">${p.timeFrom||'?'} - ${p.timeTo||'?'}</td>
-                                <td class="text-xs text-emerald-400" dir="ltr">${p.phone || '-'}</td>
+                                <td><span class="font-bold text-sm text-white">${escapeHtml(p.name || '-')}</span></td>
+                                <td><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">${getPlatformIcon(p.platform)} ${escapeHtml(p.platform || '-')}</span></td>
+                                <td class="text-xs text-slate-400">${escapeHtml(p.timeFrom||'?')} - ${escapeHtml(p.timeTo||'?')}</td>
+                                <td class="text-xs text-emerald-400" dir="ltr">${escapeHtml(p.phone || '-')}</td>
                                 <td>
                                     <button onclick="deletePlayer(${p.rowIndex})" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition-all">
                                         <i class="fa-solid fa-trash-can"></i>
@@ -835,9 +1186,9 @@ const TOURNAMENT_PLAYERS_URL =
             if (!container) return;
             container.innerHTML = '<div class="text-center py-6 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>';
             try {
-                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=tournament');
-                const data = await res.json();
-                renderMatchesForAdmin(data.groups || [], container);
+                const data = await fetchTournamentBundle();
+                const payload = normalizeTournamentPayload(data, currentTournamentData.tournamentType || 'league');
+                renderMatchesForAdmin(payload.groups || [], container);
             } catch(e) {
                 container.innerHTML = '<div class="text-center py-6 text-slate-500">تعذر التحميل</div>';
             }
@@ -866,12 +1217,12 @@ const TOURNAMENT_PLAYERS_URL =
             container.innerHTML = matches.map(m => {
                 const existing = m.p1.matches?.find(x => x.opponent === m.p2.name);
                 return `<div class="glass-card rounded-2xl p-3 flex items-center justify-between gap-3 mb-2">
-                    <span class="font-bold text-sm text-white flex-1 truncate">${m.p1.name}</span>
-                    <button onclick="openScoreModal('${m.id}','${m.p1.name}','${m.p2.name}',${m.p1.rowIndex||0},${m.p2.rowIndex||0})" 
+                    <span class="font-bold text-sm text-white flex-1 truncate">${escapeHtml(m.p1.name)}</span>
+                    <button onclick='openScoreModal(${jsArg(m.id)}, ${jsArg(m.p1.name)}, ${jsArg(m.p2.name)}, ${m.p1.rowIndex||0}, ${m.p2.rowIndex||0})' 
                         class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black transition-all ${existing ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' : 'bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/25'}">
-                        ${existing ? existing.score || 'سُجل' : 'سجّل نتيجة'}
+                        ${existing ? escapeHtml(existing.score || 'سُجل') : 'سجّل نتيجة'}
                     </button>
-                    <span class="font-bold text-sm text-white flex-1 truncate text-left">${m.p2.name}</span>
+                    <span class="font-bold text-sm text-white flex-1 truncate text-left">${escapeHtml(m.p2.name)}</span>
                 </div>`;
             }).join('');
         }
@@ -887,38 +1238,85 @@ const TOURNAMENT_PLAYERS_URL =
                 const sel = document.getElementById(id);
                 if (!sel) return;
                 const val = sel.value;
-                sel.innerHTML = '<option value="">اختر لاعب...</option>' + players.map(p => `<option value="${p.rowIndex}">${p.name} (${p.platform})</option>`).join('');
+                const filtered = manualPlatformFilter === 'all' ? players : players.filter(p => p.platform === manualPlatformFilter);
+                sel.innerHTML = '<option value="">اختر لاعب...</option>' + filtered.map(p => `<option value="${p.rowIndex}">${escapeHtml(p.name)} (${escapeHtml(p.platform)})</option>`).join('');
                 sel.value = val;
             });
         }
 
-        function createManualMatch() {
+        async function createManualMatch() {
             const p1id = document.getElementById('manual-player1').value;
             const p2id = document.getElementById('manual-player2').value;
             if (!p1id || !p2id || p1id === p2id) { showTAlert('تنبيه', 'اختار لاعبين مختلفين', false); return; }
             const p1 = allPlayers.find(p => p.rowIndex == p1id);
             const p2 = allPlayers.find(p => p.rowIndex == p2id);
-            if (p1 && p2) openScoreModal('manual', p1.name, p2.name, p1.rowIndex, p2.rowIndex);
+            if (!p1 || !p2) return;
+            const matchId = `manual_${Date.now()}_${p1.rowIndex}_${p2.rowIndex}`;
+            try {
+                const now = new Date();
+                const params = new URLSearchParams({
+                    action: 'manual_match',
+                    matchId,
+                    p1name: p1.name,
+                    p2name: p2.name,
+                    p1idx: p1.rowIndex,
+                    p2idx: p2.rowIndex,
+                    status: 'active',
+                    date: now.toLocaleDateString('ar-EG'),
+                    time: now.toLocaleTimeString('ar-EG')
+                });
+                await fetch(TOURNAMENT_PLAYERS_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
+                document.getElementById('manual-player1').value = '';
+                document.getElementById('manual-player2').value = '';
+                showTAlert('تم إنشاء المباراة', 'المباراة ظهرت في الداشبورد وهيفضل مكانها لحد نهاية البطولة.', false);
+                await loadTournamentStatus();
+            } catch(e) {
+                showTAlert('خطأ', 'تعذر حفظ المباراة في الشيت', true);
+            }
         }
 
-        function filterByPlatform(platform) {
+        function filterByPlatform(platform, btn) {
             document.querySelectorAll('.manual-pf-btn').forEach(b => {
                 b.classList.remove('border-cyan-400','bg-cyan-500/10','text-white');
                 b.classList.add('border-slate-700','text-slate-300');
             });
-            event.target.classList.add('border-cyan-400','bg-cyan-500/10','text-white');
-            event.target.classList.remove('border-slate-700','text-slate-300');
-            // reload players filtered
+            btn.classList.add('border-cyan-400','bg-cyan-500/10','text-white');
+            btn.classList.remove('border-slate-700','text-slate-300');
+            manualPlatformFilter = platform;
+            populateManualSelects(allPlayers);
+        }
+
+        function cleanWhatsAppNumber(phone) {
+            return String(phone || '').replace(/[^\d+]/g, '').replace(/^00/, '+');
+        }
+
+        async function exportWhatsAppNumbers() {
+            if (!allPlayers.length) await refreshPlayers();
+            const numbers = [...new Set(allPlayers.map(p => cleanWhatsAppNumber(p.phone)).filter(Boolean))];
+            if (!numbers.length) {
+                showTAlert('لا توجد أرقام', 'مفيش أرقام واتساب متاحة للمسجلين حالياً.', true);
+                return;
+            }
+            const text = numbers.join('\n');
+            try {
+                await navigator.clipboard.writeText(text);
+                showTAlert('الأرقام جاهزة', `تم نسخ ${numbers.length} رقم واتساب. افتح واتساب واعمل الجروب والصق الأرقام.`, false);
+            } catch(e) {
+                showTAlert('الأرقام جاهزة', `${numbers.length} رقم واتساب جاهزين. لو النسخ التلقائي فشل، افتح قائمة المسجلين وخدهم من الجدول.`, false);
+            }
+            window.open('https://web.whatsapp.com/', '_blank');
         }
 
         // ===== SCORE MODAL =====
         function openScoreModal(matchId, p1name, p2name, p1idx, p2idx) {
-            scoreP1 = 0; scoreP2 = 0;
-            document.getElementById('score-p1-val').textContent = '0';
-            document.getElementById('score-p2-val').textContent = '0';
+            const existingLive = liveMatches.find(match => String(match.id) === String(matchId));
+            scoreP1 = existingLive && existingLive.score1 !== '' ? toNumber(existingLive.score1) : 0;
+            scoreP2 = existingLive && existingLive.score2 !== '' ? toNumber(existingLive.score2) : 0;
+            document.getElementById('score-p1-val').textContent = scoreP1;
+            document.getElementById('score-p2-val').textContent = scoreP2;
             document.getElementById('score-p1-label').textContent = p1name;
             document.getElementById('score-p2-label').textContent = p2name;
-            document.getElementById('score-match-info').innerHTML = `<span class="font-bold text-yellow-400">${p1name}</span> <span class="text-slate-500 mx-2">ضد</span> <span class="font-bold text-yellow-400">${p2name}</span>`;
+            document.getElementById('score-match-info').innerHTML = `<span class="font-bold text-yellow-400">${escapeHtml(p1name)}</span> <span class="text-slate-500 mx-2">ضد</span> <span class="font-bold text-yellow-400">${escapeHtml(p2name)}</span>`;
             scoreModalData = { matchId, p1name, p2name, p1idx, p2idx };
             document.getElementById('score-modal').classList.remove('hidden');
         }
@@ -935,11 +1333,12 @@ const TOURNAMENT_PLAYERS_URL =
         }
 
         async function submitScore() {
-            const { p1name, p2name, p1idx, p2idx } = scoreModalData;
+            const { matchId, p1name, p2name, p1idx, p2idx } = scoreModalData;
             const winner = scoreP1 > scoreP2 ? p1name : scoreP2 > scoreP1 ? p2name : 'draw';
             try {
                 const params = new URLSearchParams({
                     action: 'score',
+                    matchId,
                     p1name, p2name, p1idx, p2idx,
                     score1: scoreP1, score2: scoreP2, winner,
                     date: new Date().toLocaleDateString('ar-EG')
@@ -948,7 +1347,10 @@ const TOURNAMENT_PLAYERS_URL =
                 closeScoreModal();
                 showTAlert('تم! ✅', `النتيجة: ${p1name} ${scoreP1} - ${scoreP2} ${p2name}`, false);
                 // Refresh view
-                setTimeout(() => loadTournamentStatus(), 1000);
+                setTimeout(async () => {
+                    await loadTournamentStatus();
+                    if (!document.getElementById('admin-panel-modal').classList.contains('hidden')) loadMatchesForAdmin();
+                }, 700);
             } catch(e) {
                 showTAlert('خطأ', 'تعذر حفظ النتيجة', true);
             }

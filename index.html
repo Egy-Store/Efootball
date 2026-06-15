@@ -401,7 +401,7 @@
                         </div>
                     </div>
                     <!-- زر صفحة البطولة -->
-                    <a href="tournament.html" target="_blank" class="flex items-center gap-2 px-3 py-2 rounded-xl font-extrabold text-sm text-white transition-all border border-cyan-500/40 hover:border-cyan-400" style="background: linear-gradient(135deg, #164e63, #0e7490); box-shadow: 0 0 14px rgba(0,240,255,0.2);">
+                    <a href="tournament.html" target="_blank" onclick="openTournamentPage(event)" class="flex items-center gap-2 px-3 py-2 rounded-xl font-extrabold text-sm text-white transition-all border border-cyan-500/40 hover:border-cyan-400" style="background: linear-gradient(135deg, #164e63, #0e7490); box-shadow: 0 0 14px rgba(0,240,255,0.2);">
                         <i class="fa-solid fa-ranking-star text-cyan-400"></i>
                         <span>صفحة البطولة</span>
                     </a>
@@ -3402,10 +3402,10 @@
     <!-- ============================================================ -->
     <script>
         const TOURNAMENT_LOG_URL =
-"https://script.google.com/macros/s/AKfycbwkekPcEu9Cjm3qSpK12jjtqjYx9NXgpcPGtIEBGBLN2RVIZIuLjXIshiOjc0yYIXqO/exec";
+"https://script.google.com/macros/s/AKfycbw5NJsRysLwIJJIngl2cb1jtkfn13r69nGLpIqv0hZmybo4Mrtx4ZO5y-TOWKfF_p-v/exec";
 
 const TOURNAMENT_PLAYERS_URL =
-"https://script.google.com/macros/s/AKfycbz2wzVonB233aBuHxP9h1b8wk9UIJeKZPQhpnD5nGtO8KVG1-ynXjn0tADq2Wuf1eo/exec";
+"https://script.google.com/macros/s/AKfycbzxJHx2wxxZvbu8vep2o_SBY38ywv-w34xKMPV_fMpDLFlx-rioD97isMzJj9v_HhM/exec";
         let selectedTournamentType = null;
         let selectedPlatformFilter = 'all';
         let tournamentDropdownOpen = false;
@@ -3437,9 +3437,19 @@ const TOURNAMENT_PLAYERS_URL =
             if (action === 'start') {
                 openTournamentStartModal();
             } else if (action === 'stop') {
-                showConfirm('إيقاف البطولة', 'هل أنت متأكد من إيقاف البطولة؟ سيتم حفظ البيانات الحالية.', async () => {
-                    await logTournamentEvent('STOP');
-                    showAlert('تم الإيقاف', 'تم إيقاف البطولة وحفظ البيانات.', false);
+                showConfirm('إيقاف البطولة', 'هل أنت متأكد من إيقاف البطولة؟ سيتم تحويل كل المسجلين إلى deleted وإغلاق الداشبورد.', async () => {
+                    const blocker = document.getElementById('action-blocker');
+                    blocker.classList.remove('hidden');
+                    try {
+                        await endTournamentPlayers();
+                        await logTournamentEvent('STOP');
+                        showAlert('تم الإيقاف', 'تم إيقاف البطولة وتحويل كل المسجلين إلى deleted.', false);
+                    } catch(e) {
+                        console.warn('Tournament stop error:', e);
+                        showAlert('خطأ', 'تعذر إيقاف البطولة بالكامل. راجع اتصال الشيت وحاول تاني.', true);
+                    } finally {
+                        blocker.classList.add('hidden');
+                    }
                 });
             } else if (action === 'register') {
                 showConfirm('بدأ التسجيل', 'هل تريد فتح باب التسجيل للبطولة؟', async () => {
@@ -3453,10 +3463,130 @@ const TOURNAMENT_PLAYERS_URL =
             const now = new Date();
             const dateStr = now.toLocaleDateString('ar-EG');
             const timeStr = now.toLocaleTimeString('ar-EG');
+            saveTournamentStateFallback(eventType, extraData, dateStr, timeStr);
             try {
                 const params = new URLSearchParams({ action: 'log', event: eventType, date: dateStr, time: timeStr, extra: extraData });
                 await fetch(TOURNAMENT_LOG_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
             } catch(e) { console.warn('Tournament log error:', e); }
+        }
+
+        function parseTournamentExtra(extraData = '') {
+            const data = {};
+            String(extraData || '').split(',').forEach(part => {
+                const [rawKey, ...rawValue] = part.split('=');
+                const key = (rawKey || '').trim();
+                const value = rawValue.join('=').trim();
+                if (!key) return;
+                if (key === 'type') data.tournamentType = value;
+                else if (key === 'platform') data.platformFilter = value;
+                else data[key] = value;
+            });
+            return data;
+        }
+
+        function saveTournamentStateFallback(eventType, extraData = '', date = '', time = '') {
+            const state = {
+                status: eventType,
+                date,
+                time,
+                platformFilter: selectedPlatformFilter || 'all',
+                ...parseTournamentExtra(extraData)
+            };
+            try {
+                localStorage.setItem('efb_tournament_state', JSON.stringify(state));
+            } catch(e) {}
+        }
+
+        function getTournamentStateFallback() {
+            try {
+                return JSON.parse(localStorage.getItem('efb_tournament_state') || '{}');
+            } catch(e) {
+                return {};
+            }
+        }
+
+        function buildTournamentPageUrl() {
+            const state = getTournamentStateFallback();
+            const params = new URLSearchParams();
+            if (state.status) params.set('status', state.status);
+            if (state.tournamentType) params.set('type', state.tournamentType);
+            if (state.leagueSize) params.set('leagueSize', state.leagueSize);
+            if (state.platformFilter) params.set('platform', state.platformFilter);
+            return 'tournament.html' + (params.toString() ? '?' + params.toString() : '');
+        }
+
+        function openTournamentPage(event) {
+            if (event) event.preventDefault();
+            window.open(buildTournamentPageUrl(), '_blank');
+        }
+
+        function getTournamentPlayersFromPayload(data) {
+            if (Array.isArray(data)) return data;
+            if (Array.isArray(data?.players)) return data.players;
+            if (Array.isArray(data?.data)) return data.data;
+            if (Array.isArray(data?.rows)) return data.rows;
+            return [];
+        }
+
+        async function postTournamentPlayers(params) {
+            return fetch(TOURNAMENT_PLAYERS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(params).toString()
+            });
+        }
+
+        async function prepareTournamentPlayers(type, platform, leagueSize) {
+            try {
+                await postTournamentPlayers({
+                    action: 'start_tournament',
+                    type,
+                    platform,
+                    leagueSize: leagueSize || '',
+                    date: new Date().toLocaleDateString('ar-EG'),
+                    time: new Date().toLocaleTimeString('ar-EG')
+                });
+            } catch(e) {
+                console.warn('start_tournament action is unavailable, frontend grouping will be used.', e);
+            }
+        }
+
+        async function endTournamentPlayers() {
+            try {
+                await postTournamentPlayers({ action: 'end_tournament' });
+            } catch(e) {
+                console.warn('end_tournament action is unavailable, falling back to row deletes.', e);
+            }
+
+            let deletedByRows = false;
+            try {
+                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=list');
+                const data = await res.json();
+                const players = getTournamentPlayersFromPayload(data);
+                const activePlayers = players.filter(player => {
+                    const status = String(player.status || player.Status || '').toLowerCase();
+                    return status !== 'deleted';
+                });
+                if (activePlayers.length) {
+                    await Promise.all(activePlayers.map(player => {
+                        const rowIndex = player.rowIndex || player.RowIndex || player.row || player.Row;
+                        return rowIndex ? postTournamentPlayers({ action: 'delete', rowIndex }) : Promise.resolve();
+                    }));
+                }
+                deletedByRows = true;
+            } catch(e) {
+                console.warn('Row delete fallback failed.', e);
+            }
+
+            if (!deletedByRows) {
+                await postTournamentPlayers({ action: 'delete_all' });
+            }
+
+            try {
+                await postTournamentPlayers({ action: 'clear_matches' });
+            } catch(e) {
+                console.warn('clear_matches action is unavailable.', e);
+            }
         }
 
         // ===== START MODAL =====
@@ -3546,6 +3676,7 @@ const TOURNAMENT_PLAYERS_URL =
             const blocker = document.getElementById('action-blocker');
             blocker.classList.remove('hidden');
             try {
+                await prepareTournamentPlayers(selectedTournamentType, selectedPlatformFilter, selectedTournamentType === 'league' ? (document.getElementById('league-size-input').value || '10') : '4');
                 await logTournamentEvent('START', extra);
                 closeTournamentStartModal();
                 showAlert('تم البدء! 🏆', `تم بدء البطولة (${selectedTournamentType === 'league' ? 'دوري' : 'دوري أبطال'}) بنجاح!`, false);
@@ -3607,7 +3738,7 @@ const TOURNAMENT_PLAYERS_URL =
         }
 
         function goToTournamentPage() {
-            window.location.href = 'tournament.html';
+            window.location.href = buildTournamentPageUrl();
         }
     </script>
 </body>
