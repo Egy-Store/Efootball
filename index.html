@@ -43,6 +43,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
    <script>
     const keyParts = [
         "AIza",
@@ -69,6 +70,8 @@
     });
 
     const auth = firebase.auth();
+    const db = firebase.firestore();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.warn);
 </script>
     
     <style>
@@ -615,7 +618,7 @@
         <div id="catalog-loading" class="py-24 flex flex-col items-center justify-center space-y-4">
             <div class="spinner"></div>
             <p class="text-slate-400 animate-pulse text-sm ar-only">جاري الاتصال بقاعدة البيانات...</p>
-            <p class="text-slate-400 animate-pulse text-sm en-only">Connecting to sheet database...</p>
+            <p class="text-slate-400 animate-pulse text-sm en-only">Connecting to Firebase database...</p>
         </div>
 
         <div id="catalog-empty" class="hidden py-16 text-center max-w-md mx-auto">
@@ -813,10 +816,10 @@
                 <div id="reviews-troubleshoot" class="hidden mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed space-y-2">
                     <div class="flex items-center gap-2 font-bold text-sm">
                         <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
-                        <span>تنبيه الاتصال بـ Google Sheets لمالك الموقع:</span>
+                        <span>تنبيه الاتصال بـ Firebase لمالك الموقع:</span>
                     </div>
-                    <p class="ar-only">يبدو أنك تتصفح الموقع من ملف محلي (Local File) أو لم تقم بنشر الـ Web App الخاص بك في Google Sheets بالإعدادات الصحيحة. قمنا بعرض تقييمات افتراضية بدلاً من ترك الصفحة فارغة.</p>
-                    <p class="en-only">It looks like you are running locally or the Google Apps Script Web App was not configured with public permissions. Showing fallback reviews to keep the UI beautiful.</p>
+                    <p class="ar-only">لو ظهرت الرسالة دي فراجع إعدادات Firestore Rules أو اتصال Firebase. قمنا بعرض تقييمات افتراضية بدلاً من ترك الصفحة فارغة.</p>
+                    <p class="en-only">Firestore is not reachable or rules are blocking reads. Showing fallback reviews to keep the UI beautiful.</p>
                     <div class="pt-1.5 flex gap-2">
                         <span class="px-2 py-0.5 rounded bg-amber-500/25 text-[10px] font-bold">1. Execute as: Me</span>
                         <span class="px-2 py-0.5 rounded bg-amber-500/25 text-[10px] font-bold">2. Who has access: Anyone</span>
@@ -1312,6 +1315,7 @@
                     سيتم مراجعة طلبك من قِبل الأدمن قبل نشره. ستظهر حالة "قيد المراجعة" وسيتم التواصل معك في أقرب وقت.
                 </div>
 
+
                 <div class="flex gap-3 pt-2 border-t border-slate-800">
                     <button type="button" onclick="closeUserAdvertiseModal()" class="w-1/3 px-4 py-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold rounded-xl text-sm transition-all">إلغاء</button>
                     <button type="submit" id="user-advertise-submit-btn" class="w-2/3 px-4 py-3 font-extrabold rounded-xl text-sm shadow-lg transition-all text-white" style="background: linear-gradient(135deg, #ff007a, #7c3aed);">
@@ -1474,8 +1478,8 @@
 
     <script>
         // API ENDPOINTS
-        const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbwm-vRsoDwT2iRJgkkDunUavvD_3zaB322rTp-_cC2nzhhh4rI2yrvjMJkH5nhW8jZI4Q/exec"; // Accounts
-        const SURVEY_API_URL = "https://script.google.com/macros/s/AKfycbxPUu6GoD2Gl9A3us_YBYkqt6kLRdaQLAYEGTaVLV2agcaZDpmzSw6j_e-fCjoROCHrkw/exec"; // Reviews
+        const API_ENDPOINT = null; // Deprecated: data now uses Firebase Firestore
+        const SURVEY_API_URL = null; // Deprecated: reviews now use Firebase Firestore
         
         /* === IMGBB API CONFIGURATION === */
         const IMGBB_API_KEY = "48bb17b6e24892d745741a65d54e3520";
@@ -1497,6 +1501,135 @@
         let currentLang = "ar";
         let confirmActionCallback = null;
         let activeNoteRowIndex = null;
+
+        // ================= FIRESTORE DATABASE LAYER =================
+        const FS = {
+            accounts: 'accounts',
+            reviews: 'reviews',
+            tournamentPlayers: 'tournamentPlayers',
+            tournamentMatches: 'tournamentMatches',
+            tournamentState: 'tournamentState',
+            tournamentHistory: 'tournamentHistory',
+            adminLogs: 'adminLogs'
+        };
+        const fsTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+        let currentAdminUser = null;
+
+        function tsToMillis(value) {
+            if (!value) return 0;
+            if (typeof value.toMillis === 'function') return value.toMillis();
+            const parsed = Date.parse(value);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function splitPlatformBroker(platformRaw = '') {
+            const raw = String(platformRaw || '').trim();
+            let platformClean = 'steam';
+            let brokerCode = 'B';
+            if (raw.includes('-')) {
+                const parts = raw.split('-');
+                platformClean = (parts[0] || 'steam').toLowerCase().trim();
+                brokerCode = (parts[1] || 'B').toUpperCase().trim();
+            } else if (raw) {
+                platformClean = raw.toLowerCase().trim();
+            }
+            return { platformClean, brokerCode };
+        }
+
+        function normalizeAccountFromFirestore(doc, index = 0) {
+            const row = doc.data ? doc.data() : doc;
+            const { platformClean, brokerCode } = splitPlatformBroker(row.platform || row.Platform || 'steam-B');
+            return {
+                docId: doc.id || row.docId || '',
+                rowIndex: row.rowIndex || row.RowIndex || row.row || (index + 2),
+                platform: platformClean,
+                brokerCode,
+                konamiId: row.konamiId || row['Konami ID'] || row['Konami ID status'] || 'مربوط',
+                firstMail: row.firstMail || row['First Mail'] || row['First Mail status'] || 'مربوط بكونامي',
+                idStatus: row.idStatus || row['ID Status'] || 'موثق',
+                securityLevel: row.securityLevel || row['Security Level'] || 'حماية عالية',
+                price: row.price || row.Price || '0',
+                mainImage: row.mainImage || row['Main Image'] || '',
+                galleryImages: row.galleryImages || row['Gallery Images'] || row.Gallery || '',
+                description: row.description || row.Description || row.Specs || 'لا يوجد وصف.',
+                status: String(row.status || row.Status || 'Active').trim(),
+                userName: row.userName || '',
+                userPhone: row.userPhone || '',
+                adminNote: row.adminNote || '',
+                createdAtMillis: tsToMillis(row.createdAt) || Number(row.rowIndex) || 0
+            };
+        }
+
+        function normalizeReviewFromFirestore(doc, index = 0) {
+            const row = doc.data ? doc.data() : doc;
+            return {
+                docId: doc.id || row.docId || '',
+                rowIndex: row.rowIndex || row.RowIndex || row.row || (index + 2),
+                nickName: row.nickName || row.name || row.Name || 'مجهول',
+                star: row.star || row.rating || 5,
+                comment: row.comment || row.review || '',
+                status: row.status || 'active',
+                createdAtMillis: tsToMillis(row.createdAt) || Number(row.rowIndex) || 0
+            };
+        }
+
+        async function findFirestoreDocByRowIndex(collectionName, rowIndex) {
+            const cachedAccount = collectionName === FS.accounts ? accountsData.find(a => String(a.rowIndex) === String(rowIndex)) : null;
+            if (cachedAccount?.docId) return db.collection(collectionName).doc(cachedAccount.docId);
+            const snap = await db.collection(collectionName).where('rowIndex', '==', rowIndex).limit(1).get();
+            if (!snap.empty) return snap.docs[0].ref;
+            const snapString = await db.collection(collectionName).where('rowIndex', '==', String(rowIndex)).limit(1).get();
+            if (!snapString.empty) return snapString.docs[0].ref;
+            throw new Error('Document not found: ' + collectionName + '/' + rowIndex);
+        }
+
+        function getAdminMeta() {
+            const user = firebase.auth().currentUser || currentAdminUser;
+            return {
+                uid: user?.uid || '',
+                email: user?.email || '',
+                displayName: user?.displayName || user?.email || 'Admin'
+            };
+        }
+
+        async function writeAdminLog(action, details = {}) {
+            const admin = getAdminMeta();
+            try {
+                await db.collection(FS.adminLogs).add({
+                    action,
+                    details,
+                    adminUid: admin.uid,
+                    adminEmail: admin.email,
+                    adminName: admin.displayName,
+                    page: 'index',
+                    createdAt: fsTimestamp()
+                });
+            } catch (e) {
+                console.warn('Admin log failed:', e);
+            }
+        }
+
+        function setAdminModeState(enabled, user = null) {
+            adminMode = !!enabled;
+            currentAdminUser = enabled ? (user || firebase.auth().currentUser) : null;
+            const status = document.getElementById('admin-status');
+            const addContainer = document.getElementById('admin-add-container');
+            if (status) status.classList.toggle('hidden', !adminMode);
+            if (addContainer) addContainer.classList.toggle('hidden', !adminMode);
+            const tournamentBtns = document.getElementById('tournament-admin-btns');
+            if (tournamentBtns) {
+                tournamentBtns.classList.toggle('hidden', !adminMode);
+                tournamentBtns.classList.toggle('flex', adminMode);
+            }
+            try { applyFilters(); } catch(e) {}
+            try { updatePendingCountBadge(); } catch(e) {}
+        }
+
+        function initFirebaseAuthBridge() {
+            auth.onAuthStateChanged(user => {
+                setAdminModeState(!!user, user || null);
+            });
+        }
 
         // Fallback default mock data for Accounts
         const fallbackAccounts = [
@@ -2019,7 +2152,7 @@
         }
 
         /* ================= FETCH ACCOUNTS ================= */
-        async function fetchSheetData() {
+        async function fetchFirebaseData() {
             const loadingEl = document.getElementById('catalog-loading');
             const containerEl = document.getElementById('cards-container');
             const emptyEl = document.getElementById('catalog-empty');
@@ -2029,47 +2162,12 @@
             containerEl.innerHTML = '';
 
             try {
-                const response = await fetch(API_ENDPOINT);
-                if (!response.ok) throw new Error('Network failure');
-                const responseData = await response.json();
-                
-                if (Array.isArray(responseData)) {
-                    accountsData = responseData.map((row, index) => {
-                        // Extract platform and broker Code (e.g. steam-B -> steam, B)
-                        let platformRaw = (row.platform || row.Platform || '').trim();
-                        let platformClean = 'steam';
-                        let brokerCode = 'B'; // default fallback is Abanoub
-
-                        if (platformRaw.includes('-')) {
-                            const parts = platformRaw.split('-');
-                            platformClean = parts[0].toLowerCase().trim();
-                            brokerCode = parts[1].toUpperCase().trim();
-                        } else {
-                            platformClean = platformRaw.toLowerCase().trim();
-                        }
-
-                        return {
-                            rowIndex: row.rowIndex || index + 2, 
-                            platform: platformClean,
-                            brokerCode: brokerCode,
-                            konamiId: row.konamiId || row['Konami ID'] || row['Konami ID status'] || 'مربوط',
-                            firstMail: row.firstMail || row['First Mail'] || row['First Mail status'] || 'مربوط بكونامي',
-                            idStatus: row.idStatus || row['ID Status'] || 'موثق',
-                            securityLevel: row.securityLevel || row['Security Level'] || 'حماية عالية',
-                            price: row.price || row.Price || '0',
-                            mainImage: row.mainImage || row['Main Image'] || '',
-                            galleryImages: row.galleryImages || row['Gallery Images'] || row['Gallery'] || '',
-                            description: row.description || row.Description || row.Specs || 'لا يوجد وصف.',
-                            status: (row.status || row.Status || 'Active').trim(),
-                            userName: row.userName || '',
-                            userPhone: row.userPhone || ''
-                        };
-                    });
-                } else {
-                    throw new Error('Unrecognized data pattern');
-                }
+                const snap = await db.collection(FS.accounts).get();
+                accountsData = snap.docs
+                    .map((doc, index) => normalizeAccountFromFirestore(doc, index))
+                    .sort((a, b) => (b.createdAtMillis || 0) - (a.createdAtMillis || 0));
             } catch (err) {
-                console.warn("Using fallback data for preview mode", err);
+                console.warn("Firestore accounts load failed. Using fallback preview data.", err);
                 accountsData = [...fallbackAccounts];
             }
             
@@ -2435,17 +2533,14 @@
                 </div>`;
 
             try {
-                const res = await fetch(SURVEY_API_URL);
-                if (!res.ok) throw new Error("Google Apps Script connection error");
-                const data = await res.json();
-                
-                if (!Array.isArray(data)) {
-                    throw new Error("Invalid format returned");
-                }
-
+                const snap = await db.collection(FS.reviews).get();
+                const data = snap.docs
+                    .map((doc, index) => normalizeReviewFromFirestore(doc, index))
+                    .filter(r => String(r.status || '').toLowerCase() !== 'deleted')
+                    .sort((a, b) => (b.createdAtMillis || 0) - (a.createdAtMillis || 0));
                 renderReviewsHTML(data);
             } catch (err) {
-                console.warn("Failed fetching live reviews from sheet. Loading Fallback reviews database.", err);
+                console.warn("Failed fetching live reviews from Firestore. Loading fallback reviews.", err);
                 document.getElementById('reviews-troubleshoot').classList.remove('hidden');
                 renderReviewsHTML(fallbackReviews);
             }
@@ -2490,75 +2585,45 @@
             btn.disabled = true;
             btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
 
-            const nickName = document.getElementById('review-name').value;
+            const nickName = document.getElementById('review-name').value.trim();
             const star = document.getElementById('selected-rating').value;
-            const comment = document.getElementById('review-comment').value;
-
-            const formData = new URLSearchParams();
-            formData.append('action', 'add');
-            formData.append('nickName', nickName);
-            formData.append('star', star);
-            formData.append('comment', comment);
+            const comment = document.getElementById('review-comment').value.trim();
 
             try {
-                await fetch(SURVEY_API_URL, { 
-                    method: 'POST', 
-                    body: formData 
+                await db.collection(FS.reviews).add({
+                    rowIndex: Date.now(),
+                    nickName,
+                    star,
+                    comment,
+                    status: 'active',
+                    createdAt: fsTimestamp()
                 });
-                
-                showSubmitSuccess();
-            } catch (err) {
-                console.warn("Standard POST caught CORS policy error. Attempting safe 'no-cors' fallback broadcast...");
-                
-                try {
-                    await fetch(SURVEY_API_URL, { 
-                        method: 'POST', 
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData.toString()
-                    });
-                    
-                    showSubmitSuccess();
-                } catch (fallbackErr) {
-                    msg.textContent = currentLang === 'ar' ? "حدث خطأ غير متوقع أثناء الإرسال" : "Network error. Try again later.";
-                    msg.className = "text-xs text-center text-rose-400 block mt-2";
-                    btn.disabled = false;
-                    btn.innerHTML = currentLang === 'ar' ? "نشر التقييم الموثق" : "Publish Review";
-                }
-            }
-
-            function showSubmitSuccess() {
                 document.getElementById('review-form').reset();
                 setRating(5);
-                
                 msg.textContent = currentLang === 'ar' ? "تم نشر تقييمك بنجاح وشكراً لك!" : "Thank you! Your review has been submitted!";
                 msg.className = "text-xs text-center text-emerald-400 block mt-2";
-                
+                fetchReviews();
+            } catch (err) {
+                msg.textContent = currentLang === 'ar' ? "حدث خطأ غير متوقع أثناء الإرسال" : "Network error. Try again later.";
+                msg.className = "text-xs text-center text-rose-400 block mt-2";
+            } finally {
                 btn.disabled = false;
                 btn.innerHTML = currentLang === 'ar' ? "نشر التقييم الموثق" : "Publish Review";
                 setTimeout(() => msg.classList.add('hidden'), 5000);
-                
-                fetchReviews();
             }
         }
 
         async function deleteReview(rowIndex) {
-            showConfirm("تأكيد الحذف / Confirm", "هل تريد حذف هذا التقييم نهائياً من جوجل شيت؟", async () => {
+            showConfirm("تأكيد الحذف / Confirm", "هل تريد حذف هذا التقييم نهائياً؟", async () => {
                 const blocker = document.getElementById('action-blocker');
                 blocker.classList.remove('hidden');
                 try {
-                    const formData = new URLSearchParams();
-                    formData.append('action', 'delete');
-                    formData.append('rowIndex', rowIndex);
-                    
-                    await fetch(SURVEY_API_URL, { 
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        body: formData 
-                    });
-
-                    showAlert("نجاح / Success", "تم إرسال طلب حذف التقييم بنجاح.");
+                    const ref = await findFirestoreDocByRowIndex(FS.reviews, rowIndex);
+                    await ref.update({ status: 'deleted', deletedAt: fsTimestamp() });
+                    await writeAdminLog('delete_review', { rowIndex });
+                    showAlert("نجاح / Success", "تم حذف التقييم بنجاح.");
                     fetchReviews();
+                    fetchInlineReviews();
                 } catch (err) {
                     showAlert("خطأ / Error", "حدث خطأ غير متوقع أثناء الحذف.", true);
                 } finally {
@@ -2612,56 +2677,41 @@
                                      .filter(val => val.trim() !== '')
                                      .join(', ');
 
-            // Retrieve Platform and selected Broker
             const platformBase = form.querySelector('[name="platform"]').value;
             const selectedBroker = form.querySelector('input[name="broker"]:checked').value;
-            const combinedPlatformValue = `${platformBase}-${selectedBroker}`; // e.g. steam-B
-
-            const formData = new URLSearchParams();
-            formData.append('action', 'add');
-            formData.append('platform', combinedPlatformValue);
-            formData.append('konamiId', form.querySelector('[name="konamiId"]').value);
-            formData.append('firstMail', form.querySelector('[name="firstMail"]').value);
-            formData.append('idStatus', form.querySelector('[name="idStatus"]').value);
-            formData.append('securityLevel', form.querySelector('[name="securityLevel"]').value);
-            formData.append('price', form.querySelector('[name="price"]').value);
-            formData.append('mainImage', mainImgFinal);
-            formData.append('galleryImages', galleryUrls);
-            formData.append('description', form.querySelector('[name="description"]').value);
-            formData.append('status', 'Active');
-            formData.append('isAdmin', 'true');
+            const combinedPlatformValue = `${platformBase}-${selectedBroker}`;
+            const rowIndex = Date.now();
 
             const blocker = document.getElementById('action-blocker');
             blocker.classList.remove('hidden');
 
             try {
-                const response = await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
-                });
-
-                if (response.ok) {
-                    let nextRowIndex = accountsData.length + 2; 
-                    try {
-                        const parsed = await response.json();
-                        if (parsed && parsed.rowIndex) {
-                            nextRowIndex = parsed.rowIndex;
-                        }
-                    } catch(e) {}
-
-                    if (noteText) {
-                        localStorage.setItem('efb_note_' + nextRowIndex, noteText);
-                    }
-
-                    closeAddModal();
-                    showAlert("نجاح / Success", "تم حفظ الحساب بنجاح في قاعدة البيانات!");
-                    fetchSheetData(); 
-                } else {
-                    throw new Error("Server error");
-                }
+                const doc = {
+                    rowIndex,
+                    platform: combinedPlatformValue,
+                    konamiId: form.querySelector('[name="konamiId"]').value,
+                    firstMail: form.querySelector('[name="firstMail"]').value,
+                    idStatus: form.querySelector('[name="idStatus"]').value,
+                    securityLevel: form.querySelector('[name="securityLevel"]').value,
+                    price: form.querySelector('[name="price"]').value,
+                    mainImage: mainImgFinal,
+                    galleryImages: galleryUrls,
+                    description: form.querySelector('[name="description"]').value,
+                    status: 'Active',
+                    isAdmin: true,
+                    adminNote: noteText,
+                    createdAt: fsTimestamp(),
+                    updatedAt: fsTimestamp()
+                };
+                await db.collection(FS.accounts).add(doc);
+                if (noteText) localStorage.setItem('efb_note_' + rowIndex, noteText);
+                await writeAdminLog('add_account', { rowIndex, platform: combinedPlatformValue, price: doc.price });
+                closeAddModal();
+                showAlert("نجاح / Success", "تم حفظ الحساب بنجاح في Firebase Firestore!");
+                fetchFirebaseData();
             } catch (err) {
-                showAlert("خطأ / Error", "فشل في حفظ الحساب. يرجى مراجعة إعدادات النشر ومحاولة الاتصال مجدداً.", true);
+                console.error(err);
+                showAlert("خطأ / Error", "فشل في حفظ الحساب على Firestore. راجع قواعد Firebase والصلاحيات.", true);
             } finally {
                 blocker.classList.add('hidden');
             }
@@ -2685,26 +2735,22 @@
             const errEl = document.getElementById('admin-auth-error');
             errEl.classList.add('hidden');
             try {
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                adminMode = true;
-                document.getElementById('admin-status').classList.remove('hidden');
-                document.getElementById('admin-add-container').classList.remove('hidden');
+                const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+                setAdminModeState(true, cred.user);
                 closeAdminModal();
-                applyFilters();
-                updatePendingCountBadge();
                 if (!document.getElementById('reviews-modal').classList.contains('hidden')) fetchReviews();
-                showAlert("نجاح / Success", "تم تفعيل وضع المسؤول بنجاح!");
+                await writeAdminLog('admin_login', { email });
+                showAlert("نجاح / Success", "تم تفعيل وضع المسؤول بنجاح! الجلسة هتفضل شغالة بعد الريفريش.");
             } catch (err) {
                 errEl.classList.remove('hidden');
             }
         }
 
         function adminLogout() {
+            const email = firebase.auth().currentUser?.email || currentAdminUser?.email || '';
+            writeAdminLog('admin_logout', { email });
             firebase.auth().signOut().then(() => {
-                adminMode = false;
-                document.getElementById('admin-status').classList.add('hidden');
-                document.getElementById('admin-add-container').classList.add('hidden');
-                applyFilters();
+                setAdminModeState(false, null);
                 showAlert("تم / Done", "تم تسجيل الخروج من وضع المسؤول.");
             });
         }
@@ -2754,26 +2800,18 @@
                 blocker.classList.remove('hidden');
 
                 try {
-                    const formData = new URLSearchParams();
-                    formData.append('action', actionName);
-                    formData.append('rowIndex', indexId);
+                    const ref = await findFirestoreDocByRowIndex(FS.accounts, indexId);
+                    const newStatus = actionName === 'delete' ? 'deleted' : 'sold';
+                    await ref.update({ status: newStatus, updatedAt: fsTimestamp() });
 
-                    await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData.toString()
-                    });
-
-                    const idx = accountsData.findIndex(item => item.rowIndex === indexId);
-                    if (idx > -1) {
-                        if (actionName === 'delete') accountsData[idx].status = 'deleted';
-                        else if (actionName === 'sold') accountsData[idx].status = 'sold';
-                    }
-                    
+                    const idx = accountsData.findIndex(item => String(item.rowIndex) === String(indexId));
+                    if (idx > -1) accountsData[idx].status = newStatus;
+                    await writeAdminLog(actionName === 'delete' ? 'delete_account' : 'mark_account_sold', { rowIndex: indexId });
                     applyFilters();
                     buildDynamicCarousel();
                     showAlert("نجاح / Success", "تم تحديث حالة الحساب بنجاح.");
                 } catch (err) {
+                    console.error(err);
                     showAlert("خطأ / Error", "حدث خطأ غير متوقع أثناء معالجة الطلب.", true);
                 } finally {
                     blocker.classList.add('hidden');
@@ -2800,15 +2838,12 @@
             if (!container) return;
 
             try {
-                const response = await fetch(SURVEY_API_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error('Network error');
-                const reviews = await response.json();
-
-                if (Array.isArray(reviews) && reviews.length > 0) {
-                    renderInlineReviews(reviews);
-                } else {
-                    renderInlineReviews(fallbackReviews);
-                }
+                const snap = await db.collection(FS.reviews).get();
+                const reviews = snap.docs
+                    .map((doc, index) => normalizeReviewFromFirestore(doc, index))
+                    .filter(r => String(r.status || '').toLowerCase() !== 'deleted')
+                    .sort((a, b) => (b.createdAtMillis || 0) - (a.createdAtMillis || 0));
+                renderInlineReviews(reviews.length ? reviews : fallbackReviews);
             } catch (err) {
                 renderInlineReviews(fallbackReviews);
             }
@@ -2860,14 +2895,15 @@
             btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i>`;
             msg.classList.add('hidden');
 
-            const formData = new URLSearchParams();
-            formData.append('action', 'add');
-            formData.append('nickName', name);
-            formData.append('star', star);
-            formData.append('comment', comment);
-
             try {
-                await fetch(SURVEY_API_URL, { method: 'POST', body: formData });
+                await db.collection(FS.reviews).add({
+                    rowIndex: Date.now(),
+                    nickName: name,
+                    star,
+                    comment,
+                    status: 'active',
+                    createdAt: fsTimestamp()
+                });
                 document.getElementById('inline-review-form').reset();
                 setInlineRating(5);
                 msg.textContent = currentLang === 'ar' ? "تم نشر تقييمك بنجاح! شكراً لك." : "Review published successfully! Thank you.";
@@ -2884,15 +2920,7 @@
         }
 
         async function deleteInlineReview(rowIndex) {
-            showConfirm("تأكيد الحذف", "هل تريد حذف هذا التقييم نهائياً؟", async () => {
-                const formData = new URLSearchParams();
-                formData.append('action', 'delete');
-                formData.append('rowIndex', rowIndex);
-                try {
-                    await fetch(SURVEY_API_URL, { method: 'POST', mode: 'no-cors', body: formData });
-                    fetchInlineReviews();
-                } catch (err) {}
-            });
+            deleteReview(rowIndex);
         }
 
         /* ================= STREAMING_CHUNK: User advertisement submission handler ================= */
@@ -3006,48 +3034,40 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin ml-1"></i> جاري الإرسال...';
 
-            // Retrieve selected Platform and append Broker suffix
             const platformBase = form.querySelector('[name="platform"]').value;
             const selectedBroker = form.querySelector('input[name="broker"]:checked').value;
-            const combinedPlatformValue = `${platformBase}-${selectedBroker}`; // e.g. steam-Z
-
-            const formData = new URLSearchParams();
-            formData.append('action', 'add');
-            formData.append('isAdmin', 'false');
-            formData.append('platform', combinedPlatformValue);
-            formData.append('price', form.querySelector('[name="price"]').value);
-            formData.append('konamiId', form.querySelector('[name="konamiId"]').value);
-            formData.append('firstMail', form.querySelector('[name="firstMail"]').value);
-            formData.append('mainImage', mainImgFinal);
-            formData.append('description', form.querySelector('[name="description"]').value);
-            formData.append('userName', form.querySelector('[name="userName"]').value);
-            
+            const combinedPlatformValue = `${platformBase}-${selectedBroker}`;
             const countryCode = form.querySelector('[name="countryCode"]').value;
-            let rawPhone = form.querySelector('[name="userPhone"]').value.trim();
-            if(rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1); 
+            let rawPhone = form.querySelector('[name="userPhone"]').value.trim().replace(/\D/g, '');
+            rawPhone = rawPhone.replace(/^0+/, '');
             const fullPhone = countryCode + rawPhone;
-            formData.append('userPhone', fullPhone);
-
-            formData.append('idStatus', 'موثق');
-            formData.append('securityLevel', 'أمان ممتاز');
-            
             const galleryUrls = Array.from(document.querySelectorAll('.user-gallery-final-val'))
                 .map(i => i.value).filter(v => v.trim() !== '').join(', ');
-            formData.append('galleryImages', galleryUrls);
 
             try {
-                const response = await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
+                await db.collection(FS.accounts).add({
+                    rowIndex: Date.now(),
+                    isAdmin: false,
+                    platform: combinedPlatformValue,
+                    price: form.querySelector('[name="price"]').value,
+                    konamiId: form.querySelector('[name="konamiId"]').value,
+                    firstMail: form.querySelector('[name="firstMail"]').value,
+                    mainImage: mainImgFinal,
+                    description: form.querySelector('[name="description"]').value,
+                    userName: form.querySelector('[name="userName"]').value,
+                    userPhone: fullPhone,
+                    idStatus: 'موثق',
+                    securityLevel: 'أمان ممتاز',
+                    galleryImages: galleryUrls,
+                    status: 'pending',
+                    createdAt: fsTimestamp(),
+                    updatedAt: fsTimestamp()
                 });
-                if (response.ok) {
-                    closeUserAdvertiseModal();
-                    showAlert("تم الإرسال بنجاح! ✅", "تم إرسال طلبك بنجاح. سيتم مراجعة الطلب والنشر قريباً. شكراً لك!");
-                } else {
-                    throw new Error('Server error');
-                }
+                closeUserAdvertiseModal();
+                showAlert("تم الإرسال بنجاح! ✅", "تم إرسال طلبك بنجاح. سيتم مراجعة الطلب والنشر قريباً. شكراً لك!");
+                fetchFirebaseData();
             } catch (err) {
+                console.error(err);
                 showAlert("خطأ في الإرسال", "حدث خطأ أثناء إرسال الطلب، يرجى المحاولة مرة أخرى.", true);
             } finally {
                 btn.disabled = false;
@@ -3055,16 +3075,25 @@
             }
         }
 
-        /* ================= STREAMING_CHUNK: Admin review panel & approval pipeline with broker assignments ================= */
-        /* ================= ADMIN PENDING REQUESTS SYSTEM ================= */
         function openAdminPendingModal() {
-            document.getElementById('admin-pending-modal').classList.remove('hidden');
+            if (!adminMode) {
+                showAlert("دخول الأدمن مطلوب", "سجل دخول كأدمن الأول علشان تراجع طلبات العملاء.", true);
+                return;
+            }
+            const modal = document.getElementById('admin-pending-modal');
+            if (!modal) {
+                showAlert("خطأ في الصفحة", "نافذة مراجعة الطلبات غير موجودة في الملف الحالي.", true);
+                return;
+            }
+            modal.classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
             renderPendingRequests();
+            updatePendingCountBadge();
         }
 
         function closeAdminPendingModal() {
-            document.getElementById('admin-pending-modal').classList.add('hidden');
+            const modal = document.getElementById('admin-pending-modal');
+            if (modal) modal.classList.add('hidden');
             document.body.classList.remove('overflow-hidden');
         }
 
@@ -3205,37 +3234,31 @@
             const mailEl     = document.getElementById(`edit-mail-${rowIndex}`);
             const idStatusEl = document.getElementById(`edit-idstatus-${rowIndex}`);
             const securityEl = document.getElementById(`edit-security-${rowIndex}`);
-
-            // Fetch broker assignment value
             const brokerEl = document.querySelector(`input[name="edit-broker-${rowIndex}"]:checked`);
             const brokerValue = brokerEl ? brokerEl.value : 'B';
             const platformBaseValue = platformEl ? platformEl.value : 'steam';
-            const combinedPlatformValue = `${platformBaseValue}-${brokerValue}`; // e.g. steam-B
+            const combinedPlatformValue = `${platformBaseValue}-${brokerValue}`;
 
             const blocker = document.getElementById('action-blocker');
             blocker.classList.remove('hidden');
 
             try {
-                const formData = new URLSearchParams();
-                formData.append('action', 'approve');
-                formData.append('rowIndex', rowIndex);
-                
-                // Append edited parameters to form parameters
-                formData.append('platform', combinedPlatformValue);
-                if (priceEl) formData.append('price', priceEl.value);
-                if (konamiEl) formData.append('konamiId', konamiEl.value);
-                if (mailEl) formData.append('firstMail', mailEl.value);
-                if (idStatusEl) formData.append('idStatus', idStatusEl.value);
-                if (securityEl) formData.append('securityLevel', securityEl.value);
-                if (descEl) formData.append('description', descEl.value);
+                const updates = {
+                    status: 'Active',
+                    platform: combinedPlatformValue,
+                    updatedAt: fsTimestamp(),
+                    approvedAt: fsTimestamp()
+                };
+                if (priceEl) updates.price = priceEl.value;
+                if (konamiEl) updates.konamiId = konamiEl.value;
+                if (mailEl) updates.firstMail = mailEl.value;
+                if (idStatusEl) updates.idStatus = idStatusEl.value;
+                if (securityEl) updates.securityLevel = securityEl.value;
+                if (descEl) updates.description = descEl.value;
+                const ref = await findFirestoreDocByRowIndex(FS.accounts, rowIndex);
+                await ref.update(updates);
 
-                await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData.toString()
-                });
-
-                const idx = accountsData.findIndex(a => a.rowIndex === rowIndex);
+                const idx = accountsData.findIndex(a => String(a.rowIndex) === String(rowIndex));
                 if (idx > -1) {
                     accountsData[idx].status      = 'Active';
                     accountsData[idx].brokerCode  = brokerValue;
@@ -3248,12 +3271,14 @@
                     if (securityEl) accountsData[idx].securityLevel = securityEl.value;
                 }
 
+                await writeAdminLog('approve_pending_account', { rowIndex, platform: combinedPlatformValue });
                 applyFilters();
                 buildDynamicCarousel();
                 renderPendingRequests();
                 updatePendingCountBadge();
                 showAlert("تم النشر ✅", "تم الموافقة على الطلب ونشر الحساب بنجاح!");
             } catch (err) {
+                console.error(err);
                 showAlert("خطأ", "حدث خطأ أثناء الموافقة على الطلب.", true);
             } finally {
                 blocker.classList.add('hidden');
@@ -3265,20 +3290,16 @@
                 const blocker = document.getElementById('action-blocker');
                 blocker.classList.remove('hidden');
                 try {
-                    const formData = new URLSearchParams();
-                    formData.append('action', 'delete');
-                    formData.append('rowIndex', rowIndex);
-                    await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData.toString()
-                    });
-                    const idx = accountsData.findIndex(a => a.rowIndex === rowIndex);
+                    const ref = await findFirestoreDocByRowIndex(FS.accounts, rowIndex);
+                    await ref.update({ status: 'deleted', rejectedAt: fsTimestamp(), updatedAt: fsTimestamp() });
+                    const idx = accountsData.findIndex(a => String(a.rowIndex) === String(rowIndex));
                     if (idx > -1) accountsData[idx].status = 'deleted';
+                    await writeAdminLog('reject_pending_account', { rowIndex });
                     renderPendingRequests();
                     updatePendingCountBadge();
                     showAlert("تم الرفض", "تم حذف الطلب بنجاح.");
                 } catch (err) {
+                    console.error(err);
                     showAlert("خطأ", "حدث خطأ أثناء الحذف.", true);
                 } finally {
                     blocker.classList.add('hidden');
@@ -3300,8 +3321,9 @@
         }
 
         window.onload = function() {
+            initFirebaseAuthBridge();
             initAdBanners();
-            fetchSheetData();
+            fetchFirebaseData();
             setInlineRating(5);
             fetchInlineReviews();
             initMusicPlayer();
@@ -3330,7 +3352,8 @@
                 </div>
             </div>
             <h3 class="text-2xl font-extrabold text-white mb-2">🏆 البطولة</h3>
-            <p id="tournament-popup-status" class="text-slate-300 text-sm mb-6 leading-relaxed"></p>
+            <p id="tournament-popup-status" class="text-slate-300 text-sm mb-4 leading-relaxed"></p>
+            <a id="tournament-popup-group-btn" href="#" target="_blank" class="hidden w-full py-3 mb-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-extrabold text-sm hover:bg-emerald-500/25 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> دخول جروب الواتس</a>
             <button onclick="goToTournamentPage()" class="w-full py-3.5 font-extrabold text-slate-900 rounded-2xl transition-all text-base" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 25px rgba(245,158,11,0.5);">
                 <i class="fa-solid fa-arrow-left ml-2"></i> اذهب لصفحة البطولة
             </button>
@@ -3392,6 +3415,15 @@
                         <button onclick="togglePlatformFilter(this,'mobile')" data-pf="mobile" class="pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 hover:border-pink-400 transition-all"><i class="fa-solid fa-mobile ml-1 text-pink-400"></i>موبايل</button>
                     </div>
                 </div>
+
+                <!-- لينك جروب واتساب البطولة -->
+                <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                    <label class="block text-xs text-emerald-300 mb-2 font-bold uppercase tracking-wider">
+                        <i class="fa-brands fa-whatsapp ml-1"></i> لينك جروب واتساب البطولة (اختياري)
+                    </label>
+                    <input type="url" id="tournament-group-link-input" placeholder="https://chat.whatsapp.com/..." dir="ltr" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-400 outline-none rounded-xl px-4 py-3 text-white text-sm">
+                    <p class="text-xs text-slate-500 mt-2">لو حطيته، هيظهر زر الجروب في بوب أب "البطولة بدأت" وصفحة البطولة. لو فاضي مش هيظهر.</p>
+                </div>
                 <div class="flex gap-3 pt-2 border-t border-slate-800">
                     <button onclick="closeTournamentStartModal()" class="w-1/3 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl text-sm font-bold">إلغاء</button>
                     <button onclick="confirmStartTournament()" class="w-2/3 py-3 font-extrabold text-slate-900 rounded-xl text-sm transition-all" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
@@ -3403,19 +3435,13 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- ===== TOURNAMENT JS ===== -->
+    <!-- ===== TOURNAMENT JS / FIRESTORE ===== -->
     <!-- ============================================================ -->
     <script>
-        const TOURNAMENT_LOG_URL =
-"https://script.google.com/macros/s/AKfycbw5NJsRysLwIJJIngl2cb1jtkfn13r69nGLpIqv0hZmybo4Mrtx4ZO5y-TOWKfF_p-v/exec";
-
-const TOURNAMENT_PLAYERS_URL =
-"https://script.google.com/macros/s/AKfycbzxJHx2wxxZvbu8vep2o_SBY38ywv-w34xKMPV_fMpDLFlx-rioD97isMzJj9v_HhM/exec";
         let selectedTournamentType = null;
         let selectedPlatformFilter = 'all';
         let tournamentDropdownOpen = false;
 
-        // ===== DROPDOWN =====
         function toggleTournamentDropdown() {
             tournamentDropdownOpen = !tournamentDropdownOpen;
             const dd = document.getElementById('tournament-dropdown');
@@ -3426,7 +3452,7 @@ const TOURNAMENT_PLAYERS_URL =
 
         document.addEventListener('click', function(e) {
             const wrapper = document.getElementById('tournament-dropdown-wrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
+            if (wrapper && !wrapper.contains(e.target) && tournamentDropdownOpen) {
                 document.getElementById('tournament-dropdown').classList.add('hidden');
                 tournamentDropdownOpen = false;
                 const chevron = document.getElementById('tournament-chevron');
@@ -3434,7 +3460,6 @@ const TOURNAMENT_PLAYERS_URL =
             }
         });
 
-        // ===== TOURNAMENT ACTIONS =====
         async function tournamentAction(action) {
             document.getElementById('tournament-dropdown').classList.add('hidden');
             tournamentDropdownOpen = false;
@@ -3442,16 +3467,17 @@ const TOURNAMENT_PLAYERS_URL =
             if (action === 'start') {
                 openTournamentStartModal();
             } else if (action === 'stop') {
-                showConfirm('إيقاف البطولة', 'هل أنت متأكد من إيقاف البطولة؟ سيتم تحويل كل المسجلين إلى deleted وإغلاق الداشبورد.', async () => {
+                showConfirm('إيقاف البطولة', 'هل أنت متأكد من إيقاف البطولة؟ سيتم أرشفة البطولة الحالية ثم إغلاق الداشبورد.', async () => {
                     const blocker = document.getElementById('action-blocker');
                     blocker.classList.remove('hidden');
                     try {
+                        await archiveCurrentTournament();
                         await endTournamentPlayers();
                         await logTournamentEvent('STOP');
-                        showAlert('تم الإيقاف', 'تم إيقاف البطولة وتحويل كل المسجلين إلى deleted.', false);
+                        showAlert('تم الإيقاف', 'تم إيقاف البطولة وحفظها في الهيستوري.', false);
                     } catch(e) {
                         console.warn('Tournament stop error:', e);
-                        showAlert('خطأ', 'تعذر إيقاف البطولة بالكامل. راجع اتصال الشيت وحاول تاني.', true);
+                        showAlert('خطأ', 'تعذر إيقاف البطولة بالكامل. راجع صلاحيات Firestore وحاول تاني.', true);
                     } finally {
                         blocker.classList.add('hidden');
                     }
@@ -3468,11 +3494,20 @@ const TOURNAMENT_PLAYERS_URL =
             const now = new Date();
             const dateStr = now.toLocaleDateString('ar-EG');
             const timeStr = now.toLocaleTimeString('ar-EG');
-            saveTournamentStateFallback(eventType, extraData, dateStr, timeStr);
-            try {
-                const params = new URLSearchParams({ action: 'log', event: eventType, date: dateStr, time: timeStr, extra: extraData });
-                await fetch(TOURNAMENT_LOG_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
-            } catch(e) { console.warn('Tournament log error:', e); }
+            const extraObj = parseTournamentExtra(extraData);
+            const state = {
+                status: eventType,
+                event: eventType,
+                date: dateStr,
+                time: timeStr,
+                updatedAt: fsTimestamp(),
+                updatedBy: getAdminMeta().email || '',
+                platformFilter: selectedPlatformFilter || extraObj.platformFilter || 'all',
+                ...extraObj
+            };
+            saveTournamentStateFallback(state);
+            await db.collection(FS.tournamentState).doc('current').set(state, { merge: true });
+            await writeAdminLog('tournament_' + String(eventType).toLowerCase(), state);
         }
 
         function parseTournamentExtra(extraData = '') {
@@ -3480,34 +3515,30 @@ const TOURNAMENT_PLAYERS_URL =
             String(extraData || '').split(',').forEach(part => {
                 const [rawKey, ...rawValue] = part.split('=');
                 const key = (rawKey || '').trim();
-                const value = rawValue.join('=').trim();
+                let value = rawValue.join('=').trim();
                 if (!key) return;
                 if (key === 'type') data.tournamentType = value;
                 else if (key === 'platform') data.platformFilter = value;
+                else if (key === 'groupLink') data.groupLink = decodeURIComponent(value || '');
                 else data[key] = value;
             });
             return data;
         }
 
-        function saveTournamentStateFallback(eventType, extraData = '', date = '', time = '') {
-            const state = {
-                status: eventType,
+        function saveTournamentStateFallback(stateOrEvent, extraData = '', date = '', time = '') {
+            let state = typeof stateOrEvent === 'object' ? stateOrEvent : {
+                status: stateOrEvent,
                 date,
                 time,
                 platformFilter: selectedPlatformFilter || 'all',
                 ...parseTournamentExtra(extraData)
             };
-            try {
-                localStorage.setItem('efb_tournament_state', JSON.stringify(state));
-            } catch(e) {}
+            try { localStorage.setItem('efb_tournament_state', JSON.stringify(state)); } catch(e) {}
         }
 
         function getTournamentStateFallback() {
-            try {
-                return JSON.parse(localStorage.getItem('efb_tournament_state') || '{}');
-            } catch(e) {
-                return {};
-            }
+            try { return JSON.parse(localStorage.getItem('efb_tournament_state') || '{}'); }
+            catch(e) { return {}; }
         }
 
         function buildTournamentPageUrl() {
@@ -3517,6 +3548,7 @@ const TOURNAMENT_PLAYERS_URL =
             if (state.tournamentType) params.set('type', state.tournamentType);
             if (state.leagueSize) params.set('leagueSize', state.leagueSize);
             if (state.platformFilter) params.set('platform', state.platformFilter);
+            if (state.groupLink) params.set('groupLink', state.groupLink);
             return 'tournament.html' + (params.toString() ? '?' + params.toString() : '');
         }
 
@@ -3533,71 +3565,72 @@ const TOURNAMENT_PLAYERS_URL =
             return [];
         }
 
-        async function postTournamentPlayers(params) {
-            return fetch(TOURNAMENT_PLAYERS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams(params).toString()
-            });
+        async function getActiveTournamentPlayers(platform = 'all') {
+            const snap = await db.collection(FS.tournamentPlayers).get();
+            return snap.docs.map((doc, index) => ({ docId: doc.id, ...doc.data(), rowIndex: doc.data().rowIndex || index + 2 }))
+                .filter(player => {
+                    const status = String(player.status || 'active').toLowerCase();
+                    const pf = String(player.platform || '').toLowerCase();
+                    return !['deleted', 'removed', 'inactive'].includes(status) && (platform === 'all' || pf === platform);
+                });
         }
 
         async function prepareTournamentPlayers(type, platform, leagueSize) {
-            try {
-                await postTournamentPlayers({
-                    action: 'start_tournament',
-                    type,
-                    platform,
-                    leagueSize: leagueSize || '',
-                    date: new Date().toLocaleDateString('ar-EG'),
-                    time: new Date().toLocaleTimeString('ar-EG')
+            const players = await getActiveTournamentPlayers(platform);
+            const size = type === 'champions' ? 4 : Math.max(2, Number(leagueSize || 10));
+            const batch = db.batch();
+            players.forEach((player, index) => {
+                const groupNum = Math.floor(index / size) + 1;
+                batch.update(db.collection(FS.tournamentPlayers).doc(player.docId), {
+                    status: 'active',
+                    groupNum,
+                    tournamentType: type,
+                    updatedAt: fsTimestamp()
                 });
-            } catch(e) {
-                console.warn('start_tournament action is unavailable, frontend grouping will be used.', e);
-            }
+            });
+            await batch.commit();
+            await writeAdminLog('prepare_tournament_players', { type, platform, leagueSize, players: players.length });
+        }
+
+        async function archiveCurrentTournament() {
+            const [stateSnap, playersSnap, matchesSnap] = await Promise.all([
+                db.collection(FS.tournamentState).doc('current').get(),
+                db.collection(FS.tournamentPlayers).get(),
+                db.collection(FS.tournamentMatches).get()
+            ]);
+            const players = playersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const matches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const activePlayers = players.filter(p => !['deleted', 'removed', 'inactive'].includes(String(p.status || '').toLowerCase()));
+            if (!activePlayers.length && !matches.length) return;
+            await db.collection(FS.tournamentHistory).add({
+                state: stateSnap.exists ? stateSnap.data() : {},
+                players: activePlayers,
+                matches,
+                createdAt: fsTimestamp(),
+                archivedBy: getAdminMeta().email || ''
+            });
+            await writeAdminLog('archive_tournament', { players: activePlayers.length, matches: matches.length });
         }
 
         async function endTournamentPlayers() {
-            try {
-                await postTournamentPlayers({ action: 'end_tournament' });
-            } catch(e) {
-                console.warn('end_tournament action is unavailable, falling back to row deletes.', e);
-            }
-
-            let deletedByRows = false;
-            try {
-                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=list');
-                const data = await res.json();
-                const players = getTournamentPlayersFromPayload(data);
-                const activePlayers = players.filter(player => {
-                    const status = String(player.status || player.Status || '').toLowerCase();
-                    return status !== 'deleted';
-                });
-                if (activePlayers.length) {
-                    await Promise.all(activePlayers.map(player => {
-                        const rowIndex = player.rowIndex || player.RowIndex || player.row || player.Row;
-                        return rowIndex ? postTournamentPlayers({ action: 'delete', rowIndex }) : Promise.resolve();
-                    }));
-                }
-                deletedByRows = true;
-            } catch(e) {
-                console.warn('Row delete fallback failed.', e);
-            }
-
-            if (!deletedByRows) {
-                await postTournamentPlayers({ action: 'delete_all' });
-            }
-
-            try {
-                await postTournamentPlayers({ action: 'clear_matches' });
-            } catch(e) {
-                console.warn('clear_matches action is unavailable.', e);
-            }
+            const [playersSnap, matchesSnap] = await Promise.all([
+                db.collection(FS.tournamentPlayers).get(),
+                db.collection(FS.tournamentMatches).get()
+            ]);
+            const batch = db.batch();
+            playersSnap.docs.forEach(doc => batch.update(doc.ref, { status: 'deleted', updatedAt: fsTimestamp() }));
+            matchesSnap.docs.forEach(doc => batch.update(doc.ref, { status: 'ended', updatedAt: fsTimestamp() }));
+            await batch.commit();
+            await writeAdminLog('end_tournament_players', { players: playersSnap.size, matches: matchesSnap.size });
         }
 
-        // ===== START MODAL =====
         async function openTournamentStartModal() {
             document.getElementById('tournament-start-modal').classList.remove('hidden');
-            // تحميل إحصائيات المسجلين
+            try {
+                const stateSnap = await db.collection(FS.tournamentState).doc('current').get();
+                const groupLinkInput = document.getElementById('tournament-group-link-input');
+                if (stateSnap.exists && groupLinkInput) groupLinkInput.value = stateSnap.data().groupLink || '';
+            } catch(e) {}
             await loadTournamentStats();
         }
 
@@ -3615,31 +3648,21 @@ const TOURNAMENT_PLAYERS_URL =
             const grid = document.getElementById('tournament-stats-grid');
             grid.innerHTML = '<div class="col-span-2 text-center py-4"><i class="fa-solid fa-circle-notch fa-spin text-cyan-400 text-xl"></i></div>';
             try {
-                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=stats');
-                const data = await res.json();
-                const total = data.total || 0;
-                const byPlatform = data.byPlatform || {};
+                const players = await getActiveTournamentPlayers('all');
+                const byPlatform = players.reduce((acc, p) => {
+                    const pf = String(p.platform || 'unknown').toLowerCase();
+                    acc[pf] = (acc[pf] || 0) + 1;
+                    return acc;
+                }, {});
                 grid.innerHTML = `
                     <div class="col-span-2 text-center py-2 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                        <div class="text-3xl font-extrabold text-yellow-400">${total}</div>
+                        <div class="text-3xl font-extrabold text-yellow-400">${players.length}</div>
                         <div class="text-xs text-slate-400 mt-1">إجمالي المسجلين</div>
                     </div>
-                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                        <div class="text-lg font-bold text-cyan-400">${byPlatform.steam || 0}</div>
-                        <div class="text-[10px] text-slate-500"><i class="fa-brands fa-steam"></i> Steam</div>
-                    </div>
-                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                        <div class="text-lg font-bold text-green-400">${byPlatform.xbox || 0}</div>
-                        <div class="text-[10px] text-slate-500"><i class="fa-brands fa-xbox"></i> Xbox</div>
-                    </div>
-                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                        <div class="text-lg font-bold text-blue-400">${byPlatform.ps || 0}</div>
-                        <div class="text-[10px] text-slate-500"><i class="fa-brands fa-playstation"></i> PS</div>
-                    </div>
-                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                        <div class="text-lg font-bold text-pink-400">${byPlatform.mobile || 0}</div>
-                        <div class="text-[10px] text-slate-500"><i class="fa-solid fa-mobile"></i> موبايل</div>
-                    </div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50"><div class="text-lg font-bold text-cyan-400">${byPlatform.steam || 0}</div><div class="text-[10px] text-slate-500"><i class="fa-brands fa-steam"></i> Steam</div></div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50"><div class="text-lg font-bold text-green-400">${byPlatform.xbox || 0}</div><div class="text-[10px] text-slate-500"><i class="fa-brands fa-xbox"></i> Xbox</div></div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50"><div class="text-lg font-bold text-blue-400">${byPlatform.ps || 0}</div><div class="text-[10px] text-slate-500"><i class="fa-brands fa-playstation"></i> PS</div></div>
+                    <div class="text-center py-2 bg-slate-900/50 rounded-xl border border-slate-700/50"><div class="text-lg font-bold text-pink-400">${byPlatform.mobile || 0}</div><div class="text-[10px] text-slate-500"><i class="fa-solid fa-mobile"></i> موبايل</div></div>
                 `;
             } catch(e) {
                 grid.innerHTML = '<div class="col-span-2 text-center text-slate-500 text-xs py-2">تعذر تحميل الإحصائيات</div>';
@@ -3673,11 +3696,13 @@ const TOURNAMENT_PLAYERS_URL =
                 showAlert('تنبيه', 'اختار نوع البطولة أولاً!', true);
                 return;
             }
+            const groupLink = (document.getElementById('tournament-group-link-input')?.value || '').trim();
             let extra = `type=${selectedTournamentType},platform=${selectedPlatformFilter}`;
             if (selectedTournamentType === 'league') {
                 const size = document.getElementById('league-size-input').value || '10';
                 extra += `,leagueSize=${size}`;
             }
+            if (groupLink) extra += `,groupLink=${encodeURIComponent(groupLink)}`;
             const blocker = document.getElementById('action-blocker');
             blocker.classList.remove('hidden');
             try {
@@ -3686,51 +3711,36 @@ const TOURNAMENT_PLAYERS_URL =
                 closeTournamentStartModal();
                 showAlert('تم البدء! 🏆', `تم بدء البطولة (${selectedTournamentType === 'league' ? 'دوري' : 'دوري أبطال'}) بنجاح!`, false);
             } catch(e) {
+                console.error(e);
                 showAlert('خطأ', 'حدث خطأ أثناء بدء البطولة', true);
             } finally {
                 blocker.classList.add('hidden');
             }
         }
 
-        // ===== ADMIN BUTTONS SHOW/HIDE =====
-        // Override adminMode setters to show/hide tournament buttons
-        const _origAdminCheck = window.validateAdminKey;
-        // نستخدم MutationObserver علشان نتابع لما admin-status يظهر
-        const adminStatusObserver = new MutationObserver(() => {
-            const adminStatus = document.getElementById('admin-status');
-            const tournamentBtns = document.getElementById('tournament-admin-btns');
-            if (adminStatus && tournamentBtns) {
-                if (!adminStatus.classList.contains('hidden')) {
-                    tournamentBtns.classList.remove('hidden');
-                    tournamentBtns.classList.add('flex');
-                } else {
-                    tournamentBtns.classList.add('hidden');
-                    tournamentBtns.classList.remove('flex');
-                }
-            }
-        });
-        const adminStatusEl = document.getElementById('admin-status');
-        if (adminStatusEl) adminStatusObserver.observe(adminStatusEl, { attributes: true, attributeFilter: ['class'] });
-
-        // ===== TOURNAMENT POPUP =====
         async function initTournamentPopup() {
-            // اقرأ آخر حالة من الشيت
             try {
-                const res = await fetch(TOURNAMENT_LOG_URL + '?action=status');
-                const data = await res.json();
-                const status = data.status; // 'START', 'STOP', 'REGISTER_OPEN'
+                const stateSnap = await db.collection(FS.tournamentState).doc('current').get();
+                const data = stateSnap.exists ? stateSnap.data() : getTournamentStateFallback();
+                const status = data.status;
                 if (status === 'START' || status === 'REGISTER_OPEN') {
+                    saveTournamentStateFallback(data);
                     const popup = document.getElementById('tournament-popup');
                     const statusText = document.getElementById('tournament-popup-status');
+                    const groupBtn = document.getElementById('tournament-popup-group-btn');
                     if (status === 'START') {
-                        statusText.textContent = '  https://chat.whatsapp.com/EmalsAqfdJ8IVEYiEzVNT0 🔥 البطولة شغالة دلوقتي! دوس علشان تشوف النتائج والجداول.';
+                        statusText.textContent = '🔥 البطولة شغالة دلوقتي! دوس علشان تشوف النتائج والجداول.';
+                        if (data.groupLink) {
+                            groupBtn.href = data.groupLink;
+                            groupBtn.classList.remove('hidden');
+                        } else {
+                            groupBtn.classList.add('hidden');
+                        }
                     } else {
                         statusText.textContent = '📋 باب التسجيل مفتوح! سجل دلوقتي قبل ما يقفل.';
+                        groupBtn.classList.add('hidden');
                     }
-                    // شيك لو اليوزر كان دوس X قبل كده في نفس الجلسة
-                    if (!sessionStorage.getItem('tournament_popup_dismissed')) {
-                        popup.classList.remove('hidden');
-                    }
+                    if (!sessionStorage.getItem('tournament_popup_dismissed')) popup.classList.remove('hidden');
                 }
             } catch(e) {
                 console.warn('Could not fetch tournament status:', e);

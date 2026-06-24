@@ -25,6 +25,7 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script>
         const keyParts = ["AIza","SyAd","2GHN","biEK","i9qi","nfJM","WGXS","XazZ","0Hid","1MQ"];
         firebase.initializeApp({
@@ -37,6 +38,8 @@
             appId: "1:927057374768:web:463a074dd5f3c454c1c7f5"
         });
         const auth = firebase.auth();
+        const db = firebase.firestore();
+        db.settings({ ignoreUndefinedProperties: true });
     </script>
     <style>
         body { font-family: 'Cairo', sans-serif; background: radial-gradient(circle at 50% 0%, #151b3a 0%, #080c1e 70%); color: #f8fafc; min-height: 100vh; overflow-x: hidden; }
@@ -300,8 +303,18 @@
                 <button onclick="switchAdminTab('results')" id="tab-results" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
                     <i class="fa-solid fa-table-list ml-1"></i> النتائج
                 </button>
+                <button onclick="switchAdminTab('pending-results')" id="tab-pending-results" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all relative">
+                    <i class="fa-solid fa-hourglass-half ml-1"></i> نتائج معلقة
+                    <span id="pending-results-badge" class="hidden absolute top-1 left-2 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black items-center justify-center"></span>
+                </button>
                 <button onclick="switchAdminTab('manual')" id="tab-manual" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
                     <i class="fa-solid fa-pen ml-1"></i> تحكم يدوي
+                </button>
+                <button onclick="switchAdminTab('logs')" id="tab-logs" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
+                    <i class="fa-solid fa-clock-rotate-left ml-1"></i> Logs
+                </button>
+                <button onclick="switchAdminTab('history')" id="tab-history" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
+                    <i class="fa-solid fa-box-archive ml-1"></i> هيستوري
                 </button>
             </div>
 
@@ -311,14 +324,22 @@
                 <div id="admin-tab-players">
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="text-sm font-bold text-slate-300">قائمة المسجلين</h4>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <button onclick="copyWhatsAppNumbersOnly()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-300 hover:text-white transition-all">
+                                <i class="fa-solid fa-copy ml-1"></i> نسخ الأرقام فقط
+                            </button>
                             <button onclick="exportWhatsAppNumbers()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-emerald-400 hover:text-white transition-all">
-                                <i class="fa-brands fa-whatsapp ml-1"></i> جروب واتساب
+                                <i class="fa-brands fa-whatsapp ml-1"></i> جروب واتساب + VCF
                             </button>
                             <button onclick="refreshPlayers()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all">
                                 <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
                             </button>
                         </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 mb-4 border border-emerald-500/15">
+                        <h4 class="text-sm font-bold text-slate-300 mb-2"><i class="fa-brands fa-whatsapp text-emerald-400 ml-1"></i> رسالة واتساب للاعب</h4>
+                        <textarea id="admin-whatsapp-message" rows="3" placeholder="اكتب الرسالة هنا... وبعدها دوس زر واتساب جنب اسم أي لاعب" class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white text-right"></textarea>
+                        <p class="text-[11px] text-slate-500 mt-2">واتساب لا يسمح بإرسال رسالة جماعية مباشرة من الموقع، لكن الزر جنب كل لاعب هيفتح محادثته بالرسالة جاهزة.</p>
                     </div>
                     <div id="players-list-container">
                         <div class="text-center py-8 text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>
@@ -333,6 +354,22 @@
                     </div>
                     <div id="matches-container">
                         <div class="text-center py-8 text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>
+                    </div>
+                </div>
+
+                <!-- Pending Results Tab -->
+                <div id="admin-tab-pending-results" class="hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-300">النتائج المقترحة من اللاعبين</h4>
+                            <p class="text-xs text-slate-500 mt-1">أي لاعب عادي يقدر يبعت نتيجة، وهنا الأدمن يعتمدها أو يرفضها.</p>
+                        </div>
+                        <button onclick="loadPendingScoreReports()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all">
+                            <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
+                        </button>
+                    </div>
+                    <div id="pending-results-container" class="space-y-3">
+                        <div class="text-center py-8 text-slate-500">افتح التاب لتحميل النتائج المعلقة</div>
                     </div>
                 </div>
 
@@ -360,6 +397,37 @@
                         </button>
                     </div>
                     <div class="glass-card rounded-2xl p-4">
+                        <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-brands fa-whatsapp text-emerald-400 ml-1"></i> لينك جروب واتساب البطولة</h4>
+                        <p class="text-xs text-slate-500 mb-3">حطه أو عدله هنا. لو فاضي مش هيظهر للناس.</p>
+                        <div class="flex gap-2">
+                            <input id="admin-group-link-input" type="url" dir="ltr" placeholder="https://chat.whatsapp.com/..." class="flex-1 bg-slate-950 border border-slate-700 focus:border-emerald-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white">
+                            <button onclick="saveTournamentGroupLink()" class="px-4 py-2.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold rounded-xl text-xs hover:bg-emerald-500/25 transition-all">حفظ</button>
+                        </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 border border-yellow-500/15">
+                        <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-solid fa-flag-checkered text-yellow-400 ml-1"></i> إنهاء الدوري وتحويله نوك أوت</h4>
+                        <p class="text-xs text-slate-500 mb-3">اختار مين يتأهل من كل مجموعة، وسيتم رسم شجرة خروج المغلوب تلقائيًا.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label class="text-xs text-slate-400 mb-1 block">نظام التأهل</label>
+                                <select id="knockout-qualify-mode" onchange="toggleBestThirdsInput()" class="w-full bg-slate-950 border border-slate-700 focus:border-yellow-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white">
+                                    <option value="top1">أول كل مجموعة فقط</option>
+                                    <option value="top2" selected>أول وتاني كل مجموعة</option>
+                                    <option value="top3">أول وتاني وتالت كل مجموعة</option>
+                                    <option value="top2_best3">أول وتاني + أفضل تالت</option>
+                                </select>
+                            </div>
+                            <div id="best-thirds-wrap" class="hidden">
+                                <label class="text-xs text-slate-400 mb-1 block">عدد أفضل تالت</label>
+                                <input id="best-thirds-count" type="number" min="1" value="1" class="w-full bg-slate-950 border border-slate-700 focus:border-yellow-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white" dir="ltr">
+                            </div>
+                        </div>
+                        <button onclick="finishLeagueAndCreateKnockout()" class="w-full py-2.5 bg-yellow-500/15 border border-yellow-500/30 hover:bg-yellow-500/25 text-yellow-300 font-bold rounded-xl text-sm transition-all">
+                            <i class="fa-solid fa-sitemap ml-1"></i> إنهاء الدوري وإنشاء شجرة نوك أوت
+                        </button>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-4">
                         <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-solid fa-filter text-yellow-400 ml-1"></i> تصفية حسب المنصة</h4>
                         <p class="text-xs text-slate-500 mb-3">اختار منصة معينة تبدأ البطولة بيها فقط</p>
                         <div class="flex flex-wrap gap-2 mb-3">
@@ -370,6 +438,24 @@
                             <button onclick="filterByPlatform('mobile', this)" class="manual-pf-btn px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 transition-all">موبايل</button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Logs Tab -->
+                <div id="admin-tab-logs" class="hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-bold text-slate-300">سجل تحركات الأدمن</h4>
+                        <button onclick="loadAdminLogs()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all"><i class="fa-solid fa-rotate-right ml-1"></i> تحديث</button>
+                    </div>
+                    <div id="admin-logs-container" class="space-y-2"><div class="text-center py-8 text-slate-500">افتح التاب لتحميل اللوجز</div></div>
+                </div>
+
+                <!-- History Tab -->
+                <div id="admin-tab-history" class="hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-sm font-bold text-slate-300">هيستوري البطولات السابقة</h4>
+                        <button onclick="loadTournamentHistory()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all"><i class="fa-solid fa-rotate-right ml-1"></i> تحديث</button>
+                    </div>
+                    <div id="tournament-history-container" class="space-y-3"><div class="text-center py-8 text-slate-500">افتح التاب لتحميل الهيستوري</div></div>
                 </div>
             </div>
         </div>
@@ -383,6 +469,7 @@
                 <i class="fa-solid fa-futbol text-yellow-400"></i> تسجيل نتيجة
             </h4>
             <div id="score-match-info" class="text-center text-sm text-slate-300"></div>
+            <p id="score-public-note" class="hidden text-xs text-center text-yellow-300 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-2">النتيجة هتتبعت للأدمن للمراجعة، ومش هتتحسب غير لما يضغط موافق ✅</p>
             <div class="grid grid-cols-2 gap-4">
                 <div class="text-center">
                     <label id="score-p1-label" class="block text-xs text-slate-400 mb-2">اللاعب الأول</label>
@@ -403,10 +490,59 @@
             </div>
             <div class="flex gap-3 pt-2">
                 <button onclick="closeScoreModal()" class="w-1/3 py-2.5 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl text-sm font-bold">إلغاء</button>
-                <button onclick="submitScore()" class="w-2/3 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-extrabold rounded-xl text-sm">
-                    <i class="fa-solid fa-check ml-1"></i> حفظ النتيجة
+                <button id="score-submit-btn" onclick="submitScore()" class="w-2/3 py-2.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-900 font-extrabold rounded-xl text-sm">
+                    <i class="fa-solid fa-check ml-1"></i> <span id="score-submit-label">حفظ النتيجة</span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- PUBLIC PLAYER CONTACT MODAL -->
+    <div id="public-contact-modal" class="fixed inset-0 z-[125] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closePublicContactModal()"></div>
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 relative z-10 space-y-5">
+            <div class="text-center">
+                <div class="w-14 h-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-2xl mx-auto mb-3">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <h4 class="text-lg font-extrabold text-white">تواصل مع اللاعب</h4>
+                <p class="text-xs text-slate-400 mt-1">اختار تبعت رسالة جاهزة أو تنسخ الرقم وتتصرف بنفسك</p>
+            </div>
+
+            <div class="bg-slate-950/50 border border-slate-800 rounded-2xl p-4 space-y-2">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-xs text-slate-500 font-bold">اللاعب</span>
+                    <span id="public-contact-target-name" class="text-sm text-white font-extrabold text-left"></span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-xs text-slate-500 font-bold">وقت اللاعب</span>
+                    <span id="public-contact-target-time" class="text-xs text-cyan-300 font-bold" dir="ltr"></span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-xs text-slate-500 font-bold">واتساب</span>
+                    <span id="public-contact-target-phone" class="text-xs text-emerald-300 font-bold" dir="ltr"></span>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-400 mb-1.5 font-bold">اكتب اسمك / اسم الأكونت *</label>
+                <input id="public-contact-my-name" type="text" oninput="updatePublicContactMessagePreview()" placeholder="مثال: Hesham Yassin" class="w-full bg-slate-950/80 border border-slate-800 focus:border-emerald-400 outline-none rounded-xl px-4 py-3 text-sm text-white text-right">
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-400 mb-1.5 font-bold">الرسالة الجاهزة</label>
+                <textarea id="public-contact-message-preview" rows="4" readonly class="w-full bg-slate-950/70 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-300 text-right leading-6 resize-none"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button onclick="sendPublicContactWhatsApp()" class="py-3 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:text-white hover:bg-emerald-500/25 font-extrabold rounded-xl text-sm transition-all">
+                    <i class="fa-brands fa-whatsapp ml-1"></i> رسالة دايركت
+                </button>
+                <button onclick="copyPublicContactPhone()" class="py-3 bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:text-white hover:bg-cyan-500/25 font-extrabold rounded-xl text-sm transition-all">
+                    <i class="fa-solid fa-copy ml-1"></i> نسخ الرقم
+                </button>
+            </div>
+            <button onclick="closePublicContactModal()" class="w-full py-2.5 bg-slate-900 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-sm font-bold transition-all">إلغاء</button>
         </div>
     </div>
 
@@ -422,92 +558,30 @@
     </div>
 
     <script>
-        // ===== CONFIG =====
-       const TOURNAMENT_LOG_URL =
-"https://script.google.com/macros/s/AKfycbw5NJsRysLwIJJIngl2cb1jtkfn13r69nGLpIqv0hZmybo4Mrtx4ZO5y-TOWKfF_p-v/exec";
-
-const TOURNAMENT_PLAYERS_URL =
-"https://script.google.com/macros/s/AKfycbzxJHx2wxxZvbu8vep2o_SBY38ywv-w34xKMPV_fMpDLFlx-rioD97isMzJj9v_HhM/exec";
-
-
+        // ===== FIRESTORE CONFIG =====
+        const FS = {
+            tournamentPlayers: 'tournamentPlayers',
+            tournamentMatches: 'tournamentMatches',
+            tournamentState: 'tournamentState',
+            tournamentHistory: 'tournamentHistory',
+            adminLogs: 'adminLogs',
+            scoreReports: 'tournamentScoreReports'
+        };
+        const fsTimestamp = firebase.firestore.FieldValue.serverTimestamp;
         let isAdmin = false;
+        let currentAdminUser = null;
         let currentTournamentStatus = null;
         let currentTournamentData = {};
         let allPlayers = [];
         let liveMatches = [];
         let manualPlatformFilter = 'all';
+        let pendingPublicContact = null;
         let scoreModalData = {};
         let scoreP1 = 0, scoreP2 = 0;
+        let allMatchesFlat = [];
+        let activeTournamentGroups = [];
 
-        function normalizeTournamentStatusValue(value) {
-            const raw = String(value || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
-            if (['REGISTER', 'REGISTRATION', 'REGISTRATION_OPEN', 'OPEN_REGISTRATION', 'REGISTER_OPEN'].includes(raw)) return 'REGISTER_OPEN';
-            if (['START', 'STARTED', 'ACTIVE', 'RUNNING', 'TOURNAMENT_ACTIVE'].includes(raw)) return 'START';
-            if (['STOP', 'STOPPED', 'IDLE', 'CLOSED', 'END', 'ENDED'].includes(raw)) return 'STOP';
-            return raw;
-        }
-
-        function parseTournamentExtra(extraData = '') {
-            const data = {};
-            String(extraData || '').split(',').forEach(part => {
-                const [rawKey, ...rawValue] = part.split('=');
-                const key = (rawKey || '').trim();
-                const value = rawValue.join('=').trim();
-                if (!key) return;
-                if (key === 'type') data.tournamentType = value;
-                else if (key === 'platform') data.platformFilter = value;
-                else data[key] = value;
-            });
-            return data;
-        }
-
-        function normalizeTournamentState(data = {}) {
-            if (typeof data === 'string') data = { status: data };
-            const status = normalizeTournamentStatusValue(data.status || data.Status || data.event || data.Event);
-            return {
-                ...data,
-                ...parseTournamentExtra(data.extra || data.ExtraData || ''),
-                status,
-                tournamentType: data.tournamentType || data.type || data.Type || parseTournamentExtra(data.extra || '').tournamentType || '',
-                leagueSize: data.leagueSize || data.league_size || '',
-                platformFilter: data.platformFilter || data.platform || data.Platform || 'all'
-            };
-        }
-
-        function getUrlTournamentState() {
-            const params = new URLSearchParams(window.location.search);
-            if (!params.has('status')) return {};
-            return normalizeTournamentState({
-                status: params.get('status'),
-                tournamentType: params.get('type') || '',
-                leagueSize: params.get('leagueSize') || '',
-                platformFilter: params.get('platform') || 'all'
-            });
-        }
-
-        function getStoredTournamentState() {
-            try {
-                return normalizeTournamentState(JSON.parse(localStorage.getItem('efb_tournament_state') || '{}'));
-            } catch(e) {
-                return {};
-            }
-        }
-
-        function getFallbackTournamentState() {
-            const urlState = getUrlTournamentState();
-            if (urlState.status) return urlState;
-            const storedState = getStoredTournamentState();
-            return storedState.status ? storedState : {};
-        }
-
-        function saveTournamentStateFallback(data) {
-            const state = normalizeTournamentState(data);
-            if (!state.status) return;
-            try {
-                localStorage.setItem('efb_tournament_state', JSON.stringify(state));
-            } catch(e) {}
-        }
-
+        // ===== BASIC HELPERS =====
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, char => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -531,15 +605,118 @@ const TOURNAMENT_PLAYERS_URL =
             return Number.isFinite(num) ? num : 0;
         }
 
+        function tsToMillis(value) {
+            if (!value) return 0;
+            if (typeof value.toMillis === 'function') return value.toMillis();
+            const parsed = Date.parse(value);
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
+        function tsToText(value) {
+            const ms = tsToMillis(value);
+            if (!ms) return '-';
+            return new Date(ms).toLocaleString('ar-EG');
+        }
+
+        function getAdminMeta() {
+            const user = auth.currentUser || currentAdminUser;
+            return {
+                uid: user?.uid || '',
+                email: user?.email || '',
+                displayName: user?.displayName || user?.email || 'Admin'
+            };
+        }
+
+        async function writeAdminLog(action, details = {}) {
+            const admin = getAdminMeta();
+            try {
+                await db.collection(FS.adminLogs).add({
+                    action,
+                    details,
+                    adminUid: admin.uid,
+                    adminEmail: admin.email,
+                    adminName: admin.displayName,
+                    page: 'tournament',
+                    createdAt: fsTimestamp()
+                });
+            } catch(e) { console.warn('Admin log failed', e); }
+        }
+
+        // ===== STATE NORMALIZATION =====
+        function normalizeTournamentStatusValue(value) {
+            const raw = String(value || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+            if (['REGISTER', 'REGISTRATION', 'REGISTRATION_OPEN', 'OPEN_REGISTRATION', 'REGISTER_OPEN'].includes(raw)) return 'REGISTER_OPEN';
+            if (['START', 'STARTED', 'ACTIVE', 'RUNNING', 'TOURNAMENT_ACTIVE'].includes(raw)) return 'START';
+            if (['STOP', 'STOPPED', 'IDLE', 'CLOSED', 'END', 'ENDED'].includes(raw)) return 'STOP';
+            return raw;
+        }
+
+        function parseTournamentExtra(extraData = '') {
+            const data = {};
+            String(extraData || '').split(',').forEach(part => {
+                const [rawKey, ...rawValue] = part.split('=');
+                const key = (rawKey || '').trim();
+                let value = rawValue.join('=').trim();
+                if (!key) return;
+                if (key === 'type') data.tournamentType = value;
+                else if (key === 'platform') data.platformFilter = value;
+                else if (key === 'groupLink') data.groupLink = decodeURIComponent(value || '');
+                else data[key] = value;
+            });
+            return data;
+        }
+
+        function normalizeTournamentState(data = {}) {
+            if (typeof data === 'string') data = { status: data };
+            const extraObj = parseTournamentExtra(data.extra || data.ExtraData || '');
+            const status = normalizeTournamentStatusValue(data.status || data.Status || data.event || data.Event);
+            return {
+                ...data,
+                ...extraObj,
+                status,
+                tournamentType: data.tournamentType || data.type || data.Type || extraObj.tournamentType || '',
+                leagueSize: data.leagueSize || data.league_size || extraObj.leagueSize || '',
+                platformFilter: data.platformFilter || data.platform || data.Platform || extraObj.platformFilter || 'all',
+                groupLink: data.groupLink || extraObj.groupLink || ''
+            };
+        }
+
+        function getUrlTournamentState() {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.has('status')) return {};
+            return normalizeTournamentState({
+                status: params.get('status'),
+                tournamentType: params.get('type') || '',
+                leagueSize: params.get('leagueSize') || '',
+                platformFilter: params.get('platform') || 'all',
+                groupLink: params.get('groupLink') || ''
+            });
+        }
+
+        function getStoredTournamentState() {
+            try { return normalizeTournamentState(JSON.parse(localStorage.getItem('efb_tournament_state') || '{}')); }
+            catch(e) { return {}; }
+        }
+
+        function getFallbackTournamentState() {
+            const urlState = getUrlTournamentState();
+            if (urlState.status) return urlState;
+            const storedState = getStoredTournamentState();
+            return storedState.status ? storedState : {};
+        }
+
+        function saveTournamentStateFallback(data) {
+            const state = normalizeTournamentState(data);
+            if (!state.status) return;
+            try { localStorage.setItem('efb_tournament_state', JSON.stringify(state)); } catch(e) {}
+        }
+
+        // ===== PLAYER / MATCH NORMALIZATION =====
         function parseMatches(raw) {
             if (Array.isArray(raw)) return raw;
             if (typeof raw !== 'string' || !raw.trim()) return [];
-            try {
-                const parsed = JSON.parse(raw);
-                return Array.isArray(parsed) ? parsed : [];
-            } catch(e) {
-                return [];
-            }
+            try { const parsed = JSON.parse(raw); return Array.isArray(parsed) ? parsed : []; }
+            catch(e) { return []; }
         }
 
         function countDraws(matches) {
@@ -551,34 +728,49 @@ const TOURNAMENT_PLAYERS_URL =
         }
 
         function normalizePlayer(row, index = 0) {
-            const matches = parseMatches(pick(row, ['matches', 'Matches', 'matchesJson', 'MatchesJson'], []));
-            const wins = toNumber(pick(row, ['wins', 'Wins', 'win', 'Win', 'H', 'فوز']));
-            const losses = toNumber(pick(row, ['losses', 'Losses', 'loss', 'Loss', 'I', 'خسارة']));
-            const rawDraws = pick(row, ['draws', 'Draws', 'draw', 'Draw', 'تعادل'], '');
+            const data = row.data ? row.data() : row;
+            const matches = parseMatches(pick(data, ['matches', 'Matches', 'matchesJson', 'MatchesJson'], []));
+            const wins = toNumber(pick(data, ['wins', 'Wins', 'win', 'Win', 'H', 'فوز']));
+            const losses = toNumber(pick(data, ['losses', 'Losses', 'loss', 'Loss', 'I', 'خسارة']));
+            const rawDraws = pick(data, ['draws', 'Draws', 'draw', 'Draw', 'تعادل'], '');
             const draws = rawDraws === '' ? countDraws(matches) : toNumber(rawDraws);
-            const goalsFor = toNumber(pick(row, ['goalsFor', 'GoalsFor', 'gf', 'GF', 'J', 'له']));
-            const goalsAgainst = toNumber(pick(row, ['goalsAgainst', 'GoalsAgainst', 'ga', 'GA', 'K', 'عليه']));
-            const rawPoints = pick(row, ['points', 'Points', 'pts', 'PTS', 'L', 'نقاط'], '');
-            const playedRaw = pick(row, ['played', 'Played', 'matchesPlayed', 'MatchesPlayed', 'لعب'], '');
+            const goalsFor = toNumber(pick(data, ['goalsFor', 'GoalsFor', 'gf', 'GF', 'J', 'له']));
+            const goalsAgainst = toNumber(pick(data, ['goalsAgainst', 'GoalsAgainst', 'ga', 'GA', 'K', 'عليه']));
+            const rawPoints = pick(data, ['points', 'Points', 'pts', 'PTS', 'L', 'نقاط'], '');
+            const playedRaw = pick(data, ['played', 'Played', 'matchesPlayed', 'MatchesPlayed', 'لعب'], '');
             const played = Math.max(toNumber(playedRaw), wins + draws + losses, matches.length);
-
             return {
-                rowIndex: toNumber(pick(row, ['rowIndex', 'RowIndex', 'row', 'Row'], index + 2)),
-                name: String(pick(row, ['name', 'Name', 'player', 'Player', 'A', 'الاسم'], `لاعب ${index + 1}`)).trim(),
-                platform: String(pick(row, ['platform', 'Platform', 'B', 'المنصة'], '')).trim().toLowerCase(),
-                timeFrom: pick(row, ['timeFrom', 'TimeFrom', 'C'], ''),
-                timeTo: pick(row, ['timeTo', 'TimeTo', 'D'], ''),
-                phone: pick(row, ['phone', 'Phone', 'whatsapp', 'WhatsApp', 'E'], ''),
-                wins,
-                draws,
-                losses,
-                goalsFor,
-                goalsAgainst,
-                played,
+                docId: row.id || data.docId || '',
+                rowIndex: pick(data, ['rowIndex', 'RowIndex', 'row', 'Row'], index + 2),
+                name: String(pick(data, ['name', 'Name', 'player', 'Player', 'A', 'الاسم'], `لاعب ${index + 1}`)).trim(),
+                platform: String(pick(data, ['platform', 'Platform', 'B', 'المنصة'], '')).trim().toLowerCase(),
+                timeFrom: pick(data, ['timeFrom', 'TimeFrom', 'C'], ''),
+                timeTo: pick(data, ['timeTo', 'TimeTo', 'D'], ''),
+                phone: pick(data, ['phone', 'Phone', 'whatsapp', 'WhatsApp', 'E'], ''),
+                wins, draws, losses, goalsFor, goalsAgainst, played,
                 points: rawPoints === '' ? (wins * 3) + draws : toNumber(rawPoints),
-                groupNum: toNumber(pick(row, ['groupNum', 'GroupNum', 'group', 'Group', 'M', 'المجموعة'])),
-                status: String(pick(row, ['status', 'Status', 'N', 'الحالة'], 'active')).trim().toLowerCase(),
-                matches
+                groupNum: toNumber(pick(data, ['groupNum', 'GroupNum', 'group', 'Group', 'M', 'المجموعة'])),
+                status: String(pick(data, ['status', 'Status', 'N', 'الحالة'], 'active')).trim().toLowerCase(),
+                matches,
+                createdAtMillis: tsToMillis(data.createdAt || data.createdAtIso || data.iso || data.Date)
+            };
+        }
+
+        function normalizeLiveMatch(raw, index = 0) {
+            const data = raw.data ? raw.data() : raw;
+            const score1 = pick(data, ['score1', 'Score1', 'p1Score'], '');
+            const score2 = pick(data, ['score2', 'Score2', 'p2Score'], '');
+            return {
+                docId: raw.id || data.docId || '',
+                id: String(pick(data, ['matchId', 'id', 'ID'], raw.id || `manual_${index}`)),
+                p1Name: String(pick(data, ['p1name', 'p1Name', 'p1', 'player1', 'Player1'], 'لاعب 1')),
+                p2Name: String(pick(data, ['p2name', 'p2Name', 'p2', 'player2', 'Player2'], 'لاعب 2')),
+                p1idx: pick(data, ['p1idx', 'p1RowIndex', 'player1Row', 'row1'], ''),
+                p2idx: pick(data, ['p2idx', 'p2RowIndex', 'player2Row', 'row2'], ''),
+                score1, score2,
+                winner: String(pick(data, ['winner', 'Winner'], '')),
+                status: String(pick(data, ['status', 'Status'], score1 !== '' && score2 !== '' ? 'scored' : 'active')).toLowerCase(),
+                createdAt: pick(data, ['createdAt', 'date', 'Date'], '')
             };
         }
 
@@ -586,9 +778,7 @@ const TOURNAMENT_PLAYERS_URL =
             return !['deleted', 'delete', 'removed', 'inactive'].includes(String(player.status || '').toLowerCase());
         }
 
-        function goalDiff(player) {
-            return (player.goalsFor || 0) - (player.goalsAgainst || 0);
-        }
+        function goalDiff(player) { return (player.goalsFor || 0) - (player.goalsAgainst || 0); }
 
         function sortStandingsPlayers(players) {
             return [...players].sort((a, b) =>
@@ -611,7 +801,10 @@ const TOURNAMENT_PLAYERS_URL =
         }
 
         function buildGroupsFromPlayers(players, type, leagueSize) {
-            const active = players.map(normalizePlayer).filter(isActivePlayer);
+            let active = players.map(normalizePlayer).filter(isActivePlayer);
+            const platform = currentTournamentData.platformFilter || 'all';
+            if (platform !== 'all') active = active.filter(p => p.platform === platform);
+            active = active.sort((a, b) => (a.createdAtMillis || 0) - (b.createdAtMillis || 0));
             if (!active.length) return [];
 
             if (active.some(player => player.groupNum > 0)) {
@@ -621,155 +814,79 @@ const TOURNAMENT_PLAYERS_URL =
                     acc[key].push(player);
                     return acc;
                 }, {});
-                return Object.keys(grouped)
-                    .sort((a, b) => Number(a) - Number(b))
-                    .map(key => ({ name: key, players: sortStandingsPlayers(grouped[key]) }));
+                return Object.keys(grouped).sort((a, b) => Number(a) - Number(b)).map(key => ({ name: key, players: sortStandingsPlayers(grouped[key]) }));
             }
 
-            const chunkSize = type === 'champions' ? 4 : toNumber(leagueSize);
-            if (!chunkSize || chunkSize >= active.length) {
-                return [{ name: 1, players: sortStandingsPlayers(active) }];
-            }
-
+            const chunkSize = type === 'champions' ? 4 : toNumber(leagueSize || 10);
+            if (!chunkSize || chunkSize >= active.length) return [{ name: 1, players: sortStandingsPlayers(active) }];
             const groups = [];
-            for (let i = 0; i < active.length; i += chunkSize) {
-                groups.push({ name: groups.length + 1, players: sortStandingsPlayers(active.slice(i, i + chunkSize)) });
-            }
+            for (let i = 0; i < active.length; i += chunkSize) groups.push({ name: groups.length + 1, players: sortStandingsPlayers(active.slice(i, i + chunkSize)) });
             return groups;
         }
 
-        function normalizeLiveMatch(raw, index = 0) {
-            const score1 = pick(raw, ['score1', 'Score1', 'p1Score'], '');
-            const score2 = pick(raw, ['score2', 'Score2', 'p2Score'], '');
-            return {
-                id: String(pick(raw, ['matchId', 'id', 'ID'], `manual_${index}`)),
-                p1Name: String(pick(raw, ['p1name', 'p1Name', 'p1', 'player1', 'Player1'], 'لاعب 1')),
-                p2Name: String(pick(raw, ['p2name', 'p2Name', 'p2', 'player2', 'Player2'], 'لاعب 2')),
-                p1idx: toNumber(pick(raw, ['p1idx', 'p1RowIndex', 'player1Row', 'row1'])),
-                p2idx: toNumber(pick(raw, ['p2idx', 'p2RowIndex', 'player2Row', 'row2'])),
-                score1,
-                score2,
-                winner: String(pick(raw, ['winner', 'Winner'], '')),
-                status: String(pick(raw, ['status', 'Status'], score1 !== '' && score2 !== '' ? 'scored' : 'active')).toLowerCase(),
-                createdAt: pick(raw, ['createdAt', 'date', 'Date'], '')
-            };
+        async function fetchTournamentBundle() {
+            const [stateSnap, playersSnap, matchesSnap] = await Promise.all([
+                db.collection(FS.tournamentState).doc('current').get(),
+                db.collection(FS.tournamentPlayers).get(),
+                db.collection(FS.tournamentMatches).get()
+            ]);
+            const state = stateSnap.exists ? normalizeTournamentState(stateSnap.data()) : currentTournamentData;
+            currentTournamentData = { ...currentTournamentData, ...state };
+            const players = playersSnap.docs.map((doc, index) => normalizePlayer(doc, index));
+            const matches = matchesSnap.docs.map((doc, index) => normalizeLiveMatch(doc, index));
+            return { ...state, players, liveMatches: matches };
         }
 
         function normalizeTournamentPayload(data, type) {
             const leagueSize = toNumber(data?.leagueSize || data?.league_size || currentTournamentData.leagueSize || currentTournamentData.league_size);
             const groups = Array.isArray(data?.groups) && data.groups.length
-                ? data.groups.map((group, index) => ({
-                    name: group.name || group.groupName || group.groupNum || index + 1,
-                    players: sortStandingsPlayers((group.players || []).map(normalizePlayer).filter(isActivePlayer))
-                })).filter(group => group.players.length)
+                ? data.groups.map((group, index) => ({ name: group.name || group.groupName || group.groupNum || index + 1, players: sortStandingsPlayers((group.players || []).map(normalizePlayer).filter(isActivePlayer)) })).filter(group => group.players.length)
                 : buildGroupsFromPlayers(getPlayersFromPayload(data), type, leagueSize);
-
             const matchesRaw = data?.liveMatches || data?.manualMatches || data?.dashboardMatches || data?.activeMatches || [];
-            return {
-                groups,
-                knockout: data?.knockout || [],
-                liveMatches: Array.isArray(matchesRaw) ? matchesRaw.map(normalizeLiveMatch) : []
-            };
-        }
-
-        async function fetchJson(url, options) {
-            const res = await fetch(url, options);
-            if (!res.ok) throw new Error('Network failure');
-            const text = await res.text();
-            if (!text) return {};
-            try { return JSON.parse(text); } catch(e) { return {}; }
-        }
-
-        async function fetchTournamentBundle() {
-            let data = {};
-            try {
-                data = await fetchJson(TOURNAMENT_PLAYERS_URL + '?action=tournament');
-            } catch(e) {
-                data = {};
-            }
-
-            if (!getPlayersFromPayload(data).length && !(Array.isArray(data.groups) && data.groups.length)) {
-                try {
-                    const listData = await fetchJson(TOURNAMENT_PLAYERS_URL + '?action=list');
-                    data = { ...data, players: getPlayersFromPayload(listData) };
-                } catch(e) {}
-            }
-
-            if (!(data.liveMatches || data.manualMatches || data.dashboardMatches || data.activeMatches)) {
-                try {
-                    const matchesData = await fetchJson(TOURNAMENT_PLAYERS_URL + '?action=matches');
-                    const matches = matchesData.liveMatches || matchesData.manualMatches || matchesData.matches || [];
-                    if (Array.isArray(matches)) data.liveMatches = matches;
-                } catch(e) {}
-            }
-            return data;
-        }
-
-        function renderLiveMatches(matches = []) {
-            const panel = document.getElementById('live-matches-panel');
-            if (!panel) return;
-            liveMatches = matches.map(normalizeLiveMatch);
-            const visible = liveMatches.filter(match => !['deleted', 'cancelled', 'ended'].includes(match.status));
-
-            if (!visible.length) {
-                panel.classList.add('hidden');
-                panel.innerHTML = '';
-                return;
-            }
-
-            panel.classList.remove('hidden');
-            panel.innerHTML = `
-                <div class="flex items-center justify-between gap-3 mb-4">
-                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-satellite-dish text-cyan-400"></i> مباريات الداشبورد
-                    </h3>
-                    <span class="text-[11px] px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">${visible.length} مباشر</span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    ${visible.map(match => {
-                        const hasScore = match.score1 !== '' && match.score2 !== '';
-                        const statusText = hasScore ? `${escapeHtml(match.score1)} - ${escapeHtml(match.score2)}` : 'بانتظار النتيجة';
-                        const statusClass = hasScore ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25' : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/25';
-                        return `
-                        <div class="glass-card rounded-2xl p-4 border border-cyan-500/10">
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="font-bold text-white truncate flex-1">${escapeHtml(match.p1Name)}</span>
-                                <span class="px-3 py-1 rounded-xl border text-xs font-black ${statusClass}">${statusText}</span>
-                                <span class="font-bold text-white truncate flex-1 text-left">${escapeHtml(match.p2Name)}</span>
-                            </div>
-                            ${isAdmin ? `<button onclick='openScoreModal(${jsArg(match.id)}, ${jsArg(match.p1Name)}, ${jsArg(match.p2Name)}, ${Number(match.p1idx) || 0}, ${Number(match.p2idx) || 0})' class="mt-3 w-full py-2 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/25 text-xs font-black transition-all">
-                                <i class="fa-solid fa-pen-to-square ml-1"></i> ${hasScore ? 'تعديل النتيجة' : 'إدخال النتيجة'}
-                            </button>` : ''}
-                        </div>`;
-                    }).join('')}
-                </div>
-            `;
+            return { groups, knockout: data?.knockout || [], liveMatches: Array.isArray(matchesRaw) ? matchesRaw.map(normalizeLiveMatch) : [] };
         }
 
         // ===== INIT =====
         window.onload = async function() {
+            attachPhoneSanitizers();
             await loadTournamentStatus();
+            loadPublicHistoryPreview();
         };
+
+        auth.onAuthStateChanged(user => {
+            setTournamentAdminState(!!user, user || null);
+        });
+
+        function setTournamentAdminState(enabled, user = null) {
+            isAdmin = !!enabled;
+            currentAdminUser = enabled ? (user || auth.currentUser) : null;
+            const loginBtn = document.getElementById('admin-login-btn');
+            const indicator = document.getElementById('admin-indicator');
+            if (loginBtn) loginBtn.classList.toggle('hidden', isAdmin);
+            if (indicator) {
+                indicator.classList.toggle('hidden', !isAdmin);
+                indicator.classList.toggle('flex', isAdmin);
+            }
+            if (currentTournamentStatus) renderState(currentTournamentData);
+            if (isAdmin) updatePendingScoreReportsBadge();
+        }
 
         async function loadTournamentStatus() {
             showState('loading');
             const fallbackState = getFallbackTournamentState();
             try {
-                const res = await fetch(TOURNAMENT_LOG_URL + '?action=status&_=' + Date.now(), { cache: 'no-store' });
-                const data = normalizeTournamentState(await res.json());
-                const finalData = data.status ? data : fallbackState;
-                currentTournamentStatus = finalData.status;
-                currentTournamentData = finalData;
-                saveTournamentStateFallback(finalData);
-                renderState(finalData);
+                const snap = await db.collection(FS.tournamentState).doc('current').get();
+                const data = snap.exists ? normalizeTournamentState(snap.data()) : fallbackState;
+                currentTournamentStatus = data.status;
+                currentTournamentData = data;
+                saveTournamentStateFallback(data);
+                renderState(data);
             } catch(e) {
                 if (fallbackState.status) {
                     currentTournamentStatus = fallbackState.status;
                     currentTournamentData = fallbackState;
                     renderState(fallbackState);
-                } else {
-                    showState('idle');
-                }
+                } else showState('idle');
             }
         }
 
@@ -779,68 +896,80 @@ const TOURNAMENT_PLAYERS_URL =
             currentTournamentStatus = status;
             currentTournamentData = state;
             updateHeaderBadge(status);
-
-            if (!status || status === 'STOP') {
-                renderLiveMatches([]);
-                showState('idle');
+            if (status === 'STOP' || !status) {
+                renderLiveMatches([]); showState('idle'); loadPublicHistoryPreview();
             } else if (status === 'REGISTER_OPEN') {
-                renderLiveMatches([]);
-                showState('registration');
+                renderLiveMatches([]); showState('registration');
             } else if (status === 'START') {
-                showState('tournament');
-                renderTournamentContent(state);
+                showState('tournament'); renderTournamentContent(state);
             } else {
-                renderLiveMatches([]);
-                showState('idle');
+                renderLiveMatches([]); showState('idle');
             }
         }
 
         function updateHeaderBadge(status) {
             const badge = document.getElementById('header-status-badge');
             status = normalizeTournamentStatusValue(status);
-            if (!status || status === 'STOP') {
-                badge.classList.add('hidden');
-            } else if (status === 'REGISTER_OPEN') {
-                badge.classList.remove('hidden');
-                badge.textContent = '📋 التسجيل مفتوح';
-                badge.className = badge.className.replace(/bg-\S+|text-\S+|border-\S+/g, '');
-                badge.classList.add('text-xs','px-3','py-1.5','rounded-full','font-bold','border','bg-cyan-500/15','text-cyan-400','border-cyan-500/30');
+            if (!status || status === 'STOP') badge.classList.add('hidden');
+            else if (status === 'REGISTER_OPEN') {
+                badge.classList.remove('hidden'); badge.textContent = '📋 التسجيل مفتوح';
+                badge.className = 'text-xs px-3 py-1.5 rounded-full font-bold border bg-cyan-500/15 text-cyan-400 border-cyan-500/30';
             } else if (status === 'START') {
-                badge.classList.remove('hidden');
-                badge.textContent = '🏆 البطولة نشطة';
-                badge.className = badge.className.replace(/bg-\S+|text-\S+|border-\S+/g, '');
-                badge.classList.add('text-xs','px-3','py-1.5','rounded-full','font-bold','border','bg-emerald-500/15','text-emerald-400','border-emerald-500/30','animate-pulse');
+                badge.classList.remove('hidden'); badge.textContent = '🏆 البطولة نشطة';
+                badge.className = 'text-xs px-3 py-1.5 rounded-full font-bold border bg-emerald-500/15 text-emerald-400 border-emerald-500/30 animate-pulse';
             }
         }
 
         function showState(state) {
-            ['loading','idle','registration','tournament'].forEach(s => {
-                document.getElementById('state-' + s).classList.add('hidden');
-            });
+            ['loading','idle','registration','tournament'].forEach(s => document.getElementById('state-' + s).classList.add('hidden'));
             document.getElementById('state-' + state).classList.remove('hidden');
         }
 
-        // ===== TOURNAMENT CONTENT RENDER =====
+        // ===== RENDER TOURNAMENT =====
         function renderTournamentContent(data) {
             const type = data.tournamentType || 'league';
             const container = document.getElementById('tournament-content');
             const subtitle = document.getElementById('tournament-subtitle');
+            subtitle.textContent = type === 'knockout' ? 'خروج مغلوب - شجرة نوك أوت' : (type === 'champions' ? 'دوري أبطال - مجموعات + ناك أوت' : 'نظام الدوري - ترتيب حسب النقاط');
+            if (type === 'knockout' || Array.isArray(data.knockout) && data.knockout.length) renderKnockout(data, container);
+            else if (type === 'champions') renderChampions(data, container);
+            else renderLeague(data, container);
+        }
 
-            if (type === 'league') {
-                subtitle.textContent = 'نظام الدوري - ترتيب حسب النقاط';
-                renderLeague(data, container);
-            } else if (type === 'champions') {
-                subtitle.textContent = 'دوري أبطال - مجموعات + ناك أوت';
-                renderChampions(data, container);
-            }
+        function renderGroupLinkCard() {
+            const link = currentTournamentData.groupLink || '';
+            if (!link) return '';
+            return `<div class="glass-panel rounded-3xl p-5 mb-6 border border-emerald-500/20 flex items-center justify-between gap-4 flex-wrap">
+                <div><h3 class="text-white font-extrabold flex items-center gap-2"><i class="fa-brands fa-whatsapp text-emerald-400"></i> جروب واتساب البطولة</h3><p class="text-slate-400 text-xs mt-1">ادخل الجروب لمتابعة المواعيد والتنبيهات</p></div>
+                <a href="${escapeHtml(link)}" target="_blank" class="px-5 py-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black hover:bg-emerald-500/25 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> دخول الجروب</a>
+            </div>`;
+        }
+        function renderAdminGroupLinkEditorCard() {
+            if (!isAdmin || currentTournamentStatus !== 'START') return '';
+            const link = currentTournamentData.groupLink || '';
+            return `<div class="glass-panel rounded-3xl p-5 mb-6 border border-emerald-500/20">
+                <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+                    <div>
+                        <h3 class="text-white font-extrabold flex items-center gap-2"><i class="fa-brands fa-whatsapp text-emerald-400"></i> وضع / تعديل جروب واتساب البطولة</h3>
+                        <p class="text-slate-400 text-xs mt-1">تقدر تضيف اللينك بعد بداية البطولة، وهيظهر للناس فورًا.</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 flex-col md:flex-row">
+                    <input id="inline-group-link-input" value="${escapeHtml(link)}" type="url" dir="ltr" placeholder="https://chat.whatsapp.com/..." class="flex-1 bg-slate-950 border border-slate-700 focus:border-emerald-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white">
+                    <button onclick="saveInlineTournamentGroupLink()" class="px-5 py-2.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black rounded-xl text-sm hover:bg-emerald-500/25 transition-all"><i class="fa-solid fa-floppy-disk ml-1"></i> حفظ الجروب</button>
+                </div>
+            </div>`;
+        }
+
+        function renderTournamentTopCards() {
+            return renderAdminGroupLinkEditorCard() + renderGroupLinkCard() + `<div class="glass-panel rounded-2xl p-4 mb-5 border border-emerald-500/15 text-center"><p class="text-sm text-slate-300"><i class="fa-brands fa-whatsapp text-emerald-400 ml-1"></i> تقدر تضغط على اسم أي لاعب في الجدول، وهيظهرلك اختيار: تبعتله رسالة واتساب جاهزة أو تنسخ رقمه.</p></div>`;
         }
 
         function renderLeague(data, container) {
             const payload = normalizeTournamentPayload(data, 'league');
             if (payload.groups.length === 0) {
-                container.innerHTML = '<div class="text-center py-16 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>جاري تحميل الجداول...</div>';
-                loadLeagueData(container);
-                return;
+                container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>جاري تحميل الجداول...</div>';
+                loadLeagueData(container); return;
             }
             renderLiveMatches(payload.liveMatches);
             renderLeagueGroups(payload.groups, container);
@@ -852,70 +981,134 @@ const TOURNAMENT_PLAYERS_URL =
                 const payload = normalizeTournamentPayload(data, 'league');
                 renderLiveMatches(payload.liveMatches);
                 renderLeagueGroups(payload.groups, container);
-            } catch(e) {
-                container.innerHTML = '<div class="text-center py-16 text-slate-500">تعذر تحميل البيانات</div>';
+            } catch(e) { container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500">تعذر تحميل البيانات</div>'; }
+        }
+
+        function renderPublicPlayerContactButton(player) {
+            const name = player?.name || '-';
+            const phone = cleanWhatsAppNumber(player?.phone || '').replace(/\D/g, '');
+            const disabledClass = phone ? 'hover:text-emerald-300 hover:underline cursor-pointer' : 'cursor-not-allowed opacity-70';
+            const icon = phone ? '<i class="fa-brands fa-whatsapp text-emerald-400 text-[12px]"></i>' : '';
+            if (!phone) return `<span class="text-white font-bold text-sm" title="لا يوجد رقم واتساب لهذا اللاعب">${escapeHtml(name)}</span>`;
+            return `<button type="button" onclick='openPlayerWhatsAppFromStandings(${jsArg(player.rowIndex || '')}, ${jsArg(name)}, ${jsArg(player.phone || '')}, ${jsArg(player.timeFrom || '')}, ${jsArg(player.timeTo || '')})' class="inline-flex items-center gap-1 text-white font-bold text-sm ${disabledClass} transition-all" title="كلم اللاعب على واتساب">${icon}<span>${escapeHtml(name)}</span></button>`;
+        }
+
+        async function openPlayerWhatsAppFromStandings(rowIndex, targetName, targetPhone, timeFrom, timeTo) {
+            const phone = cleanWhatsAppNumber(targetPhone).replace(/\D/g, '');
+            if (!phone || phone.length < 8) {
+                showTAlert('مفيش رقم واتساب', 'اللاعب ده مفيش له رقم واتساب صحيح مسجل.', true);
+                return;
             }
+            pendingPublicContact = {
+                rowIndex,
+                targetName: targetName || 'اللاعب',
+                targetPhone: '+' + phone,
+                phoneDigits: phone,
+                timeFrom: timeFrom || '',
+                timeTo: timeTo || ''
+            };
+
+            const savedName = localStorage.getItem('ef_tournament_public_player_name') || '';
+            const modal = document.getElementById('public-contact-modal');
+            const nameInput = document.getElementById('public-contact-my-name');
+            document.getElementById('public-contact-target-name').textContent = pendingPublicContact.targetName;
+            document.getElementById('public-contact-target-phone').textContent = pendingPublicContact.targetPhone;
+            document.getElementById('public-contact-target-time').textContent = (timeFrom || timeTo) ? `${timeFrom || '?'} - ${timeTo || '?'}` : 'غير محدد';
+            nameInput.value = savedName;
+            updatePublicContactMessagePreview();
+            modal.classList.remove('hidden');
+            setTimeout(() => { try { nameInput.focus(); nameInput.select(); } catch(e) {} }, 80);
+        }
+
+        function closePublicContactModal() {
+            document.getElementById('public-contact-modal')?.classList.add('hidden');
+        }
+
+        function buildPublicContactMessage(myName) {
+            if (!pendingPublicContact) return '';
+            const targetName = pendingPublicContact.targetName || 'اللاعب';
+            const availableText = (pendingPublicContact.timeFrom || pendingPublicContact.timeTo)
+                ? `\nالوقت المتاح عندك مكتوب من ${pendingPublicContact.timeFrom || '?'} إلى ${pendingPublicContact.timeTo || '?'}.`
+                : '';
+            return `السلام عليكم يا ${targetName}\nأنا ${myName || '...'} من بطولة eFootball.\nيلا نلعب الماتش بتاعنا؟ المفروض ألعبك.\nالوقت المتاح عندك إمتى؟${availableText}`;
+        }
+
+        function updatePublicContactMessagePreview() {
+            const name = (document.getElementById('public-contact-my-name')?.value || '').trim();
+            const preview = document.getElementById('public-contact-message-preview');
+            if (preview) preview.value = buildPublicContactMessage(name);
+        }
+
+        function getPublicContactNameOrWarn(requireName = true) {
+            const input = document.getElementById('public-contact-my-name');
+            const myName = (input?.value || '').trim();
+            if (requireName && !myName) {
+                showTAlert('اكتب اسمك', 'اكتب اسمك أو اسم الأكونت الأول عشان الرسالة تبقى واضحة للاعب.', false);
+                setTimeout(() => { try { input?.focus(); } catch(e) {} }, 250);
+                return '';
+            }
+            if (myName) localStorage.setItem('ef_tournament_public_player_name', myName);
+            return myName;
+        }
+
+        async function sendPublicContactWhatsApp() {
+            if (!pendingPublicContact) return;
+            const myName = getPublicContactNameOrWarn(true);
+            if (!myName) return;
+            const message = buildPublicContactMessage(myName);
+            try {
+                await writeAdminLog('public_open_whatsapp_to_player', {
+                    rowIndex: pendingPublicContact.rowIndex,
+                    targetName: pendingPublicContact.targetName,
+                    phone: pendingPublicContact.targetPhone,
+                    mode: 'direct_message'
+                });
+            } catch(e) {}
+            window.open(`https://wa.me/${pendingPublicContact.phoneDigits}?text=${encodeURIComponent(message)}`, '_blank');
+            closePublicContactModal();
+        }
+
+        async function copyPublicContactPhone() {
+            if (!pendingPublicContact) return;
+            const text = pendingPublicContact.targetPhone;
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch(e) {
+                const tmp = document.createElement('input');
+                tmp.value = text;
+                tmp.style.position = 'fixed';
+                tmp.style.opacity = '0';
+                document.body.appendChild(tmp);
+                tmp.select();
+                try { document.execCommand('copy'); } catch(err) {}
+                tmp.remove();
+            }
+            try {
+                await writeAdminLog('public_copy_player_whatsapp', {
+                    rowIndex: pendingPublicContact.rowIndex,
+                    targetName: pendingPublicContact.targetName,
+                    phone: pendingPublicContact.targetPhone,
+                    mode: 'copy_number'
+                });
+            } catch(e) {}
+            showTAlert('تم نسخ الرقم ✅', `رقم ${pendingPublicContact.targetName}: ${text}`, false);
+            closePublicContactModal();
         }
 
         function renderLeagueGroups(groups, container) {
-            if (!groups.length) {
-                container.innerHTML = '<div class="text-center py-16 text-slate-500">لم يتم إنشاء الجداول بعد</div>';
-                return;
-            }
-            container.innerHTML = groups.map((group, gi) => `
+            activeTournamentGroups = groups || [];
+            if (!groups.length) { container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500">لم يتم إنشاء الجداول بعد</div>'; return; }
+            container.innerHTML = renderTournamentTopCards() + groups.map((group, gi) => `
                 <div class="glass-panel rounded-3xl overflow-hidden mb-6">
                     <div class="px-6 py-4 border-b border-slate-800 flex items-center gap-3 bg-gradient-to-r from-yellow-900/20 to-transparent">
                         <div class="w-8 h-8 rounded-lg bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-yellow-400 text-sm font-black">${gi+1}</div>
-                        <h3 class="font-bold text-white">الدوري ${gi+1}</h3>
-                        <span class="text-xs text-slate-500">(${group.players?.length || 0} لاعبين)</span>
+                        <h3 class="font-bold text-white">الدوري ${gi+1}</h3><span class="text-xs text-slate-500">(${group.players?.length || 0} لاعبين)</span>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full standings-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-right">#</th>
-                                    <th class="text-right">اللاعب</th>
-                                    <th>لعب</th>
-                                    <th>ف</th>
-                                    <th>ت</th>
-                                    <th>خ</th>
-                                    <th>له</th>
-                                    <th>عليه</th>
-                                    <th>فارق</th>
-                                    <th>نقاط</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${sortStandingsPlayers(group.players || []).map((p,pi) => `
-                                <tr class="${pi===0 ? 'winner' : ''}">
-                                    <td class="text-slate-500 font-bold">${pi+1}</td>
-                                    <td>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-white font-bold text-sm">${escapeHtml(p.name || '-')}</span>
-                                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${getPlatformIcon(p.platform)}</span>
-                                        </div>
-                                    </td>
-                                    <td class="text-center text-slate-400">${p.played || ((p.wins||0)+(p.draws||0)+(p.losses||0))}</td>
-                                    <td class="text-center text-emerald-400 font-bold">${p.wins||0}</td>
-                                    <td class="text-center text-cyan-300 font-bold">${p.draws||0}</td>
-                                    <td class="text-center text-rose-400 font-bold">${p.losses||0}</td>
-                                    <td class="text-center text-slate-300">${p.goalsFor||0}</td>
-                                    <td class="text-center text-slate-300">${p.goalsAgainst||0}</td>
-                                    <td class="text-center text-slate-300">${goalDiff(p) >= 0 ? '+':'' }${goalDiff(p)}</td>
-                                    <td class="text-center font-extrabold text-yellow-400 text-base">${(p.points||0)}</td>
-                                </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                    ${isAdmin ? `<div class="px-4 py-3 border-t border-slate-800 bg-slate-900/30">
-                        <p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-info-circle ml-1"></i>اضغط على مباراة عشان تسجل النتيجة</p>
-                        <div class="grid grid-cols-2 gap-2" id="matches-group-${gi}">
-                            ${renderGroupMatches(group.players || [], gi)}
-                        </div>
-                    </div>` : ''}
-                </div>
-            `).join('');
+                    <div class="overflow-x-auto"><table class="w-full standings-table"><thead><tr><th class="text-right">#</th><th class="text-right">اللاعب</th><th>لعب</th><th>ف</th><th>ت</th><th>خ</th><th>له</th><th>عليه</th><th>فارق</th><th>نقاط</th></tr></thead><tbody>
+                    ${sortStandingsPlayers(group.players || []).map((p,pi) => `<tr class="${pi===0 ? 'winner' : ''}"><td class="text-slate-500 font-bold">${pi+1}</td><td><div class="flex items-center gap-2 flex-wrap">${renderPublicPlayerContactButton(p)}<span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${getPlatformIcon(p.platform)}</span>${renderMoveGroupControl(p, group.name)}</div></td><td class="text-center text-slate-400">${p.played || ((p.wins||0)+(p.draws||0)+(p.losses||0))}</td><td class="text-center text-emerald-400 font-bold">${p.wins||0}</td><td class="text-center text-cyan-300 font-bold">${p.draws||0}</td><td class="text-center text-rose-400 font-bold">${p.losses||0}</td><td class="text-center text-slate-300">${p.goalsFor||0}</td><td class="text-center text-slate-300">${p.goalsAgainst||0}</td><td class="text-center text-slate-300">${goalDiff(p) >= 0 ? '+':''}${goalDiff(p)}</td><td class="text-center font-extrabold text-yellow-400 text-base">${(p.points||0)}</td></tr>`).join('')}
+                    </tbody></table></div>
+                    <div class="px-4 py-3 border-t border-slate-800 bg-slate-900/30"><p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-info-circle ml-1"></i>${isAdmin ? 'اضغط على مباراة عشان تسجل أو تعدل النتيجة مباشرة' : 'لو لعبت ماتش، ابعت النتيجة للأدمن للمراجعة والاعتماد'}</p><div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="matches-group-${gi}">${renderGroupMatches(group.players || [], gi)}</div></div>
+                </div>`).join('');
         }
 
         function renderGroupMatches(players, gi) {
@@ -924,97 +1117,36 @@ const TOURNAMENT_PLAYERS_URL =
                 for (let j = i+1; j < players.length; j++) {
                     const p1 = players[i], p2 = players[j];
                     const matchId = `g${gi}_${i}_${j}`;
-                    const existing = p1.matches?.find(m => m.opponent === p2.name);
-                    html += `<button onclick='openScoreModal(${jsArg(matchId)}, ${jsArg(p1.name)}, ${jsArg(p2.name)}, ${p1.rowIndex || i}, ${p2.rowIndex || j})' 
-                        class="flex items-center justify-between px-3 py-2 rounded-xl border ${existing ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-700 hover:border-yellow-500/40'} text-xs transition-all">
-                        <span class="font-bold text-white truncate">${escapeHtml(p1.name)}</span>
-                        <span class="text-slate-500 mx-2 flex-shrink-0">${existing ? escapeHtml(existing.score || '?-?') : 'vs'}</span>
-                        <span class="font-bold text-white truncate text-left">${escapeHtml(p2.name)}</span>
-                    </button>`;
+                    const existing = p1.matches?.find(m => m.matchId === matchId || m.opponent === p2.name);
+                    const middle = existing ? escapeHtml(existing.score || '?-?') : (isAdmin ? 'سجّل نتيجة' : 'إرسال نتيجة');
+                    const btnClass = existing ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-300' : (isAdmin ? 'border-yellow-500/30 bg-yellow-500/5 text-yellow-300 hover:bg-yellow-500/10' : 'border-cyan-500/25 bg-cyan-500/5 text-cyan-300 hover:bg-cyan-500/10');
+                    html += `<button onclick='openScoreModal(${jsArg(matchId)}, ${jsArg(p1.name)}, ${jsArg(p2.name)}, ${jsArg(p1.rowIndex || i)}, ${jsArg(p2.rowIndex || j)})' class="flex items-center justify-between px-3 py-2 rounded-xl border ${btnClass} text-xs transition-all"><span class="font-bold text-white truncate">${escapeHtml(p1.name)}</span><span class="mx-2 flex-shrink-0 font-black">${middle}</span><span class="font-bold text-white truncate text-left">${escapeHtml(p2.name)}</span></button>`;
                 }
             }
-            return html || '<p class="col-span-2 text-xs text-slate-600 text-center py-2">لا توجد مباريات</p>';
+            return html || '<p class="text-xs text-slate-500">لا توجد مباريات</p>';
         }
 
-        function renderChampions(data, container) {
-            // Champions League - Groups of 4 + Knockout
-            container.innerHTML = `
-                <div class="text-center py-8 text-slate-400">
-                    <i class="fa-solid fa-star text-yellow-400 text-4xl mb-4 block"></i>
-                    <p class="text-sm">دور المجموعات - دوري أبطال</p>
-                    <p class="text-xs text-slate-600 mt-1">جاري تحميل البيانات...</p>
-                </div>
-            `;
-            loadChampionsData(container);
-        }
-
-        async function loadChampionsData(container) {
+        async function renderChampions(data, container) {
+            container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>جاري تحميل دوري الأبطال...</div>';
             try {
-                const data = await fetchTournamentBundle();
-                const payload = normalizeTournamentPayload(data, 'champions');
-                const groups = payload.groups;
-                const knockout = payload.knockout;
+                const loaded = await fetchTournamentBundle();
+                const payload = normalizeTournamentPayload(loaded, 'champions');
                 renderLiveMatches(payload.liveMatches);
-
-                let html = '<div class="space-y-6">';
-
-                // Groups phase
-                if (groups.length) {
-                    html += '<h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-layer-group text-yellow-400"></i> دور المجموعات</h3>';
-                    html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-                    groups.forEach((g, gi) => {
-                        html += `<div class="glass-panel rounded-2xl overflow-hidden">
-                            <div class="px-4 py-3 border-b border-slate-800 bg-gradient-to-r from-yellow-900/20 to-transparent">
-                                <span class="text-xs font-bold text-yellow-400">المجموعة ${['A','B','C','D','E','F','G','H'][gi] || gi+1}</span>
-                            </div>
-                            <table class="w-full standings-table text-xs">
-                                <thead><tr><th class="text-right">اللاعب</th><th>لعب</th><th>ف</th><th>ت</th><th>خ</th><th>فارق</th><th>نقاط</th></tr></thead>
-                                <tbody>${sortStandingsPlayers(g.players||[]).map((p,pi)=>`
-                                <tr class="${pi<2?'winner':''}">
-                                    <td><span class="font-bold text-white">${escapeHtml(p.name)}</span></td>
-                                    <td class="text-center text-slate-400">${p.played || ((p.wins||0)+(p.draws||0)+(p.losses||0))}</td>
-                                    <td class="text-center text-emerald-400">${p.wins||0}</td>
-                                    <td class="text-center text-cyan-300">${p.draws||0}</td>
-                                    <td class="text-center text-rose-400">${p.losses||0}</td>
-                                    <td class="text-center text-slate-300">${goalDiff(p) >= 0 ? '+':''}${goalDiff(p)}</td>
-                                    <td class="text-center font-extrabold text-yellow-400">${p.points||0}</td>
-                                </tr>`).join('')}</tbody>
-                            </table>
-                            ${isAdmin ? `<div class="px-4 py-3 border-t border-slate-800 bg-slate-900/30">
-                                <div class="grid grid-cols-1 gap-2">${renderGroupMatches(g.players || [], gi)}</div>
-                            </div>` : ''}
-                        </div>`;
-                    });
-                    html += '</div>';
-                }
-
-                // Knockout phase
-                if (knockout.length) {
-                    html += '<h3 class="text-lg font-bold text-white mt-4 flex items-center gap-2"><i class="fa-solid fa-sitemap text-cyan-400"></i> دور الناك أوت</h3>';
-                    html += '<div class="space-y-2">';
-                    knockout.forEach(m => {
-                        html += `<div class="bracket-match glass-card max-w-xs mx-auto">
-                            <div class="team ${m.winner===m.p1?'winner':''}">
-                                <span>${escapeHtml(m.p1 || 'TBD')}</span>
-                                <span class="score">${m.score1 ?? '-'}</span>
-                            </div>
-                            <div class="team ${m.winner===m.p2?'winner':''}">
-                                <span>${escapeHtml(m.p2 || 'TBD')}</span>
-                                <span class="score">${m.score2 ?? '-'}</span>
-                            </div>
-                        </div>`;
-                    });
-                    html += '</div>';
-                }
-
-                html += '</div>';
-                container.innerHTML = html || '<div class="text-center py-16 text-slate-500">لم يتم إنشاء الجداول بعد</div>';
-            } catch(e) {
-                container.innerHTML = '<div class="text-center py-16 text-slate-500">تعذر تحميل البيانات</div>';
-            }
+                renderLeagueGroups(payload.groups, container);
+            } catch(e) { container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500">تعذر تحميل البيانات</div>'; }
         }
 
-        // ===== REGISTRATION FORM =====
+        function renderLiveMatches(matches = []) {
+            const panel = document.getElementById('live-matches-panel');
+            if (!panel) return;
+            liveMatches = matches.map(normalizeLiveMatch);
+            const visible = liveMatches.filter(match => !['deleted', 'cancelled', 'ended'].includes(match.status));
+            if (!visible.length) { panel.classList.add('hidden'); panel.innerHTML = ''; return; }
+            panel.classList.remove('hidden');
+            panel.innerHTML = `<div class="flex items-center justify-between gap-3 mb-4"><h3 class="text-sm font-extrabold text-white flex items-center gap-2"><i class="fa-solid fa-satellite-dish text-cyan-400"></i> مباريات الداشبورد</h3><span class="text-[11px] px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">${visible.length} مباشر</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${visible.map(match => { const hasScore = match.score1 !== '' && match.score2 !== ''; const statusText = hasScore ? `${escapeHtml(match.score1)} - ${escapeHtml(match.score2)}` : 'بانتظار النتيجة'; const statusClass = hasScore ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25' : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/25'; return `<div class="glass-card rounded-2xl p-4 border border-cyan-500/10"><div class="flex items-center justify-between gap-3"><span class="font-bold text-white truncate flex-1">${escapeHtml(match.p1Name)}</span><span class="px-3 py-1 rounded-xl border text-xs font-black ${statusClass}">${statusText}</span><span class="font-bold text-white truncate flex-1 text-left">${escapeHtml(match.p2Name)}</span></div><button onclick='openScoreModal(${jsArg(match.id)}, ${jsArg(match.p1Name)}, ${jsArg(match.p2Name)}, ${jsArg(match.p1idx)}, ${jsArg(match.p2idx)})' class="mt-3 w-full py-2 rounded-xl ${isAdmin ? 'bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/25' : 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25'} text-xs font-black transition-all"><i class="fa-solid ${isAdmin ? 'fa-pen-to-square' : 'fa-paper-plane'} ml-1"></i> ${isAdmin ? (hasScore ? 'تعديل النتيجة' : 'إدخال النتيجة') : 'إرسال النتيجة للأدمن'}</button></div>`; }).join('')}</div>`;
+        }
+
+        // ===== PHONE REGISTRATION =====
         let selectedPlatform = '';
         function selectPlatform(btn, platform) {
             document.querySelectorAll('.platform-reg-btn').forEach(b => {
@@ -1029,6 +1161,25 @@ const TOURNAMENT_PLAYERS_URL =
             document.getElementById('reg-platform').value = platform;
         }
 
+        function normalizeLocalPhoneInput(value) {
+            return String(value || '').replace(/\D/g, '').replace(/^0+/, '');
+        }
+
+        function attachPhoneSanitizers() {
+            const phone = document.getElementById('reg-phone');
+            const code = document.getElementById('reg-country-code');
+            if (!phone) return;
+            const apply = () => {
+                const before = phone.value;
+                phone.value = normalizeLocalPhoneInput(phone.value);
+                phone.placeholder = code?.value === '+20' ? '10XXXXXXXX' : '5XXXXXXXX';
+                if (before !== phone.value) phone.setSelectionRange(phone.value.length, phone.value.length);
+            };
+            phone.addEventListener('input', apply);
+            if (code) code.addEventListener('change', apply);
+            apply();
+        }
+
         document.getElementById('registration-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
@@ -1036,353 +1187,455 @@ const TOURNAMENT_PLAYERS_URL =
             const timeFrom = document.getElementById('reg-time-from').value;
             const timeTo = document.getElementById('reg-time-to').value;
             const code = document.getElementById('reg-country-code').value;
-            const phone = document.getElementById('reg-phone').value.trim();
+            const phoneLocal = normalizeLocalPhoneInput(document.getElementById('reg-phone').value);
             const errEl = document.getElementById('reg-error');
-
-            if (!name || !platform || !timeFrom || !timeTo || !phone) {
-                errEl.textContent = 'الرجاء ملء جميع الحقول المطلوبة';
-                errEl.classList.remove('hidden');
-                return;
-            }
-
-            const btn = document.getElementById('reg-submit-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-2"></i> جاري التسجيل...';
-            errEl.classList.add('hidden');
-
+            if (!name || !platform || !timeFrom || !timeTo || !phoneLocal) { errEl.textContent = 'الرجاء ملء جميع الحقول المطلوبة'; errEl.classList.remove('hidden'); return; }
+            if (phoneLocal.length < 8) { errEl.textContent = 'رقم الواتساب قصير أو غير صحيح'; errEl.classList.remove('hidden'); return; }
+            const btn = document.getElementById('reg-submit-btn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-2"></i> جاري التسجيل...'; errEl.classList.add('hidden');
             try {
-                const now = new Date();
-                const params = new URLSearchParams({
-                    action: 'register',
-                    name, platform,
-                    timeFrom, timeTo,
-                    phone: code + phone,
-                    date: now.toLocaleDateString('ar-EG'),
-                    time: now.toLocaleTimeString('ar-EG')
-                });
-                await fetch(TOURNAMENT_PLAYERS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: params.toString()
+                const fullPhone = code + phoneLocal;
+                await db.collection(FS.tournamentPlayers).add({
+                    rowIndex: Date.now(), name, platform, timeFrom, timeTo, phone: fullPhone,
+                    wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0,
+                    matches: [], status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp()
                 });
                 document.getElementById('registration-form').classList.add('hidden');
                 document.getElementById('reg-success-msg').classList.remove('hidden');
             } catch(err) {
-                errEl.textContent = 'حدث خطأ أثناء التسجيل، حاول تاني';
-                errEl.classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-paper-plane ml-2"></i> تسجيل الآن';
+                console.error(err);
+                errEl.textContent = 'حدث خطأ أثناء التسجيل، حاول تاني'; errEl.classList.remove('hidden');
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane ml-2"></i> تسجيل الآن';
             }
         });
 
         // ===== ADMIN AUTH =====
         function openAdminLogin() { document.getElementById('admin-login-modal').classList.remove('hidden'); }
         function closeAdminLogin() { document.getElementById('admin-login-modal').classList.add('hidden'); }
-
         async function doAdminLogin() {
             const email = document.getElementById('tadmin-email').value;
             const pass = document.getElementById('tadmin-pass').value;
             const errEl = document.getElementById('tadmin-error');
             try {
-                await auth.signInWithEmailAndPassword(email, pass);
-                isAdmin = true;
-                closeAdminLogin();
-                document.getElementById('admin-login-btn').classList.add('hidden');
-                document.getElementById('admin-indicator').classList.remove('hidden');
-                document.getElementById('admin-indicator').classList.add('flex');
-                // add admin panel button
-                openAdminPanel();
-            } catch(e) {
-                errEl.classList.remove('hidden');
-            }
+                const cred = await auth.signInWithEmailAndPassword(email, pass);
+                setTournamentAdminState(true, cred.user); closeAdminLogin(); await writeAdminLog('admin_login', { email }); openAdminPanel();
+            } catch(e) { errEl.classList.remove('hidden'); }
         }
-
-        function adminLogout() {
-            auth.signOut();
-            isAdmin = false;
-            document.getElementById('admin-login-btn').classList.remove('hidden');
-            document.getElementById('admin-indicator').classList.add('hidden');
-        }
+        function adminLogout() { writeAdminLog('admin_logout', { email: auth.currentUser?.email || '' }); auth.signOut(); setTournamentAdminState(false, null); closeAdminPanel(); }
 
         // ===== ADMIN PANEL =====
-        async function openAdminPanel() {
-            document.getElementById('admin-panel-modal').classList.remove('hidden');
-            await refreshPlayers();
-        }
+        async function openAdminPanel() { if (!isAdmin) return openAdminLogin(); document.getElementById('admin-panel-modal').classList.remove('hidden'); await refreshPlayers(); loadGroupLinkInput(); updatePendingScoreReportsBadge(); }
         function closeAdminPanel() { document.getElementById('admin-panel-modal').classList.add('hidden'); }
-
         function switchAdminTab(tab) {
-            ['players','results','manual'].forEach(t => {
-                document.getElementById('admin-tab-' + t).classList.add('hidden');
-                document.getElementById('tab-' + t).classList.remove('text-white','border-cyan-400');
-                document.getElementById('tab-' + t).classList.add('text-slate-400','border-transparent');
+            ['players','results','pending-results','manual','logs','history'].forEach(t => {
+                const pane = document.getElementById('admin-tab-' + t); const btn = document.getElementById('tab-' + t);
+                if (pane) pane.classList.add('hidden');
+                if (btn) { btn.classList.remove('text-white','border-cyan-400'); btn.classList.add('text-slate-400','border-transparent'); }
             });
             document.getElementById('admin-tab-' + tab).classList.remove('hidden');
             document.getElementById('tab-' + tab).classList.add('text-white','border-cyan-400');
             document.getElementById('tab-' + tab).classList.remove('text-slate-400','border-transparent');
             if (tab === 'results' || tab === 'manual') loadMatchesForAdmin();
+            if (tab === 'pending-results') loadPendingScoreReports();
+            if (tab === 'manual') loadGroupLinkInput();
+            if (tab === 'logs') loadAdminLogs();
+            if (tab === 'history') loadTournamentHistory();
         }
 
         async function refreshPlayers() {
             const container = document.getElementById('players-list-container');
             container.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>';
             try {
-                const res = await fetch(TOURNAMENT_PLAYERS_URL + '?action=list');
-                const data = await res.json();
-                allPlayers = getPlayersFromPayload(data).map(normalizePlayer).filter(isActivePlayer);
-                renderPlayersList(container, allPlayers);
-                populateManualSelects(allPlayers);
-            } catch(e) {
-                container.innerHTML = '<div class="text-center py-6 text-slate-500">تعذر التحميل</div>';
-            }
+                const snap = await db.collection(FS.tournamentPlayers).get();
+                allPlayers = snap.docs.map((doc, index) => normalizePlayer(doc, index)).filter(isActivePlayer);
+                renderPlayersList(container, allPlayers); populateManualSelects(allPlayers);
+            } catch(e) { console.error('refreshPlayers failed', e); container.innerHTML = '<div class="text-center py-6 text-rose-400">تعذر تحميل اللاعبين من Firebase<br><span class="text-xs text-slate-500" dir="ltr">' + escapeHtml(e.message || e.code || e) + '</span></div>'; }
         }
 
         function renderPlayersList(container, players) {
-            if (!players.length) {
-                container.innerHTML = '<div class="text-center py-8 text-slate-500">لا يوجد مسجلون بعد</div>';
-                return;
-            }
-            container.innerHTML = `
-                <div class="overflow-x-auto">
-                    <table class="w-full standings-table">
-                        <thead><tr>
-                            <th class="text-right">#</th>
-                            <th class="text-right">الاسم</th>
-                            <th class="text-right">المنصة</th>
-                            <th class="text-right">الوقت</th>
-                            <th class="text-right">واتساب</th>
-                            <th></th>
-                        </tr></thead>
-                        <tbody>
-                            ${players.map((p,i) => `
-                            <tr>
-                                <td class="text-slate-500 text-xs">${i+1}</td>
-                                <td><span class="font-bold text-sm text-white">${escapeHtml(p.name || '-')}</span></td>
-                                <td><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">${getPlatformIcon(p.platform)} ${escapeHtml(p.platform || '-')}</span></td>
-                                <td class="text-xs text-slate-400">${escapeHtml(p.timeFrom||'?')} - ${escapeHtml(p.timeTo||'?')}</td>
-                                <td class="text-xs text-emerald-400" dir="ltr">${escapeHtml(p.phone || '-')}</td>
-                                <td>
-                                    <button onclick="deletePlayer(${p.rowIndex})" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition-all">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </td>
-                            </tr>`).join('')}
-                        </tbody>
-                    </table>
-                </div>`;
+            if (!players.length) { container.innerHTML = '<div class="text-center py-8 text-slate-500">لا يوجد مسجلون بعد</div>'; return; }
+            container.innerHTML = `<div class="overflow-x-auto"><table class="w-full standings-table"><thead><tr><th class="text-right">#</th><th class="text-right">الاسم</th><th class="text-right">الجروب</th><th class="text-right">المنصة</th><th class="text-right">الوقت</th><th class="text-right">واتساب</th><th class="text-right">رسالة</th><th></th></tr></thead><tbody>${players.map((p,i) => `<tr><td class="text-slate-500 text-xs">${i+1}</td><td><span class="font-bold text-sm text-white">${escapeHtml(p.name || '-')}</span></td><td class="text-xs text-yellow-300 font-bold">${escapeHtml(p.groupNum || '-')}</td><td><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">${getPlatformIcon(p.platform)} ${escapeHtml(p.platform || '-')}</span></td><td class="text-xs text-slate-400">${escapeHtml(p.timeFrom||'?')} - ${escapeHtml(p.timeTo||'?')}</td><td class="text-xs text-emerald-400" dir="ltr">${escapeHtml(cleanWhatsAppNumber(p.phone) || '-')}</td><td><button onclick="sendWhatsAppToPlayer(${jsArg(p.rowIndex)})" class="text-emerald-300 hover:text-white text-xs px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/40 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> إرسال</button></td><td><button onclick="deletePlayer(${jsArg(p.rowIndex)})" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition-all"><i class="fa-solid fa-trash-can"></i></button></td></tr>`).join('')}</tbody></table></div>`;
+        }
+
+        async function findPlayerDocByRowIndex(rowIndex) {
+            const cached = allPlayers.find(p => String(p.rowIndex) === String(rowIndex));
+            if (cached?.docId) return db.collection(FS.tournamentPlayers).doc(cached.docId);
+            let snap = await db.collection(FS.tournamentPlayers).where('rowIndex', '==', rowIndex).limit(1).get();
+            if (snap.empty) snap = await db.collection(FS.tournamentPlayers).where('rowIndex', '==', Number(rowIndex)).limit(1).get();
+            if (snap.empty) snap = await db.collection(FS.tournamentPlayers).where('rowIndex', '==', String(rowIndex)).limit(1).get();
+            if (!snap.empty) return snap.docs[0].ref;
+            throw new Error('Player not found: ' + rowIndex);
         }
 
         async function deletePlayer(rowIndex) {
             if (!confirm('حذف هذا اللاعب؟')) return;
-            try {
-                const params = new URLSearchParams({ action: 'delete', rowIndex });
-                await fetch(TOURNAMENT_PLAYERS_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
-                await refreshPlayers();
-            } catch(e) { showTAlert('خطأ', 'تعذر الحذف', true); }
+            try { const ref = await findPlayerDocByRowIndex(rowIndex); await ref.update({ status: 'deleted', updatedAt: fsTimestamp() }); await writeAdminLog('delete_tournament_player', { rowIndex }); await refreshPlayers(); }
+            catch(e) { showTAlert('خطأ', 'تعذر الحذف', true); }
         }
 
         async function loadMatchesForAdmin() {
-            const container = document.getElementById('matches-container');
-            if (!container) return;
+            const container = document.getElementById('matches-container'); if (!container) return;
             container.innerHTML = '<div class="text-center py-6 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>';
-            try {
-                const data = await fetchTournamentBundle();
-                const payload = normalizeTournamentPayload(data, currentTournamentData.tournamentType || 'league');
-                renderMatchesForAdmin(payload.groups || [], container);
-            } catch(e) {
-                container.innerHTML = '<div class="text-center py-6 text-slate-500">تعذر التحميل</div>';
-            }
+            try { const data = await fetchTournamentBundle(); const payload = normalizeTournamentPayload(data, currentTournamentData.tournamentType || 'league'); renderMatchesForAdmin(payload.groups || [], container, payload.liveMatches || []); }
+            catch(e) { container.innerHTML = '<div class="text-center py-6 text-slate-500">تعذر التحميل</div>'; }
         }
 
-        let allMatchesFlat = [];
-        function renderMatchesForAdmin(groups, container) {
+        function renderMatchesForAdmin(groups, container, live = []) {
             allMatchesFlat = [];
-            groups.forEach((g, gi) => {
-                const players = g.players || [];
-                for (let i = 0; i < players.length; i++) {
-                    for (let j = i+1; j < players.length; j++) {
-                        allMatchesFlat.push({ gi, p1: players[i], p2: players[j], id: `g${gi}_${i}_${j}` });
-                    }
-                }
-            });
+            groups.forEach((g, gi) => { const players = g.players || []; for (let i = 0; i < players.length; i++) for (let j = i+1; j < players.length; j++) allMatchesFlat.push({ gi, p1: players[i], p2: players[j], id: `g${gi}_${i}_${j}` }); });
+            live.forEach(m => allMatchesFlat.push({ id: m.id, p1: { name: m.p1Name, rowIndex: m.p1idx, matches: [] }, p2: { name: m.p2Name, rowIndex: m.p2idx, matches: [] }, live: true }));
             renderFilteredMatches(allMatchesFlat, container);
         }
 
         function renderFilteredMatches(matches, container) {
             if (!container) container = document.getElementById('matches-container');
-            if (!matches.length) {
-                container.innerHTML = '<div class="text-center py-6 text-slate-500">لا توجد مباريات</div>';
-                return;
-            }
-            container.innerHTML = matches.map(m => {
-                const existing = m.p1.matches?.find(x => x.opponent === m.p2.name);
-                return `<div class="glass-card rounded-2xl p-3 flex items-center justify-between gap-3 mb-2">
-                    <span class="font-bold text-sm text-white flex-1 truncate">${escapeHtml(m.p1.name)}</span>
-                    <button onclick='openScoreModal(${jsArg(m.id)}, ${jsArg(m.p1.name)}, ${jsArg(m.p2.name)}, ${m.p1.rowIndex||0}, ${m.p2.rowIndex||0})' 
-                        class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black transition-all ${existing ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' : 'bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/25'}">
-                        ${existing ? escapeHtml(existing.score || 'سُجل') : 'سجّل نتيجة'}
-                    </button>
-                    <span class="font-bold text-sm text-white flex-1 truncate text-left">${escapeHtml(m.p2.name)}</span>
-                </div>`;
-            }).join('');
+            if (!matches.length) { container.innerHTML = '<div class="text-center py-6 text-slate-500">لا توجد مباريات</div>'; return; }
+            container.innerHTML = matches.map(m => { const existing = m.p1.matches?.find(x => x.matchId === m.id || x.opponent === m.p2.name); return `<div class="glass-card rounded-2xl p-3 flex items-center justify-between gap-3 mb-2"><span class="font-bold text-sm text-white flex-1 truncate">${escapeHtml(m.p1.name)}</span><button onclick='openScoreModal(${jsArg(m.id)}, ${jsArg(m.p1.name)}, ${jsArg(m.p2.name)}, ${jsArg(m.p1.rowIndex||0)}, ${jsArg(m.p2.rowIndex||0)})' class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black transition-all ${existing ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' : 'bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/25'}">${existing ? escapeHtml(existing.score || 'سُجل') : 'سجّل نتيجة'}</button><span class="font-bold text-sm text-white flex-1 truncate text-left">${escapeHtml(m.p2.name)}</span></div>`; }).join('');
         }
-
-        function filterMatches() {
-            const q = document.getElementById('match-search').value.toLowerCase();
-            const filtered = allMatchesFlat.filter(m => m.p1.name.toLowerCase().includes(q) || m.p2.name.toLowerCase().includes(q));
-            renderFilteredMatches(filtered);
-        }
-
-        function populateManualSelects(players) {
-            ['manual-player1','manual-player2'].forEach(id => {
-                const sel = document.getElementById(id);
-                if (!sel) return;
-                const val = sel.value;
-                const filtered = manualPlatformFilter === 'all' ? players : players.filter(p => p.platform === manualPlatformFilter);
-                sel.innerHTML = '<option value="">اختر لاعب...</option>' + filtered.map(p => `<option value="${p.rowIndex}">${escapeHtml(p.name)} (${escapeHtml(p.platform)})</option>`).join('');
-                sel.value = val;
-            });
-        }
+        function filterMatches() { const q = document.getElementById('match-search').value.toLowerCase(); renderFilteredMatches(allMatchesFlat.filter(m => m.p1.name.toLowerCase().includes(q) || m.p2.name.toLowerCase().includes(q))); }
+        function populateManualSelects(players) { ['manual-player1','manual-player2'].forEach(id => { const sel = document.getElementById(id); if (!sel) return; const val = sel.value; const filtered = manualPlatformFilter === 'all' ? players : players.filter(p => p.platform === manualPlatformFilter); sel.innerHTML = '<option value="">اختر لاعب...</option>' + filtered.map(p => `<option value="${escapeHtml(p.rowIndex)}">${escapeHtml(p.name)} (${escapeHtml(p.platform)})</option>`).join(''); sel.value = val; }); }
 
         async function createManualMatch() {
-            const p1id = document.getElementById('manual-player1').value;
-            const p2id = document.getElementById('manual-player2').value;
+            const p1id = document.getElementById('manual-player1').value; const p2id = document.getElementById('manual-player2').value;
             if (!p1id || !p2id || p1id === p2id) { showTAlert('تنبيه', 'اختار لاعبين مختلفين', false); return; }
-            const p1 = allPlayers.find(p => p.rowIndex == p1id);
-            const p2 = allPlayers.find(p => p.rowIndex == p2id);
-            if (!p1 || !p2) return;
+            const p1 = allPlayers.find(p => String(p.rowIndex) === String(p1id)); const p2 = allPlayers.find(p => String(p.rowIndex) === String(p2id)); if (!p1 || !p2) return;
             const matchId = `manual_${Date.now()}_${p1.rowIndex}_${p2.rowIndex}`;
+            try { await db.collection(FS.tournamentMatches).doc(matchId).set({ matchId, p1name: p1.name, p2name: p2.name, p1idx: p1.rowIndex, p2idx: p2.rowIndex, status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp() }); document.getElementById('manual-player1').value = ''; document.getElementById('manual-player2').value = ''; await writeAdminLog('create_manual_match', { matchId, p1: p1.name, p2: p2.name }); showTAlert('تم إنشاء المباراة', 'المباراة ظهرت في الداشبورد وهيفضل مكانها لحد نهاية البطولة.', false); await loadTournamentStatus(); }
+            catch(e) { showTAlert('خطأ', 'تعذر حفظ المباراة في Firebase', true); }
+        }
+
+        function filterByPlatform(platform, btn) { document.querySelectorAll('.manual-pf-btn').forEach(b => { b.classList.remove('border-cyan-400','bg-cyan-500/10','text-white'); b.classList.add('border-slate-700','text-slate-300'); }); btn.classList.add('border-cyan-400','bg-cyan-500/10','text-white'); btn.classList.remove('border-slate-700','text-slate-300'); manualPlatformFilter = platform; populateManualSelects(allPlayers); }
+
+        function renderMoveGroupControl(player, currentGroupName) {
+            if (!isAdmin || !activeTournamentGroups.length) return '';
+            const current = String(player.groupNum || currentGroupName || '1');
+            const options = activeTournamentGroups.map(g => {
+                const val = String(g.name || '1');
+                return `<option value="${escapeHtml(val)}" ${val === current ? 'selected' : ''}>جروب ${escapeHtml(val)}</option>`;
+            }).join('');
+            return `<select onchange="movePlayerToGroup(${jsArg(player.rowIndex)}, this.value)" class="bg-slate-950 border border-slate-700 text-yellow-300 text-[11px] rounded-lg px-2 py-1 outline-none focus:border-yellow-400">${options}</select>`;
+        }
+
+        async function movePlayerToGroup(rowIndex, newGroup) {
+            if (!isAdmin) return openAdminLogin();
             try {
-                const now = new Date();
-                const params = new URLSearchParams({
-                    action: 'manual_match',
-                    matchId,
-                    p1name: p1.name,
-                    p2name: p2.name,
-                    p1idx: p1.rowIndex,
-                    p2idx: p2.rowIndex,
-                    status: 'active',
-                    date: now.toLocaleDateString('ar-EG'),
-                    time: now.toLocaleTimeString('ar-EG')
-                });
-                await fetch(TOURNAMENT_PLAYERS_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
-                document.getElementById('manual-player1').value = '';
-                document.getElementById('manual-player2').value = '';
-                showTAlert('تم إنشاء المباراة', 'المباراة ظهرت في الداشبورد وهيفضل مكانها لحد نهاية البطولة.', false);
+                const ref = await findPlayerDocByRowIndex(rowIndex);
+                const player = allPlayers.find(p => String(p.rowIndex) === String(rowIndex));
+                await ref.update({ groupNum: toNumber(newGroup) || newGroup, updatedAt: fsTimestamp(), movedBy: getAdminMeta().email || '' });
+                await writeAdminLog('move_player_to_group', { rowIndex, player: player?.name || '', newGroup });
+                showTAlert('تم النقل', `تم نقل اللاعب إلى جروب ${newGroup}.`, false);
                 await loadTournamentStatus();
-            } catch(e) {
-                showTAlert('خطأ', 'تعذر حفظ المباراة في الشيت', true);
-            }
+                if (!document.getElementById('admin-panel-modal')?.classList.contains('hidden')) await refreshPlayers();
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر نقل اللاعب بين الجروبات', true); }
         }
 
-        function filterByPlatform(platform, btn) {
-            document.querySelectorAll('.manual-pf-btn').forEach(b => {
-                b.classList.remove('border-cyan-400','bg-cyan-500/10','text-white');
-                b.classList.add('border-slate-700','text-slate-300');
+        function toggleBestThirdsInput() {
+            const mode = document.getElementById('knockout-qualify-mode')?.value || 'top2';
+            const wrap = document.getElementById('best-thirds-wrap');
+            if (wrap) wrap.classList.toggle('hidden', mode !== 'top2_best3');
+        }
+
+        function qualifySort(a, b) {
+            return (b.points || 0) - (a.points || 0) || goalDiff(b) - goalDiff(a) || (b.goalsFor || 0) - (a.goalsFor || 0) || (b.wins || 0) - (a.wins || 0) || String(a.name).localeCompare(String(b.name), 'ar');
+        }
+
+        function getQualifiersFromGroups(groups, mode, bestThirdsCount) {
+            const qualifiers = [];
+            const thirds = [];
+            groups.forEach((group, gi) => {
+                const sorted = sortStandingsPlayers(group.players || []);
+                const groupName = group.name || (gi + 1);
+                const addPlayer = (p, rank) => p && qualifiers.push({ ...p, seed: qualifiers.length + 1, sourceGroup: groupName, sourceRank: rank });
+                if (mode === 'top1') addPlayer(sorted[0], 1);
+                else if (mode === 'top2') { addPlayer(sorted[0], 1); addPlayer(sorted[1], 2); }
+                else if (mode === 'top3') { addPlayer(sorted[0], 1); addPlayer(sorted[1], 2); addPlayer(sorted[2], 3); }
+                else if (mode === 'top2_best3') { addPlayer(sorted[0], 1); addPlayer(sorted[1], 2); if (sorted[2]) thirds.push({ ...sorted[2], sourceGroup: groupName, sourceRank: 3 }); }
             });
-            btn.classList.add('border-cyan-400','bg-cyan-500/10','text-white');
-            btn.classList.remove('border-slate-700','text-slate-300');
-            manualPlatformFilter = platform;
-            populateManualSelects(allPlayers);
+            if (mode === 'top2_best3') {
+                thirds.sort(qualifySort).slice(0, Math.max(0, toNumber(bestThirdsCount))).forEach(p => qualifiers.push({ ...p, seed: qualifiers.length + 1 }));
+            }
+            return qualifiers.filter(Boolean);
         }
 
-        function cleanWhatsAppNumber(phone) {
-            return String(phone || '').replace(/[^\d+]/g, '').replace(/^00/, '+');
+        function nextPowerOfTwo(n) { let p = 1; while (p < n) p *= 2; return Math.max(2, p); }
+        function roundLabel(size) {
+            if (size === 2) return 'النهائي';
+            if (size === 4) return 'نصف النهائي';
+            if (size === 8) return 'ربع النهائي';
+            return `دور ${size}`;
         }
 
+        function buildKnockoutBracket(qualifiers) {
+            const size = nextPowerOfTwo(qualifiers.length);
+            const seeded = qualifiers.map((p, i) => ({ name: p.name, rowIndex: p.rowIndex || '', platform: p.platform || '', phone: p.phone || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '', seed: i + 1, sourceGroup: p.sourceGroup || '', sourceRank: p.sourceRank || '' }));
+            while (seeded.length < size) seeded.push({ name: 'BYE', bye: true, seed: seeded.length + 1 });
+            const rounds = [];
+            let currentSize = size;
+            let firstMatches = [];
+            for (let i = 0; i < size / 2; i++) {
+                const p1 = seeded[i];
+                const p2 = seeded[size - 1 - i];
+                firstMatches.push({ id: `ko_r1_m${i+1}`, p1, p2, status: 'pending' });
+            }
+            rounds.push({ round: 1, label: roundLabel(size), size, matches: firstMatches });
+            let round = 2;
+            currentSize = currentSize / 2;
+            while (currentSize >= 2) {
+                const matches = [];
+                for (let i = 0; i < currentSize / 2; i++) matches.push({ id: `ko_r${round}_m${i+1}`, p1: { name: `فائز مباراة ${i*2+1}` }, p2: { name: `فائز مباراة ${i*2+2}` }, status: 'waiting' });
+                rounds.push({ round, label: roundLabel(currentSize), size: currentSize, matches });
+                currentSize = currentSize / 2; round++;
+            }
+            return rounds;
+        }
+
+        async function finishLeagueAndCreateKnockout() {
+            if (!isAdmin) return openAdminLogin();
+            if (!confirm('هتنهي الدوري وتحوّله لبطولة نوك أوت. تكمل؟')) return;
+            try {
+                const data = await fetchTournamentBundle();
+                const payload = normalizeTournamentPayload(data, 'league');
+                const mode = document.getElementById('knockout-qualify-mode')?.value || 'top2';
+                const bestThirdsCount = toNumber(document.getElementById('best-thirds-count')?.value || 0);
+                const qualifiers = getQualifiersFromGroups(payload.groups || [], mode, bestThirdsCount);
+                if (qualifiers.length < 2) return showTAlert('تنبيه', 'لازم يكون فيه لاعبين مؤهلين على الأقل عشان نعمل نوك أوت.', true);
+                const bracket = buildKnockoutBracket(qualifiers);
+                await db.collection(FS.tournamentState).doc('current').set({ status: 'START', tournamentType: 'knockout', knockout: bracket, knockoutQualifiers: qualifiers.map(p => ({ name: p.name, rowIndex: p.rowIndex || '', phone: p.phone || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '', group: p.sourceGroup || '', rank: p.sourceRank || '', points: p.points || 0, goalsFor: p.goalsFor || 0, goalsAgainst: p.goalsAgainst || 0 })), leagueFinalized: true, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+                await writeAdminLog('finish_league_create_knockout', { mode, bestThirdsCount, qualifiersCount: qualifiers.length, bracketSize: bracket[0]?.size || 0 });
+                showTAlert('تم إنشاء النوك أوت ✅', `تم تأهيل ${qualifiers.length} لاعب ورسم شجرة ${bracket[0]?.label || 'نوك أوت'}.`, false);
+                await loadTournamentStatus();
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر إنهاء الدوري وإنشاء النوك أوت', true); }
+        }
+
+        function renderKnockout(data, container) {
+            const rounds = Array.isArray(data.knockout) ? data.knockout : [];
+            if (!rounds.length) { container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500">لا توجد شجرة نوك أوت حتى الآن</div>'; return; }
+            renderLiveMatches(data.liveMatches || []);
+            container.innerHTML = renderTournamentTopCards() + `<div class="glass-panel rounded-3xl p-5 mb-6 border border-yellow-500/20">\n                <div class="flex items-center justify-between gap-3 flex-wrap mb-5">\n                    <div>\n                        <h3 class="text-xl font-extrabold text-white flex items-center gap-2"><i class="fa-solid fa-sitemap text-yellow-400"></i> شجرة خروج المغلوب</h3>\n                        <p class="text-xs text-slate-400 mt-1">تم إنشاؤها من ترتيب مجموعات الدوري. تقدر تطورها بعد كده لتسجيل نتائج النوك أوت.</p>\n                    </div>\n                    ${isAdmin ? '<button onclick="loadTournamentStatus()" class="px-3 py-2 rounded-xl bg-slate-800 text-cyan-300 text-xs font-bold"><i class="fa-solid fa-rotate-right ml-1"></i> تحديث</button>' : ''}\n                </div>\n                <div class="overflow-x-auto pb-2"><div class="flex gap-4 min-w-max">${rounds.map(round => renderKnockoutRound(round)).join('')}</div></div>\n            </div>`;
+        }
+
+        function renderKnockoutRound(round) {
+            return `<div class="w-64 flex-shrink-0">\n                <div class="text-center text-yellow-300 font-black text-sm mb-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl py-2">${escapeHtml(round.label || ('Round ' + round.round))}</div>\n                <div class="space-y-3">${(round.matches || []).map(match => renderKnockoutMatch(match)).join('')}</div>\n            </div>`;
+        }
+
+        function renderKnockoutPlayer(player) {
+            const isBye = player?.bye || String(player?.name || '').toUpperCase() === 'BYE';
+            return `<div class="team ${isBye ? 'text-slate-600' : ''}">${(!isBye && player?.phone) ? `<button type="button" onclick='openPlayerWhatsAppFromStandings(${jsArg(player?.rowIndex || '')}, ${jsArg(player?.name || '---')}, ${jsArg(player?.phone || '')}, ${jsArg(player?.timeFrom || '')}, ${jsArg(player?.timeTo || '')})' class="truncate hover:text-emerald-300 hover:underline transition-all"><i class="fa-brands fa-whatsapp text-emerald-400 text-[11px] ml-1"></i>${escapeHtml(player?.name || '---')}</button>` : `<span class="truncate">${escapeHtml(player?.name || '---')}</span>`}${player?.seed ? `<span class="score">#${escapeHtml(player.seed)}</span>` : ''}</div>`;
+        }
+
+        function renderKnockoutMatch(match) {
+            return `<div class="bracket-match bg-slate-950/40">${renderKnockoutPlayer(match.p1)}${renderKnockoutPlayer(match.p2)}</div>`;
+        }
+
+        // ===== WHATSAPP EXPORT =====
+        function cleanWhatsAppNumber(phone) { let s = String(phone || '').replace(/[^\d+]/g, '').replace(/^00/, '+'); if (!s.startsWith('+')) s = '+' + s.replace(/^\+?/, ''); return s; }
+        function buildVcf(numbers) { return numbers.map((num, i) => `BEGIN:VCARD\nVERSION:3.0\nFN:eFootball Player ${i+1}\nTEL;TYPE=CELL:${num}\nEND:VCARD`).join('\n'); }
+        function getTournamentWhatsAppNumbers() { return [...new Set(allPlayers.map(p => cleanWhatsAppNumber(p.phone)).filter(n => n && n.length > 5))]; }
+        async function copyWhatsAppNumbersOnly() {
+            if (!allPlayers.length) await refreshPlayers();
+            const numbers = getTournamentWhatsAppNumbers();
+            if (!numbers.length) { showTAlert('لا توجد أرقام', 'مفيش أرقام واتساب متاحة للمسجلين حالياً.', true); return; }
+            const text = numbers.join(', ');
+            try { await navigator.clipboard.writeText(text); showTAlert('تم النسخ ✅', `تم نسخ ${numbers.length} رقم واتساب مفصولين بفواصل.`, false); }
+            catch(e) { showTAlert('انسخ يدويًا', text, false); }
+        }
+        function getAdminWhatsappMessage() { return (document.getElementById('admin-whatsapp-message')?.value || '').trim(); }
+        async function sendWhatsAppToPlayer(rowIndex) {
+            if (!allPlayers.length) await refreshPlayers();
+            const player = allPlayers.find(p => String(p.rowIndex) === String(rowIndex));
+            if (!player) return showTAlert('خطأ', 'اللاعب غير موجود', true);
+            const phone = cleanWhatsAppNumber(player.phone).replace(/\D/g, '');
+            if (!phone) return showTAlert('رقم غير صحيح', 'اللاعب ده مفيش له رقم واتساب صحيح.', true);
+            const msg = getAdminWhatsappMessage();
+            if (!msg) return showTAlert('اكتب الرسالة', 'اكتب الرسالة في مربع رسالة واتساب فوق الجدول الأول.', false);
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+            writeAdminLog('open_whatsapp_message_to_player', { rowIndex, player: player.name, phone: cleanWhatsAppNumber(player.phone) });
+        }
         async function exportWhatsAppNumbers() {
             if (!allPlayers.length) await refreshPlayers();
-            const numbers = [...new Set(allPlayers.map(p => cleanWhatsAppNumber(p.phone)).filter(Boolean))];
-            if (!numbers.length) {
-                showTAlert('لا توجد أرقام', 'مفيش أرقام واتساب متاحة للمسجلين حالياً.', true);
-                return;
-            }
-            const text = numbers.join('\n');
+            const numbers = getTournamentWhatsAppNumbers();
+            if (!numbers.length) { showTAlert('لا توجد أرقام', 'مفيش أرقام واتساب متاحة للمسجلين حالياً.', true); return; }
+            const text = numbers.join(', ');
+            try { await navigator.clipboard.writeText(text); } catch(e) {}
             try {
-                await navigator.clipboard.writeText(text);
-                showTAlert('الأرقام جاهزة', `تم نسخ ${numbers.length} رقم واتساب. افتح واتساب واعمل الجروب والصق الأرقام.`, false);
-            } catch(e) {
-                showTAlert('الأرقام جاهزة', `${numbers.length} رقم واتساب جاهزين. لو النسخ التلقائي فشل، افتح قائمة المسجلين وخدهم من الجدول.`, false);
-            }
+                const blob = new Blob([buildVcf(numbers)], { type: 'text/vcard;charset=utf-8' });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'efootball-tournament-contacts.vcf'; a.click(); URL.revokeObjectURL(a.href);
+            } catch(e) {}
+            showTAlert('الأرقام جاهزة', `تم نسخ ${numbers.length} رقم مفصولين بفواصل + تحميل ملف جهات اتصال VCF. واتساب مبيسمحش بإنشاء جروب بضغطة واحدة من رابط خارجي، بس كده الإضافة هتبقى أسرع.`, false);
             window.open('https://web.whatsapp.com/', '_blank');
         }
 
         // ===== SCORE MODAL =====
         function openScoreModal(matchId, p1name, p2name, p1idx, p2idx) {
             const existingLive = liveMatches.find(match => String(match.id) === String(matchId));
-            scoreP1 = existingLive && existingLive.score1 !== '' ? toNumber(existingLive.score1) : 0;
-            scoreP2 = existingLive && existingLive.score2 !== '' ? toNumber(existingLive.score2) : 0;
-            document.getElementById('score-p1-val').textContent = scoreP1;
-            document.getElementById('score-p2-val').textContent = scoreP2;
-            document.getElementById('score-p1-label').textContent = p1name;
-            document.getElementById('score-p2-label').textContent = p2name;
+            const p1 = allPlayers.find(p => String(p.rowIndex) === String(p1idx));
+            const existingPlayerMatch = p1?.matches?.find(m => m.matchId === matchId || m.opponent === p2name);
+            const scoreParts = existingPlayerMatch?.score ? String(existingPlayerMatch.score).match(/(\d+)\D+(\d+)/) : null;
+            scoreP1 = existingLive && existingLive.score1 !== '' ? toNumber(existingLive.score1) : (scoreParts ? Number(scoreParts[1]) : 0);
+            scoreP2 = existingLive && existingLive.score2 !== '' ? toNumber(existingLive.score2) : (scoreParts ? Number(scoreParts[2]) : 0);
+            document.getElementById('score-p1-val').textContent = scoreP1; document.getElementById('score-p2-val').textContent = scoreP2;
+            document.getElementById('score-p1-label').textContent = p1name; document.getElementById('score-p2-label').textContent = p2name;
             document.getElementById('score-match-info').innerHTML = `<span class="font-bold text-yellow-400">${escapeHtml(p1name)}</span> <span class="text-slate-500 mx-2">ضد</span> <span class="font-bold text-yellow-400">${escapeHtml(p2name)}</span>`;
-            scoreModalData = { matchId, p1name, p2name, p1idx, p2idx };
-            document.getElementById('score-modal').classList.remove('hidden');
+            const publicNote = document.getElementById('score-public-note');
+            const submitLabel = document.getElementById('score-submit-label');
+            if (publicNote) publicNote.classList.toggle('hidden', isAdmin);
+            if (submitLabel) submitLabel.textContent = isAdmin ? 'حفظ النتيجة' : 'إرسال للأدمن';
+            scoreModalData = { matchId, p1name, p2name, p1idx, p2idx }; document.getElementById('score-modal').classList.remove('hidden');
         }
         function closeScoreModal() { document.getElementById('score-modal').classList.add('hidden'); }
+        function adjustScore(player, delta) { if (player === 'p1') { scoreP1 = Math.max(0, scoreP1 + delta); document.getElementById('score-p1-val').textContent = scoreP1; } else { scoreP2 = Math.max(0, scoreP2 + delta); document.getElementById('score-p2-val').textContent = scoreP2; } }
 
-        function adjustScore(player, delta) {
-            if (player === 'p1') {
-                scoreP1 = Math.max(0, scoreP1 + delta);
-                document.getElementById('score-p1-val').textContent = scoreP1;
-            } else {
-                scoreP2 = Math.max(0, scoreP2 + delta);
-                document.getElementById('score-p2-val').textContent = scoreP2;
-            }
+        function statsFromMatches(matches) {
+            return matches.reduce((acc, m) => {
+                const parts = String(m.score || '').match(/(\d+)\D+(\d+)/); if (!parts) return acc;
+                const gf = Number(parts[1]), ga = Number(parts[2]); acc.played++; acc.goalsFor += gf; acc.goalsAgainst += ga;
+                if (gf > ga) { acc.wins++; acc.points += 3; } else if (gf < ga) acc.losses++; else { acc.draws++; acc.points += 1; }
+                return acc;
+            }, { played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0 });
+        }
+
+        async function applyScoreDirect({ matchId, p1name, p2name, p1idx, p2idx, score1, score2, reportId = '' }) {
+            const winner = score1 > score2 ? p1name : score2 > score1 ? p2name : 'draw';
+            const p1ref = await findPlayerDocByRowIndex(p1idx);
+            const p2ref = await findPlayerDocByRowIndex(p2idx);
+            const matchRef = db.collection(FS.tournamentMatches).doc(String(matchId));
+            await db.runTransaction(async tx => {
+                const [p1snap, p2snap] = await Promise.all([tx.get(p1ref), tx.get(p2ref)]);
+                const p1data = p1snap.data() || {};
+                const p2data = p2snap.data() || {};
+                const p1matches = parseMatches(p1data.matches).filter(m => m.matchId !== matchId && m.opponent !== p2name);
+                const p2matches = parseMatches(p2data.matches).filter(m => m.matchId !== matchId && m.opponent !== p1name);
+                p1matches.push({ matchId, opponent: p2name, score: `${score1}-${score2}`, result: winner === p1name ? 'win' : winner === 'draw' ? 'draw' : 'loss', date: new Date().toISOString(), approvedFromReportId: reportId || '' });
+                p2matches.push({ matchId, opponent: p1name, score: `${score2}-${score1}`, result: winner === p2name ? 'win' : winner === 'draw' ? 'draw' : 'loss', date: new Date().toISOString(), approvedFromReportId: reportId || '' });
+                tx.update(p1ref, { matches: p1matches, ...statsFromMatches(p1matches), updatedAt: fsTimestamp() });
+                tx.update(p2ref, { matches: p2matches, ...statsFromMatches(p2matches), updatedAt: fsTimestamp() });
+                tx.set(matchRef, { matchId, p1name, p2name, p1idx, p2idx, score1, score2, winner, status: 'scored', approvedFromReportId: reportId || '', updatedAt: fsTimestamp(), createdAt: fsTimestamp() }, { merge: true });
+            });
+            await writeAdminLog(reportId ? 'approve_player_score_report' : 'submit_score', { matchId, p1name, p2name, score1, score2, winner, reportId });
+            return winner;
         }
 
         async function submitScore() {
             const { matchId, p1name, p2name, p1idx, p2idx } = scoreModalData;
-            const winner = scoreP1 > scoreP2 ? p1name : scoreP2 > scoreP1 ? p2name : 'draw';
             try {
-                const params = new URLSearchParams({
-                    action: 'score',
-                    matchId,
-                    p1name, p2name, p1idx, p2idx,
-                    score1: scoreP1, score2: scoreP2, winner,
-                    date: new Date().toLocaleDateString('ar-EG')
-                });
-                await fetch(TOURNAMENT_PLAYERS_URL, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
+                if (!isAdmin) {
+                    await db.collection(FS.scoreReports).add({
+                        matchId, p1name, p2name, p1idx, p2idx,
+                        score1: scoreP1,
+                        score2: scoreP2,
+                        status: 'pending',
+                        source: 'public_user',
+                        tournamentStatus: currentTournamentStatus || '',
+                        tournamentType: currentTournamentData.tournamentType || '',
+                        platformFilter: currentTournamentData.platformFilter || '',
+                        createdAt: fsTimestamp(),
+                        updatedAt: fsTimestamp()
+                    });
+                    closeScoreModal();
+                    showTAlert('اترسلت للأدمن ✅', 'النتيجة اتسجلت كمراجعة معلقة، ومش هتتحسب في الجدول غير لما الأدمن يوافق عليها.', false);
+                    return;
+                }
+                const winner = await applyScoreDirect({ matchId, p1name, p2name, p1idx, p2idx, score1: scoreP1, score2: scoreP2 });
                 closeScoreModal();
                 showTAlert('تم! ✅', `النتيجة: ${p1name} ${scoreP1} - ${scoreP2} ${p2name}`, false);
-                // Refresh view
-                setTimeout(async () => {
-                    await loadTournamentStatus();
-                    if (!document.getElementById('admin-panel-modal').classList.contains('hidden')) loadMatchesForAdmin();
-                }, 700);
+                setTimeout(async () => { await loadTournamentStatus(); if (!document.getElementById('admin-panel-modal').classList.contains('hidden')) loadMatchesForAdmin(); }, 700);
+            } catch(e) { console.error(e); showTAlert('خطأ', isAdmin ? 'تعذر حفظ النتيجة' : 'تعذر إرسال النتيجة للأدمن', true); }
+        }
+
+        async function updatePendingScoreReportsBadge() {
+            const badge = document.getElementById('pending-results-badge');
+            if (!badge || !isAdmin) return;
+            try {
+                const snap = await db.collection(FS.scoreReports).where('status', '==', 'pending').get();
+                const count = snap.size;
+                badge.textContent = count;
+                badge.classList.toggle('hidden', count === 0);
+                badge.classList.toggle('flex', count > 0);
+            } catch(e) { badge.classList.add('hidden'); }
+        }
+
+        async function loadPendingScoreReports() {
+            const c = document.getElementById('pending-results-container');
+            if (!c) return;
+            c.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل النتائج المعلقة...</div>';
+            try {
+                const snap = await db.collection(FS.scoreReports).where('status', '==', 'pending').get();
+                const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => tsToMillis(b.createdAt) - tsToMillis(a.createdAt));
+                await updatePendingScoreReportsBadge();
+                if (!rows.length) { c.innerHTML = '<div class="text-center py-8 text-slate-500">لا توجد نتائج معلقة</div>'; return; }
+                c.innerHTML = rows.map(r => `<div class="glass-card rounded-2xl p-4 border border-yellow-500/20" id="score-report-${escapeHtml(r.id)}">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <span class="text-[11px] text-slate-500" dir="ltr">${escapeHtml(tsToText(r.createdAt))}</span>
+                        <span class="px-2.5 py-1 rounded-full bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 text-[11px] font-black">Pending</span>
+                    </div>
+                    <div class="flex items-center justify-between gap-3 text-center">
+                        <div class="flex-1"><div class="font-extrabold text-white truncate">${escapeHtml(r.p1name)}</div><div class="text-3xl font-black text-cyan-300 mt-1">${escapeHtml(r.score1 ?? 0)}</div></div>
+                        <div class="text-slate-500 font-black">VS</div>
+                        <div class="flex-1"><div class="font-extrabold text-white truncate">${escapeHtml(r.p2name)}</div><div class="text-3xl font-black text-cyan-300 mt-1">${escapeHtml(r.score2 ?? 0)}</div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button onclick="approveScoreReport('${escapeHtml(r.id)}')" class="py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black hover:bg-emerald-500/25 transition-all"><i class="fa-solid fa-check ml-1"></i> موافق</button>
+                        <button onclick="rejectScoreReport('${escapeHtml(r.id)}')" class="py-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black hover:bg-rose-500/25 transition-all"><i class="fa-solid fa-xmark ml-1"></i> رفض</button>
+                    </div>
+                </div>`).join('');
             } catch(e) {
-                showTAlert('خطأ', 'تعذر حفظ النتيجة', true);
+                console.error(e);
+                c.innerHTML = '<div class="text-center py-8 text-rose-400">تعذر تحميل النتائج المعلقة</div>';
             }
+        }
+
+        async function approveScoreReport(reportId) {
+            try {
+                const ref = db.collection(FS.scoreReports).doc(String(reportId));
+                const snap = await ref.get();
+                if (!snap.exists) return showTAlert('خطأ', 'النتيجة المعلقة غير موجودة', true);
+                const r = snap.data();
+                await applyScoreDirect({ matchId: r.matchId, p1name: r.p1name, p2name: r.p2name, p1idx: r.p1idx, p2idx: r.p2idx, score1: toNumber(r.score1), score2: toNumber(r.score2), reportId });
+                await ref.update({ status: 'approved', reviewedAt: fsTimestamp(), reviewedBy: getAdminMeta().email || '', updatedAt: fsTimestamp() });
+                showTAlert('تم الاعتماد ✅', 'النتيجة اتحسبت في جدول البطولة.', false);
+                await loadPendingScoreReports();
+                await loadTournamentStatus();
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر اعتماد النتيجة', true); }
+        }
+
+        async function rejectScoreReport(reportId) {
+            try {
+                await db.collection(FS.scoreReports).doc(String(reportId)).update({ status: 'rejected', reviewedAt: fsTimestamp(), reviewedBy: getAdminMeta().email || '', updatedAt: fsTimestamp() });
+                await writeAdminLog('reject_player_score_report', { reportId });
+                showTAlert('تم الرفض', 'النتيجة اترفضت ومش هتتحسب.', false);
+                await loadPendingScoreReports();
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر رفض النتيجة', true); }
+        }
+
+
+        // ===== GROUP LINK / LOGS / HISTORY =====
+        async function loadGroupLinkInput() { try { const snap = await db.collection(FS.tournamentState).doc('current').get(); const link = snap.exists ? (snap.data().groupLink || '') : ''; const input = document.getElementById('admin-group-link-input'); if (input) input.value = link; const inline = document.getElementById('inline-group-link-input'); if (inline) inline.value = link; } catch(e) {} }
+        async function saveGroupLinkValue(link) { await db.collection(FS.tournamentState).doc('current').set({ groupLink: link, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true }); currentTournamentData.groupLink = link; saveTournamentStateFallback(currentTournamentData); await writeAdminLog('update_whatsapp_group_link', { hasLink: !!link }); showTAlert('تم الحفظ', link ? 'تم حفظ لينك الجروب وهيظهر للناس.' : 'تم مسح لينك الجروب، مش هيظهر للناس.', false); renderState(currentTournamentData); }
+        async function saveTournamentGroupLink() { const link = (document.getElementById('admin-group-link-input')?.value || '').trim(); try { await saveGroupLinkValue(link); } catch(e) { showTAlert('خطأ', 'تعذر حفظ لينك الجروب', true); } }
+        async function saveInlineTournamentGroupLink() { const link = (document.getElementById('inline-group-link-input')?.value || '').trim(); try { const modalInput = document.getElementById('admin-group-link-input'); if (modalInput) modalInput.value = link; await saveGroupLinkValue(link); } catch(e) { showTAlert('خطأ', 'تعذر حفظ لينك الجروب', true); } }
+
+        async function loadAdminLogs() {
+            const c = document.getElementById('admin-logs-container'); c.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</div>';
+            try { const snap = await db.collection(FS.adminLogs).get(); const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => tsToMillis(b.createdAt)-tsToMillis(a.createdAt)).slice(0,100); if (!rows.length) { c.innerHTML = '<div class="text-center py-8 text-slate-500">لا توجد Logs حتى الآن</div>'; return; } c.innerHTML = rows.map(r => `<div class="glass-card rounded-2xl p-3 border border-slate-700/50"><div class="flex items-center justify-between gap-3"><span class="font-bold text-white text-sm">${escapeHtml(r.action || '-')}</span><span class="text-[11px] text-slate-500" dir="ltr">${escapeHtml(tsToText(r.createdAt))}</span></div><div class="text-xs text-cyan-300 mt-1" dir="ltr">${escapeHtml(r.adminEmail || r.adminName || 'unknown')}</div><pre class="text-[11px] text-slate-400 mt-2 whitespace-pre-wrap break-all bg-slate-950/50 rounded-xl p-2" dir="ltr">${escapeHtml(JSON.stringify(r.details || {}, null, 2))}</pre></div>`).join(''); }
+            catch(e) { c.innerHTML = '<div class="text-center py-8 text-slate-500">تعذر تحميل اللوجز</div>'; }
+        }
+
+        async function loadTournamentHistory() {
+            const c = document.getElementById('tournament-history-container'); c.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</div>';
+            try { const snap = await db.collection(FS.tournamentHistory).get(); const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>tsToMillis(b.createdAt)-tsToMillis(a.createdAt)).slice(0,30); if (!rows.length) { c.innerHTML = '<div class="text-center py-8 text-slate-500">لا يوجد هيستوري بطولات حتى الآن</div>'; return; } c.innerHTML = rows.map((h,i) => { const players = h.players || []; const matches = h.matches || []; const state = h.state || {}; const winner = sortStandingsPlayers(players.map(normalizePlayer).filter(isActivePlayer))[0]; return `<div class="glass-card rounded-2xl p-4"><div class="flex items-center justify-between gap-3"><h4 class="font-extrabold text-white">بطولة #${rows.length - i}</h4><span class="text-xs text-slate-500" dir="ltr">${escapeHtml(tsToText(h.createdAt))}</span></div><div class="grid grid-cols-3 gap-2 mt-3 text-center"><div class="bg-slate-950/50 rounded-xl p-2"><div class="text-yellow-400 font-black">${players.length}</div><div class="text-[10px] text-slate-500">لاعب</div></div><div class="bg-slate-950/50 rounded-xl p-2"><div class="text-cyan-400 font-black">${matches.length}</div><div class="text-[10px] text-slate-500">ماتش</div></div><div class="bg-slate-950/50 rounded-xl p-2"><div class="text-emerald-400 font-black truncate">${escapeHtml(winner?.name || '-')}</div><div class="text-[10px] text-slate-500">الأول</div></div></div><p class="text-xs text-slate-400 mt-3">النوع: ${escapeHtml(state.tournamentType || '-')} | المنصة: ${escapeHtml(state.platformFilter || 'all')}</p></div>`; }).join(''); }
+            catch(e) { c.innerHTML = '<div class="text-center py-8 text-slate-500">تعذر تحميل الهيستوري</div>'; }
+        }
+
+        async function loadPublicHistoryPreview() {
+            const idle = document.getElementById('state-idle');
+            if (!idle || document.getElementById('public-history-preview')) return;
+            try { const snap = await db.collection(FS.tournamentHistory).get(); const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>tsToMillis(b.createdAt)-tsToMillis(a.createdAt)).slice(0,3); if (!rows.length) return; const div = document.createElement('div'); div.id = 'public-history-preview'; div.className = 'mt-10 max-w-2xl mx-auto text-right'; div.innerHTML = `<h3 class="text-lg font-extrabold text-white mb-3 text-center"><i class="fa-solid fa-clock-rotate-left text-yellow-400 ml-1"></i> آخر البطولات</h3>${rows.map(h => `<div class="glass-card rounded-2xl p-4 mb-2"><div class="flex justify-between"><span class="text-white font-bold">بطولة سابقة</span><span class="text-xs text-slate-500" dir="ltr">${escapeHtml(tsToText(h.createdAt))}</span></div><p class="text-xs text-slate-400 mt-1">عدد اللاعبين: ${(h.players || []).length} | عدد المباريات: ${(h.matches || []).length}</p></div>`).join('')}`; idle.appendChild(div); } catch(e) {}
         }
 
         // ===== HELPERS =====
-        function getPlatformIcon(platform) {
-            const icons = { steam: '🎮', xbox: '🟢', ps: '🔵', mobile: '📱' };
-            return icons[platform] || '🎮';
-        }
-
-        function showTAlert(title, msg, isError) {
-            const modal = document.getElementById('t-alert-modal');
-            const icon = document.getElementById('t-alert-icon');
-            document.getElementById('t-alert-title').textContent = title;
-            document.getElementById('t-alert-msg').textContent = msg;
-            if (isError) {
-                icon.className = 'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-rose-500/15 text-rose-400';
-                icon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
-            } else {
-                icon.className = 'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-emerald-500/15 text-emerald-400';
-                icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-            }
-            modal.classList.remove('hidden');
-        }
+        function getPlatformIcon(platform) { const icons = { steam: '🎮', xbox: '🟢', ps: '🔵', mobile: '📱' }; return icons[platform] || '🎮'; }
+        function showTAlert(title, msg, isError) { const modal = document.getElementById('t-alert-modal'); const icon = document.getElementById('t-alert-icon'); document.getElementById('t-alert-title').textContent = title; document.getElementById('t-alert-msg').textContent = msg; if (isError) { icon.className = 'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-rose-500/15 text-rose-400'; icon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>'; } else { icon.className = 'w-14 h-14 rounded-full mx-auto flex items-center justify-center text-2xl bg-emerald-500/15 text-emerald-400'; icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>'; } modal.classList.remove('hidden'); }
         function closeTAlert() { document.getElementById('t-alert-modal').classList.add('hidden'); }
-
-        // Admin button to open panel when logged in
-        document.getElementById('admin-indicator').addEventListener('click', function(e) {
-            if (e.target.closest('button[onclick="adminLogout()"]')) return;
-            openAdminPanel();
-        });
+        document.getElementById('admin-indicator').addEventListener('click', function(e) { if (e.target.closest('button[onclick="adminLogout()"]')) return; openAdminPanel(); });
     </script>
 </body>
 </html>
