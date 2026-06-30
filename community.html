@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eFootball Community | ايفوتبول كوميونتي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        efootball: {
+                            cyan: '#00f0ff',
+                            magenta: '#ff007a',
+                            dark: '#080c1e'
+                        }
+                    },
+                    boxShadow: {
+                        glowCyan: '0 0 22px rgba(0,240,255,.32)',
+                        glowPink: '0 0 22px rgba(255,0,122,.28)'
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script>
+        const keyParts = ["AIza","SyAd","2GHN","biEK","i9qi","nfJM","WGXS","XazZ","0Hid","1MQ"];
+        firebase.initializeApp({
+            apiKey: keyParts.join(""),
+            authDomain: "efootball-d1358.firebaseapp.com",
+            databaseURL: "https://efootball-d1358-default-rtdb.firebaseio.com",
+            projectId: "efootball-d1358",
+            storageBucket: "efootball-d1358.firebasestorage.app",
+            messagingSenderId: "927057374768",
+            appId: "1:927057374768:web:463a074dd5f3c454c1c7f5",
+            measurementId: "G-9HJY9MHRMP"
+        });
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
+        db.settings({ ignoreUndefinedProperties: true });
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.warn);
+        const IMGBB_API_KEY = "48bb17b6e24892d745741a65d54e3520";
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            min-height: 100vh;
+            color: #f8fafc;
+            background:
+                radial-gradient(circle at 12% 12%, rgba(255, 0, 122, .16), transparent 28%),
+                radial-gradient(circle at 88% 4%, rgba(0, 240, 255, .17), transparent 32%),
+                linear-gradient(145deg, #080c1e 0%, #101735 45%, #080c1e 100%);
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(13, 19, 43, .68);
+            border: 1px solid rgba(255,255,255,.08);
+            box-shadow: 0 16px 42px rgba(0,0,0,.34);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+        .glass-card {
+            background: rgba(18, 26, 59, .55);
+            border: 1px solid rgba(255,255,255,.07);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .field {
+            width: 100%;
+            border: 1px solid rgba(148,163,184,.25);
+            background: rgba(2,6,23,.82);
+            color: #fff;
+            outline: none;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 14px;
+        }
+        .field:focus { border-color: #00f0ff; box-shadow: 0 0 0 3px rgba(0,240,255,.09); }
+        .avatar { width: 42px; height: 42px; border-radius: 999px; object-fit: cover; background: #0f172a; border: 1px solid rgba(255,255,255,.12); }
+        .avatar-sm { width: 30px; height: 30px; border-radius: 999px; object-fit: cover; background: #0f172a; border: 1px solid rgba(255,255,255,.12); }
+        .tab-btn.active { color: #07111f; background: linear-gradient(135deg, #00f0ff, #38bdf8); border-color: rgba(0,240,255,.75); }
+        .admin-tab.active { color: #fff; border-color: #00f0ff; background: rgba(0,240,255,.09); }
+        .image-tile { aspect-ratio: 16/10; background: #020617; overflow: hidden; border-radius: 18px; border: 1px solid rgba(255,255,255,.08); }
+        .image-tile img { width: 100%; height: 100%; object-fit: cover; }
+        .comment-preview { max-height: 210px; overflow: hidden; }
+        .chat-drawer { transform: translateX(110%); transition: transform .28s ease; }
+        .chat-drawer.open { transform: translateX(0); }
+        @keyframes notifyPulse { 0%,100% { box-shadow: 0 0 0 rgba(250,204,21,0); } 50% { box-shadow: 0 0 26px rgba(250,204,21,.65); } }
+        .notify-pulse { animation: notifyPulse 1.1s ease-in-out infinite; }
+        .spinner { width: 34px; height: 34px; border-radius: 999px; border: 3px solid rgba(255,255,255,.13); border-right-color: #00f0ff; animation: spin .8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #080c1e; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.13); border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,240,255,.45); }
+        #admin-backdoor {
+            position: fixed;
+            left: 10px;
+            bottom: 10px;
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.17);
+            z-index: 120;
+            cursor: pointer;
+        }
+        #admin-backdoor:hover { background: rgba(0,240,255,.68); box-shadow: 0 0 16px rgba(0,240,255,.55); }
+        @media (max-width: 768px) {
+            .chat-drawer { width: calc(100vw - 20px); right: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="admin-backdoor" onclick="openAdminLogin()" title="Admin"></div>
+
+    <header class="glass-panel sticky top-0 z-50 border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            <a href="index.html" class="flex items-center gap-3 min-w-0">
+                <span class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-pink-500 flex items-center justify-center shadow-glowCyan shrink-0">
+                    <i class="fa-solid fa-gamepad text-white text-xl"></i>
+                </span>
+                <span class="min-w-0">
+                    <span class="block text-white font-black leading-tight truncate">eFootball Community</span>
+                    <span class="block text-cyan-300 text-xs font-bold">ايفوتبول كوميونتي</span>
+                </span>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-2">
+                <a href="index.html" class="px-3 py-2 rounded-xl text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i class="fa-solid fa-store ml-1 text-cyan-300"></i> المتجر
+                </a>
+                <a href="tournament.html" class="px-3 py-2 rounded-xl text-sm font-bold text-slate-300 hover:text-white hover:bg-white/5 transition-all">
+                    <i class="fa-solid fa-trophy ml-1 text-yellow-300"></i> البطولة
+                </a>
+            </nav>
+
+            <div class="flex items-center gap-2">
+                <button id="header-notification-btn" onclick="toggleNotifications()" class="hidden relative w-10 h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/25 text-yellow-300 hover:bg-yellow-500/20 transition-all">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notification-count" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center"></span>
+                </button>
+                <button id="header-profile-btn" onclick="openProfileEditor()" class="hidden items-center gap-2 px-2 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-400/50 transition-all">
+                    <img id="header-avatar" class="avatar-sm" alt="profile">
+                    <span id="header-name" class="hidden sm:block text-sm font-bold text-white max-w-[120px] truncate"></span>
+                </button>
+                <button id="community-logout-btn" onclick="communityLogout()" title="تسجيل خروج اليوزر" class="hidden w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-300 hover:text-white hover:border-cyan-400/50 transition-all">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+                <span id="admin-badge" class="hidden items-center gap-2 px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-black">
+                    <i class="fa-solid fa-user-shield"></i> أدمن
+                    <button onclick="adminLogout()" title="تسجيل خروج الأدمن" class="hover:text-white"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </span>
+            </div>
+        </div>
+        <nav class="md:hidden max-w-7xl mx-auto px-4 pb-3 flex items-center gap-2">
+            <a href="index.html" class="flex-1 text-center px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black text-slate-200">
+                <i class="fa-solid fa-store ml-1 text-cyan-300"></i> المتجر
+            </a>
+            <a href="tournament.html" class="flex-1 text-center px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black text-slate-200">
+                <i class="fa-solid fa-trophy ml-1 text-yellow-300"></i> البطولة
+            </a>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 md:py-8">
+        <section id="entry-gate" class="min-h-[72vh] flex items-center justify-center">
+            <div class="glass-panel w-full max-w-md rounded-3xl p-6 md:p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center mb-4 shadow-glowCyan">
+                        <i class="fa-solid fa-users text-cyan-300 text-3xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-black text-white">ادخل الكوميونتي</h1>
+                    <p class="text-sm text-slate-400 mt-2">اكتب الإيميل فقط. لو أول مرة، هنطلب الاسم والصورة.</p>
+                </div>
+
+                <form id="email-form" class="space-y-4">
+                    <input id="entry-email" type="email" required dir="ltr" class="field text-center" placeholder="name@email.com">
+                    <button id="email-submit-btn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 font-black shadow-glowCyan hover:brightness-110 transition-all">
+                        دخول
+                    </button>
+                </form>
+
+                <form id="profile-create-form" class="hidden space-y-4 mt-5 border-t border-white/10 pt-5">
+                    <p class="text-sm text-cyan-200 font-bold text-center">أول مرة بالإيميل ده. كمّل بياناتك مرة واحدة.</p>
+                    <input id="profile-create-name" type="text" required class="field text-right" placeholder="اسمك أو اسم الأكونت">
+                    <label class="block">
+                        <span class="block text-xs text-slate-400 mb-2 font-bold">صورتك</span>
+                        <input id="profile-create-photo" type="file" accept="image/*" class="field file:ml-3 file:border-0 file:rounded-lg file:bg-cyan-500/20 file:text-cyan-200 file:px-3 file:py-1.5">
+                    </label>
+                    <button id="profile-create-btn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-black shadow-glowPink hover:brightness-110 transition-all">
+                        حفظ وفتح الكوميونتي
+                    </button>
+                </form>
+
+                <p id="entry-error" class="hidden mt-4 text-center text-sm text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-xl p-3"></p>
+            </div>
+        </section>
+
+        <section id="blocked-state" class="hidden min-h-[68vh] flex items-center justify-center text-center">
+            <div class="glass-panel max-w-lg rounded-3xl p-8">
+                <i class="fa-solid fa-ban text-rose-400 text-5xl mb-4"></i>
+                <h2 class="text-2xl font-black text-white">الحساب موقوف مؤقتاً</h2>
+                <p class="text-slate-400 text-sm mt-2">الإيميل ده اتعمله Disable من الأدمن. لو فيه خطأ، تواصل مع إدارة المتجر.</p>
+                <button onclick="resetEntry()" class="mt-5 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold">تجربة إيميل تاني</button>
+            </div>
+        </section>
+
+        <section id="community-app" class="hidden space-y-6">
+            <div class="glass-panel rounded-3xl p-5 md:p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <img id="hero-avatar" class="w-16 h-16 rounded-2xl object-cover border border-cyan-400/30 bg-slate-900" alt="profile">
+                        <div class="min-w-0">
+                            <h2 class="text-2xl md:text-3xl font-black text-white leading-tight">الكوميونتي</h2>
+                            <p class="text-slate-400 text-sm mt-1">خطط، تقييمات، تحديات، وشات مباشر بين لاعيبة eFootball.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="openPostModal()" class="px-4 py-3 rounded-2xl bg-cyan-400 text-slate-950 font-black hover:brightness-110 transition-all shadow-glowCyan">
+                            <i class="fa-solid fa-plus ml-1"></i> تقييم / خطة
+                        </button>
+                        <button onclick="openChallengeModal()" class="px-4 py-3 rounded-2xl bg-pink-500 text-white font-black hover:brightness-110 transition-all shadow-glowPink">
+                            <i class="fa-solid fa-bolt ml-1"></i> تحدي
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-5 flex gap-2 overflow-x-auto pb-1">
+                    <button data-tab="home" onclick="switchTab('home')" class="tab-btn active shrink-0 px-4 py-2.5 rounded-xl border border-white/10 text-sm font-black text-slate-300 hover:text-white transition-all">
+                        <i class="fa-solid fa-house ml-1"></i> الرئيسية
+                    </button>
+                    <button data-tab="challenges" onclick="switchTab('challenges')" class="tab-btn shrink-0 px-4 py-2.5 rounded-xl border border-white/10 text-sm font-black text-slate-300 hover:text-white transition-all">
+                        <i class="fa-solid fa-fire ml-1"></i> التحديات
+                    </button>
+                    <button id="admin-tab-button" data-tab="admin" onclick="switchTab('admin')" class="tab-btn hidden shrink-0 px-4 py-2.5 rounded-xl border border-rose-500/30 text-sm font-black text-rose-200 hover:text-white transition-all">
+                        <i class="fa-solid fa-screwdriver-wrench ml-1"></i> إدارة
+                    </button>
+                </div>
+            </div>
+
+            <div id="home-layout" class="grid grid-cols-1 gap-5">
+                <section id="posts-section" class="space-y-4 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <h3 id="posts-title" class="text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chalkboard-user text-cyan-300"></i> الخطط والتقييمات
+                        </h3>
+                        <button onclick="refreshAll()" class="text-xs px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-cyan-200 hover:text-white transition-all">
+                            <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
+                        </button>
+                    </div>
+                    <div id="posts-list" class="space-y-4">
+                        <div class="glass-card rounded-3xl p-8 flex flex-col items-center gap-3 text-slate-400">
+                            <div class="spinner"></div>
+                            <span>جاري تحميل المنشورات...</span>
+                        </div>
+                    </div>
+                </section>
+
+                <aside id="challenges-column" class="space-y-4 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-gamepad text-pink-300"></i> التحديات
+                        </h3>
+                        <button onclick="openChallengeModal()" class="text-xs px-3 py-2 rounded-xl bg-pink-500/15 border border-pink-500/30 text-pink-200 hover:text-white transition-all">
+                            <i class="fa-solid fa-plus ml-1"></i> تحدي جديد
+                        </button>
+                    </div>
+                    <div id="challenges-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        <div class="glass-card rounded-3xl p-8 text-center text-slate-400">جاري تحميل التحديات...</div>
+                    </div>
+                </aside>
+            </div>
+
+            <section id="admin-panel" class="hidden space-y-4">
+                <div class="glass-panel rounded-3xl p-5">
+                    <div class="flex items-center justify-between gap-3 flex-wrap border-b border-white/10 pb-4 mb-4">
+                        <div>
+                            <h3 class="text-xl font-black text-white">لوحة إدارة الكوميونتي</h3>
+                            <p class="text-sm text-slate-400 mt-1">تحكم في المستخدمين، تعطيل الإيميلات، وحذف المحتوى.</p>
+                        </div>
+                        <button onclick="loadAdminData()" class="px-4 py-2.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-200 font-bold hover:text-white">
+                            <i class="fa-solid fa-rotate-right ml-1"></i> تحديث
+                        </button>
+                    </div>
+                    <div class="flex gap-2 overflow-x-auto pb-3">
+                        <button onclick="switchAdminPane('users')" data-admin-pane="users" class="admin-tab active shrink-0 px-4 py-2.5 rounded-xl border text-sm font-black text-slate-300">
+                            <i class="fa-solid fa-users ml-1"></i> اليوزرات
+                        </button>
+                        <button onclick="switchAdminPane('posts')" data-admin-pane="posts" class="admin-tab shrink-0 px-4 py-2.5 rounded-xl border border-transparent text-sm font-black text-slate-400">
+                            <i class="fa-solid fa-newspaper ml-1"></i> المنشورات
+                        </button>
+                        <button onclick="switchAdminPane('challenges')" data-admin-pane="challenges" class="admin-tab shrink-0 px-4 py-2.5 rounded-xl border border-transparent text-sm font-black text-slate-400">
+                            <i class="fa-solid fa-bolt ml-1"></i> التحديات
+                        </button>
+                    </div>
+                    <div id="admin-users-pane"></div>
+                    <div id="admin-posts-pane" class="hidden"></div>
+                    <div id="admin-challenges-pane" class="hidden"></div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <button id="chat-float-btn" onclick="toggleChat()" class="hidden fixed right-5 bottom-5 z-[90] px-5 py-4 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 font-black shadow-glowCyan hover:brightness-110 transition-all">
+        <i class="fa-solid fa-comments ml-1"></i> الشات
+        <span id="online-count-pill" class="mr-2 px-2 py-0.5 rounded-full bg-slate-950/15 text-xs"></span>
+    </button>
+
+    <aside id="chat-panel" class="chat-drawer fixed right-4 bottom-20 z-[95] w-[410px] max-w-[calc(100vw-2rem)] h-[620px] max-h-[calc(100vh-7rem)] glass-panel rounded-3xl overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between gap-3">
+            <div>
+                <h3 class="text-white font-black flex items-center gap-2"><i class="fa-solid fa-comments text-cyan-300"></i> الشات</h3>
+                <p class="text-xs text-slate-400">عام وبرايفت مع كل اليوزرات المسجلة</p>
+            </div>
+            <button onclick="toggleChat(false)" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="p-3 border-b border-white/10 flex gap-2">
+            <button id="chat-public-tab" onclick="switchChatMode('public')" class="flex-1 py-2 rounded-xl bg-cyan-400 text-slate-950 font-black text-sm">عام</button>
+            <button id="chat-private-tab" onclick="switchChatMode('private')" class="flex-1 py-2 rounded-xl bg-white/5 text-slate-300 font-black text-sm">برايفت</button>
+        </div>
+
+        <div id="public-chat-pane" class="flex-1 min-h-0 flex flex-col">
+            <div class="p-3 border-b border-white/10">
+                <p class="text-xs font-bold text-slate-400 mb-2">كل اللاعبين</p>
+                <div id="online-users-list" class="flex gap-2 overflow-x-auto pb-1"></div>
+            </div>
+            <div id="public-messages" class="flex-1 min-h-0 overflow-y-auto p-3 space-y-3"></div>
+            <form id="public-chat-form" class="p-3 border-t border-white/10 flex gap-2">
+                <input id="public-chat-input" class="field py-2.5 text-sm" placeholder="اكتب في الشات العام...">
+                <button class="w-11 rounded-xl bg-cyan-400 text-slate-950 font-black"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+
+        <div id="private-chat-pane" class="hidden flex-1 min-h-0">
+            <div class="grid grid-cols-[118px_minmax(0,1fr)] h-full min-h-0">
+                <div class="border-l border-white/10 overflow-y-auto p-2">
+                    <p class="text-[11px] text-slate-500 font-bold mb-2 px-1">اختار لاعب</p>
+                    <input id="private-user-search" class="field py-2 mb-2 text-xs" placeholder="بحث بالاسم...">
+                    <div id="private-users-list" class="space-y-2"></div>
+                </div>
+                <div class="flex flex-col min-w-0 min-h-0">
+                    <div id="private-chat-header" class="p-3 border-b border-white/10 text-sm font-black text-white">برايفت</div>
+                    <div id="private-messages" class="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+                        <div class="text-center text-slate-500 text-sm py-10">اختار أي لاعب مسجل عشان تبدأ كلام.</div>
+                    </div>
+                    <form id="private-chat-form" class="p-3 border-t border-white/10 flex gap-2">
+                        <input id="private-chat-input" class="field py-2.5 text-sm" placeholder="رسالة برايفت...">
+                        <button class="w-11 rounded-xl bg-pink-500 text-white font-black"><i class="fa-solid fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div id="notifications-panel" class="hidden fixed top-20 left-4 z-[85] w-[360px] max-w-[calc(100vw-2rem)] glass-panel rounded-3xl overflow-hidden">
+        <div class="p-4 border-b border-white/10 flex items-center justify-between">
+            <h3 class="font-black text-white"><i class="fa-solid fa-bell text-yellow-300 ml-1"></i> الإشعارات</h3>
+            <button onclick="toggleNotifications(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="notifications-list" class="max-h-[420px] overflow-y-auto p-3 space-y-2"></div>
+    </div>
+
+    <div id="profile-modal" class="hidden fixed inset-0 z-[100] p-4 flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onclick="closeProfileEditor()"></div>
+        <form id="profile-edit-form" class="glass-panel w-full max-w-md rounded-3xl p-6 relative z-10 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-black text-white">تعديل البروفايل</h3>
+                <button type="button" onclick="closeProfileEditor()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <input id="profile-edit-name" class="field text-right" required placeholder="اسمك">
+            <label class="block">
+                <span class="block text-xs text-slate-400 mb-2 font-bold">تغيير الصورة</span>
+                <input id="profile-edit-photo" type="file" accept="image/*" class="field file:ml-3 file:border-0 file:rounded-lg file:bg-cyan-500/20 file:text-cyan-200 file:px-3 file:py-1.5">
+            </label>
+            <button id="profile-edit-btn" class="w-full py-3.5 rounded-2xl bg-cyan-400 text-slate-950 font-black shadow-glowCyan">حفظ التعديل</button>
+        </form>
+    </div>
+
+    <div id="post-modal" class="hidden fixed inset-0 z-[100] p-4 flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onclick="closePostModal()"></div>
+        <form id="post-form" class="glass-panel w-full max-w-2xl rounded-3xl p-6 relative z-10 space-y-4 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-black text-white">منشور جديد</h3>
+                <button type="button" onclick="closePostModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input id="post-title" class="field text-right" placeholder="عنوان الخطة أو التقييم" required>
+                <select id="post-type" class="field">
+                    <option value="خطة">خطة</option>
+                    <option value="تقييم">تقييم</option>
+                    <option value="تعليمات فردية">تعليمات فردية</option>
+                </select>
+            </div>
+            <textarea id="post-body" class="field text-right min-h-[130px]" placeholder="اكتب شرح الخطة، التعليمات، أو التقييم..." required></textarea>
+            <label class="block">
+                <span class="block text-xs text-slate-400 mb-2 font-bold">صور المنشور (ينفع كذا صورة)</span>
+                <input id="post-images" type="file" accept="image/*" multiple class="field file:ml-3 file:border-0 file:rounded-lg file:bg-cyan-500/20 file:text-cyan-200 file:px-3 file:py-1.5" required>
+            </label>
+            <p class="text-xs text-slate-500">الصورة الأولى هتظهر في الكارت، وباقي الصور تظهر كصور إضافية داخل المنشور.</p>
+            <button id="post-submit-btn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 font-black shadow-glowCyan">نشر</button>
+        </form>
+    </div>
+
+    <div id="challenge-modal" class="hidden fixed inset-0 z-[100] p-4 flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onclick="closeChallengeModal()"></div>
+        <form id="challenge-form" class="glass-panel w-full max-w-lg rounded-3xl p-6 relative z-10 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-black text-white">تحدي جديد</h3>
+                <button type="button" onclick="closeChallengeModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="grid grid-cols-[150px_minmax(0,1fr)] gap-2">
+                <select id="challenge-country" class="field"></select>
+                <input id="challenge-phone" class="field" dir="ltr" type="tel" placeholder="رقم واتساب" required>
+            </div>
+            <label class="block">
+                <span class="block text-xs text-slate-400 mb-2 font-bold">صورة واحدة من أكونتك</span>
+                <input id="challenge-image" type="file" accept="image/*" class="field file:ml-3 file:border-0 file:rounded-lg file:bg-pink-500/20 file:text-pink-200 file:px-3 file:py-1.5" required>
+            </label>
+            <button id="challenge-submit-btn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-black shadow-glowPink">نشر التحدي</button>
+        </form>
+    </div>
+
+    <div id="accept-modal" class="hidden fixed inset-0 z-[100] p-4 flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm" onclick="closeAcceptModal()"></div>
+        <form id="accept-form" class="glass-panel w-full max-w-lg rounded-3xl p-6 relative z-10 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-black text-white">قبول التحدي</h3>
+                <button type="button" onclick="closeAcceptModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p id="accept-text" class="text-sm text-slate-300"></p>
+            <div class="grid grid-cols-[150px_minmax(0,1fr)] gap-2">
+                <select id="accept-country" class="field"></select>
+                <input id="accept-phone" class="field" dir="ltr" type="tel" placeholder="رقم واتساب" required>
+            </div>
+            <button id="accept-submit-btn" class="w-full py-3.5 rounded-2xl bg-emerald-400 text-slate-950 font-black">تأكيد قبول التحدي</button>
+        </form>
+    </div>
+
+
+    <div id="challenge-phone-modal" class="hidden fixed inset-0 z-[160] p-4 flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-950/88 backdrop-blur-sm" onclick="closeChallengePhoneModal()"></div>
+        <div class="glass-panel w-full max-w-md rounded-3xl p-6 relative z-10 space-y-4 border border-emerald-400/25">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <h3 id="challenge-phone-modal-title" class="text-xl font-black text-white">رقم الواتساب</h3>
+                    <p id="challenge-phone-modal-name" class="text-sm text-slate-400 mt-1"></p>
+                </div>
+                <button type="button" onclick="closeChallengePhoneModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
+                <p id="challenge-phone-modal-number" dir="ltr" class="text-2xl font-black text-white tracking-wide"></p>
+            </div>
+            <a id="challenge-phone-whatsapp-link" href="#" target="_blank" rel="noopener" class="block w-full py-3.5 rounded-2xl bg-emerald-400 text-slate-950 font-black text-center hover:brightness-110 transition-all">
+                <i class="fa-brands fa-whatsapp ml-1"></i> فتح واتساب
+            </a>
+        </div>
+    </div>
+
+    <div id="post-viewer-modal" class="hidden fixed inset-0 z-[110] p-3 md:p-5 flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-md" onclick="closePostViewer()"></div>
+        <div class="glass-panel w-full max-w-6xl h-[92vh] rounded-3xl overflow-hidden relative z-10 grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(340px,.8fr)]">
+            <section class="min-h-0 bg-slate-950/45 flex flex-col">
+                <div class="p-4 border-b border-white/10 flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <h3 id="viewer-title" class="text-lg font-black text-white truncate"></h3>
+                        <p id="viewer-author" class="text-xs text-slate-400"></p>
+                    </div>
+                    <button onclick="closePostViewer()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="relative flex-1 min-h-0 flex items-center justify-center bg-black/25">
+                    <button onclick="moveViewerImage(-1)" class="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-slate-950/70 border border-white/10 text-white hover:border-cyan-300">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    <img id="viewer-image" src="" alt="post image" class="max-w-full max-h-full object-contain">
+                    <button onclick="moveViewerImage(1)" class="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-slate-950/70 border border-white/10 text-white hover:border-cyan-300">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                </div>
+                <div id="viewer-thumbs" class="p-3 border-t border-white/10 flex gap-2 overflow-x-auto"></div>
+            </section>
+            <aside class="min-h-0 flex flex-col border-r border-white/10">
+                <div class="p-4 border-b border-white/10">
+                    <p id="viewer-body" class="text-sm text-slate-300 whitespace-pre-line leading-relaxed"></p>
+                </div>
+                <div id="viewer-comments" class="flex-1 min-h-0 overflow-y-auto p-4 space-y-3"></div>
+                <form id="viewer-comment-form" class="p-4 border-t border-white/10 space-y-2">
+                    <div id="reply-chip" class="hidden text-xs text-cyan-200 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3 py-2 flex items-center justify-between">
+                        <span id="reply-chip-text"></span>
+                        <button type="button" onclick="clearReply()" class="text-slate-300 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="flex gap-2">
+                        <input id="viewer-comment-input" class="field py-2.5 text-sm" placeholder="اكتب تعليق...">
+                        <button class="w-11 rounded-xl bg-cyan-400 text-slate-950 font-black"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </form>
+            </aside>
+        </div>
+    </div>
+
+    <div id="admin-login-modal" class="hidden fixed inset-0 z-[120] p-4 flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closeAdminLogin()"></div>
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-6 relative z-10">
+            <div class="text-center mb-5">
+                <i class="fa-solid fa-shield-halved text-cyan-300 text-4xl mb-3"></i>
+                <h3 class="text-xl font-black text-white">دخول الأدمن</h3>
+            </div>
+            <div class="space-y-3">
+                <input id="admin-email" type="email" dir="ltr" class="field text-center" placeholder="admin@email.com" onkeydown="if(event.key==='Enter')adminLogin()">
+                <input id="admin-password" type="password" class="field text-center" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')adminLogin()">
+                <p id="admin-login-error" class="hidden text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-xl p-2 text-center">بيانات الأدمن غير صحيحة</p>
+                <div class="flex gap-2">
+                    <button onclick="closeAdminLogin()" class="w-1/2 py-3 rounded-xl bg-slate-800 text-slate-200 font-bold">إلغاء</button>
+                    <button onclick="adminLogin()" class="w-1/2 py-3 rounded-xl bg-cyan-400 text-slate-950 font-black">دخول</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-5 z-[150] max-w-[calc(100vw-2rem)] rounded-2xl px-5 py-3 bg-slate-950 border border-cyan-500/30 text-white text-sm font-bold shadow-glowCyan"></div>
+
+    <script>
+        const FS = {
+            admins: 'admins',
+            users: 'communityUsers',
+            posts: 'communityPosts',
+            comments: 'communityComments',
+            challenges: 'communityChallenges',
+            notifications: 'communityNotifications',
+            publicChatMessages: 'communityPublicMessages',
+            privateChatThreads: 'communityPrivateThreads',
+            adminLogs: 'adminLogs'
+        };
+        const RT = {
+            presence: 'communityPresence',
+            publicChat: 'communityPublicChat',
+            privateChat: 'communityPrivateChat'
+        };
+        const FieldValue = firebase.firestore.FieldValue;
+        const DbServerValue = firebase.database.ServerValue;
+        const countries = [
+            ['🇪🇬 مصر', '+20'], ['🇸🇦 السعودية', '+966'], ['🇦🇪 الإمارات', '+971'], ['🇰🇼 الكويت', '+965'],
+            ['🇶🇦 قطر', '+974'], ['🇧🇭 البحرين', '+973'], ['🇴🇲 عمان', '+968'], ['🇯🇴 الأردن', '+962'],
+            ['🇱🇧 لبنان', '+961'], ['🇸🇾 سوريا', '+963'], ['🇮🇶 العراق', '+964'], ['🇱🇾 ليبيا', '+218'],
+            ['🇹🇳 تونس', '+216'], ['🇩🇿 الجزائر', '+213'], ['🇲🇦 المغرب', '+212'], ['🇸🇩 السودان', '+249'],
+            ['🇺🇸 أمريكا', '+1'], ['🇬🇧 بريطانيا', '+44'], ['🇩🇪 ألمانيا', '+49'], ['🇫🇷 فرنسا', '+33'], ['🇹🇷 تركيا', '+90']
+        ];
+
+        let currentUser = null;
+        let currentUserId = '';
+        let pendingEmail = '';
+        let isAdmin = false;
+        let currentAdminUser = null;
+        let currentTab = 'home';
+        let adminPane = 'users';
+        let posts = [];
+        let comments = [];
+        let challenges = [];
+        let adminUsers = [];
+        let notifications = [];
+        let onlineUsers = [];
+        let chatUsers = [];
+        let activePostId = '';
+        let activePostImageIndex = 0;
+        let activeReplyCommentId = '';
+        let activeAcceptChallengeId = '';
+        let privateTargetUser = null;
+        let privateSearchTerm = '';
+        let privateMessagesUnsubscribe = null;
+        let userReadyPromise = null;
+        let currentUserSource = '';
+        let presenceRef = null;
+        const unsub = [];
+
+        document.addEventListener('DOMContentLoaded', initCommunity);
+
+        function initCommunity() {
+            fillCountrySelects();
+            bindForms();
+            restoreLastEmail();
+            auth.onAuthStateChanged(async user => {
+                try {
+                    const adminReady = await syncAdminFromAuth(user);
+                    if (!adminReady && !currentUser) await autoRestoreCommunityUser();
+                    renderAdminState();
+                    renderAll();
+                } catch (err) {
+                    console.error('Auth state failed', err);
+                    if (!currentUser) await autoRestoreCommunityUser();
+                }
+            });
+        }
+
+        async function syncAdminFromAuth(user, { announce = false } = {}) {
+            if (!user || user.isAnonymous) {
+                isAdmin = false;
+                currentAdminUser = null;
+                renderAdminState();
+                return false;
+            }
+
+            const allowed = await checkAdminAccess(user);
+            if (!allowed) {
+                isAdmin = false;
+                currentAdminUser = null;
+                await auth.signOut().catch(() => {});
+                renderAdminState();
+                return false;
+            }
+
+            isAdmin = true;
+            currentAdminUser = user;
+            await loadAdminCommunityProfile(user);
+            renderAdminState();
+            await loadAdminData();
+            if (announce) showToast('تم دخول الأدمن.');
+            return true;
+        }
+
+        async function checkAdminAccess(user) {
+            try {
+                const snap = await db.collection(FS.admins).doc(user.uid).get();
+                return snap.exists;
+            } catch (err) {
+                console.warn('Admin check failed', err);
+                return false;
+            }
+        }
+
+        async function loadAdminCommunityProfile(user) {
+            const email = normalizeEmail(user.email || '');
+            const fallbackName = user.displayName || (email ? email.split('@')[0] : 'Admin');
+            const id = `admin_${user.uid}`;
+            const ref = db.collection(FS.users).doc(id);
+            const snap = await ref.get();
+            const existing = snap.exists ? snap.data() : {};
+            const favoritePostIds = Array.isArray(existing.favoritePostIds) ? existing.favoritePostIds : [];
+            const profile = {
+                email,
+                name: existing.name || fallbackName || 'Admin',
+                photoURL: existing.photoURL || user.photoURL || avatarFallback(fallbackName || 'Admin'),
+                disabled: false,
+                deleted: false,
+                adminProfile: true,
+                favoritePostIds,
+                updatedAt: FieldValue.serverTimestamp(),
+                lastSeen: FieldValue.serverTimestamp()
+            };
+            if (!snap.exists) profile.createdAt = FieldValue.serverTimestamp();
+            await ref.set(profile, { merge: true });
+            currentUserId = id;
+            pendingEmail = email;
+            currentUserSource = 'admin';
+            currentUser = normalizeProfile({ id, ...existing, ...profile });
+            localStorage.removeItem('efc_current_email');
+            startApp();
+        }
+
+        async function loadCommunityProfileByEmail(email, { silent = false } = {}) {
+            const normalized = normalizeEmail(email);
+            if (!normalized) return false;
+            pendingEmail = normalized;
+            currentUserId = makeUserId(normalized);
+            const snap = await db.collection(FS.users).doc(currentUserId).get();
+            if (!snap.exists) {
+                if (!silent) {
+                    document.getElementById('profile-create-form')?.classList.remove('hidden');
+                    document.getElementById('profile-create-name')?.focus();
+                }
+                return false;
+            }
+            const profile = { id: snap.id, ...snap.data() };
+            if (profile.disabled || profile.deleted) {
+                showBlocked();
+                return false;
+            }
+            currentUser = normalizeProfile(profile);
+            currentUserSource = 'community';
+            localStorage.setItem('efc_current_email', normalized);
+            await db.collection(FS.users).doc(currentUser.id).set({ lastSeen: FieldValue.serverTimestamp() }, { merge: true }).catch(() => {});
+            startApp();
+            return true;
+        }
+
+        async function autoRestoreCommunityUser() {
+            if (isAdmin || currentAdminUser) return;
+            const saved = normalizeEmail(localStorage.getItem('efc_current_email') || '');
+            if (!saved || currentUser) return;
+            try {
+                await loadCommunityProfileByEmail(saved, { silent: true });
+            } catch (err) {
+                console.warn('Auto restore failed', err);
+            }
+        }
+
+        async function ensureUserReady() {
+            if (currentUser && !currentUser.disabled) return true;
+            if (isAdmin && currentAdminUser) {
+                await loadAdminCommunityProfile(currentAdminUser);
+                return !!currentUser;
+            }
+            const saved = normalizeEmail(localStorage.getItem('efc_current_email') || pendingEmail || '');
+            if (saved) {
+                try {
+                    const ok = await loadCommunityProfileByEmail(saved, { silent: true });
+                    if (ok) return true;
+                } catch (err) {
+                    console.warn('User restore failed', err);
+                }
+            }
+            showToast('ادخل بإيميلك الأول.');
+            return false;
+        }
+
+        function bindForms() {
+            document.getElementById('email-form').addEventListener('submit', handleEmailSubmit);
+            document.getElementById('profile-create-form').addEventListener('submit', handleCreateProfile);
+            document.getElementById('profile-edit-form').addEventListener('submit', handleEditProfile);
+            document.getElementById('post-form').addEventListener('submit', handleCreatePost);
+            document.getElementById('challenge-form').addEventListener('submit', handleCreateChallenge);
+            document.getElementById('accept-form').addEventListener('submit', handleAcceptChallenge);
+            document.getElementById('viewer-comment-form').addEventListener('submit', handleViewerComment);
+            document.getElementById('public-chat-form').addEventListener('submit', sendPublicMessage);
+            document.getElementById('private-chat-form').addEventListener('submit', sendPrivateMessage);
+            document.getElementById('private-user-search')?.addEventListener('input', e => {
+                privateSearchTerm = normalizeSearch(e.target.value);
+                renderOnlineUsers();
+            });
+            document.addEventListener('submit', e => {
+                const inlineForm = e.target.closest('[data-inline-comment-form]');
+                if (inlineForm) {
+                    handleInlineComment(e, inlineForm.dataset.postId, inlineForm);
+                    return;
+                }
+                const cardReplyForm = e.target.closest('[data-card-reply-form]');
+                if (cardReplyForm) {
+                    handleCardReply(e, cardReplyForm.dataset.postId, cardReplyForm.dataset.parentId, cardReplyForm);
+                    return;
+                }
+                const replyForm = e.target.closest('[data-viewer-reply-form]');
+                if (replyForm) {
+                    handleInlineReply(e, replyForm.dataset.parentId, replyForm);
+                    return;
+                }
+            });
+            document.addEventListener('click', e => {
+                const acceptChallengeBtn = e.target.closest('[data-accept-challenge-id]');
+                if (acceptChallengeBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openAcceptModal(acceptChallengeBtn.dataset.acceptChallengeId);
+                    return;
+                }
+                const revealChallengeBtn = e.target.closest('[data-reveal-challenge-id]');
+                if (revealChallengeBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    revealChallengePhone(revealChallengeBtn.dataset.revealChallengeId);
+                    return;
+                }
+                const miniReplyBtn = e.target.closest('[data-mini-reply-toggle]');
+                if (miniReplyBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleMiniReplyForm(miniReplyBtn.dataset.targetForm);
+                    return;
+                }
+                const privateBtn = e.target.closest('[data-private-user-id]');
+                if (privateBtn) {
+                    e.preventDefault();
+                    openPrivateChat(privateBtn.dataset.privateUserId);
+                    return;
+                }
+                const adminBtn = e.target.closest('[data-admin-action]');
+                if (adminBtn) {
+                    e.preventDefault();
+                    handleAdminAction(adminBtn.dataset.adminAction, adminBtn.dataset.targetId, adminBtn.dataset.nextDisabled);
+                }
+            });
+        }
+
+        function restoreLastEmail() {
+            const saved = localStorage.getItem('efc_current_email') || '';
+            if (saved) document.getElementById('entry-email').value = saved;
+        }
+
+        function fillCountrySelects() {
+            ['challenge-country', 'accept-country'].forEach(id => {
+                const select = document.getElementById(id);
+                select.innerHTML = countries.map(([label, code]) => `<option value="${code}">${label} ${code}</option>`).join('');
+            });
+        }
+
+async function handleEmailSubmit(e) {
+            e.preventDefault();
+            const email = normalizeEmail(document.getElementById('entry-email').value);
+            const btn = document.getElementById('email-submit-btn');
+            if (!email) return showEntryError('اكتب إيميل صحيح.');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري الدخول...';
+            hideEntryError();
+            try {
+                const ok = await loadCommunityProfileByEmail(email, { silent: false });
+                if (!ok) {
+                    document.getElementById('profile-create-form').classList.remove('hidden');
+                    document.getElementById('profile-create-name').focus();
+                    showToast('كمّل الاسم والصورة عشان نعمل حسابك.');
+                }
+            } catch (err) {
+                console.error(err);
+                showEntryError('تعذر فتح الحساب. راجع اتصال Firebase أو Rules.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'دخول';
+            }
+        }
+
+        async function handleCreateProfile(e) {
+            e.preventDefault();
+            const name = document.getElementById('profile-create-name').value.trim();
+            const file = document.getElementById('profile-create-photo').files[0];
+            const btn = document.getElementById('profile-create-btn');
+            if (!name || !pendingEmail) return;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري الحفظ...';
+            try {
+                const photoURL = file ? await uploadImage(file) : avatarFallback(name);
+                const profile = {
+                    email: pendingEmail,
+                    name,
+                    photoURL,
+                    disabled: false,
+                    favoritePostIds: [],
+                    createdAt: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp(),
+                    lastSeen: FieldValue.serverTimestamp()
+                };
+                await db.collection(FS.users).doc(currentUserId).set(profile, { merge: true });
+                currentUser = normalizeProfile({ id: currentUserId, ...profile });
+                currentUserSource = 'community';
+                localStorage.setItem('efc_current_email', pendingEmail);
+                startApp();
+            } catch (err) {
+                console.error(err);
+                showEntryError('تعذر حفظ البروفايل. حاول تاني.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'حفظ وفتح الكوميونتي';
+            }
+        }
+
+        async function handleEditProfile(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+            const name = document.getElementById('profile-edit-name').value.trim();
+            const file = document.getElementById('profile-edit-photo').files[0];
+            const btn = document.getElementById('profile-edit-btn');
+            if (!name) return showToast('اكتب الاسم.');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري الحفظ...';
+            try {
+                const photoURL = file ? await uploadImage(file) : currentUser.photoURL;
+                await db.collection(FS.users).doc(currentUser.id).set({ name, photoURL, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+                currentUser = { ...currentUser, name, photoURL };
+                closeProfileEditor();
+                updateCurrentUserUI();
+                startPresence();
+                renderAll();
+                showToast('تم تعديل البروفايل.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر تعديل البروفايل.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'حفظ التعديل';
+            }
+        }
+
+        function startApp() {
+            document.getElementById('entry-gate').classList.add('hidden');
+            document.getElementById('blocked-state').classList.add('hidden');
+            document.getElementById('community-app').classList.remove('hidden');
+            document.getElementById('chat-float-btn').classList.remove('hidden');
+            document.getElementById('header-profile-btn').classList.remove('hidden');
+            document.getElementById('header-profile-btn').classList.add('flex');
+            document.getElementById('community-logout-btn').classList.remove('hidden');
+            document.getElementById('header-notification-btn').classList.remove('hidden');
+            document.getElementById('profile-create-form').classList.add('hidden');
+            hideEntryError();
+            updateCurrentUserUI();
+            startPresence();
+            subscribeCommunityData();
+            subscribeNotifications();
+            subscribeChat();
+        }
+
+        function subscribeCommunityData() {
+            clearUnsubscribes();
+            unsub.push(db.collection(FS.posts).orderBy('createdAt', 'desc').limit(80).onSnapshot(snap => {
+                posts = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.status !== 'deleted');
+                renderAll();
+            }, onDataError));
+            unsub.push(db.collection(FS.comments).orderBy('createdAt', 'desc').limit(500).onSnapshot(snap => {
+                comments = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.status !== 'deleted');
+                renderAll();
+                renderViewerComments();
+            }, onDataError));
+            unsub.push(db.collection(FS.challenges).orderBy('createdAt', 'desc').limit(80).onSnapshot(snap => {
+                challenges = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.status !== 'deleted');
+                renderAll();
+            }, onDataError));
+            unsub.push(db.collection(FS.users).onSnapshot(snap => {
+                const allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                chatUsers = allUsers
+                    .filter(u => !u.disabled && u.id !== currentUser?.id)
+                    .sort((a,b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+                if (isAdmin) {
+                    adminUsers = allUsers.sort((a,b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+                    renderAdminPanel();
+                }
+                renderOnlineUsers();
+            }, err => console.warn('Users listener failed', err)));
+        }
+
+        function subscribeNotifications() {
+            if (!currentUser) return;
+            unsub.push(db.collection(FS.notifications).where('toUserId', '==', currentUser.id).onSnapshot(snap => {
+                notifications = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => tsToMillis(b.createdAt) - tsToMillis(a.createdAt));
+                renderNotifications();
+            }, err => console.warn('Notifications failed', err)));
+        }
+
+        function startPresence() {
+            if (!currentUser) return;
+            const ref = rtdb.ref(`${RT.presence}/${currentUser.id}`);
+            presenceRef = ref;
+            ref.onDisconnect().remove().catch(() => {});
+            ref.set(publicUserPayload({ state: 'online', lastActive: DbServerValue.TIMESTAMP })).catch(() => {});
+            clearInterval(window.efcPresenceTimer);
+            window.efcPresenceTimer = setInterval(() => {
+                if (currentUser) ref.update(publicUserPayload({ lastActive: DbServerValue.TIMESTAMP })).catch(() => {});
+            }, 25000);
+        }
+
+        function subscribeChat() {
+            rtdb.ref(RT.presence).off();
+            rtdb.ref(RT.presence).on('value', snap => {
+                const rows = snap.val() || {};
+                onlineUsers = Object.entries(rows).map(([id, row]) => ({ id, ...row })).filter(u => u.id !== currentUser?.id);
+                renderOnlineUsers();
+            }, () => renderOnlineUsers());
+
+            unsub.push(db.collection(FS.publicChatMessages)
+                .orderBy('createdAt', 'asc')
+                .limit(120)
+                .onSnapshot(snap => {
+                    const messages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderPublicMessages(messages);
+                }, err => {
+                    console.warn('Public chat failed', err);
+                    showToast('الشات العام محتاج صلاحيات Firestore.');
+                }));
+        }
+
+        function renderAll() {
+            if (!currentUser) return;
+            renderPosts();
+            renderChallenges();
+            renderAdminState();
+            if (isAdmin) renderAdminPanel();
+        }
+
+function renderPosts() {
+            const container = document.getElementById('posts-list');
+            const title = document.getElementById('posts-title');
+            const homeLayout = document.getElementById('home-layout');
+            const postsSection = document.getElementById('posts-section');
+            const challengesColumn = document.getElementById('challenges-column');
+            let visible = posts;
+            homeLayout.className = 'grid grid-cols-1 gap-5';
+
+            if (currentTab === 'challenges') {
+                postsSection.classList.add('hidden');
+                challengesColumn.classList.remove('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            title.innerHTML = '<i class="fa-solid fa-chalkboard-user text-cyan-300"></i> الخطط والتقييمات';
+            postsSection.classList.remove('hidden');
+            challengesColumn.classList.add('hidden');
+
+            if (!visible.length) {
+                container.innerHTML = emptyCard('لسه مفيش منشورات. كن أول واحد ينزل خطة أو تقييم.');
+                return;
+            }
+            container.innerHTML = visible.map(renderPostCard).join('');
+        }
+
+function renderPostCard(post) {
+            const imgs = normalizeImages(post.images);
+            const firstImage = imgs[0] || '';
+            const postComments = comments
+                .filter(c => c.postId === post.id && !c.parentId)
+                .sort((a,b) => tsToMillis(b.createdAt) - tsToMillis(a.createdAt));
+            const preview = postComments.slice(0, 4);
+            const adminControls = isAdmin ? `
+                <button type="button" data-admin-action="delete-post" data-target-id="${escapeAttr(post.id)}" class="px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold hover:bg-rose-500/20">
+                    <i class="fa-solid fa-trash-can ml-1"></i> حذف
+                </button>` : '';
+            const thumbs = imgs.slice(1, 5).map((url, idx) => `
+                <button type="button" onclick="openPostViewer(${jsArg(post.id)}, ${idx + 1})" class="w-16 h-12 rounded-lg overflow-hidden border border-white/10 bg-slate-950 shrink-0">
+                    <img src="${escapeAttr(url)}" class="w-full h-full object-cover" alt="">
+                </button>`).join('');
+            return `
+                <article class="glass-card rounded-3xl overflow-hidden">
+                    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.05fr)_minmax(330px,.95fr)]">
+                        <section class="min-w-0">
+                            <div class="image-tile cursor-pointer relative group rounded-none border-0" onclick="openPostViewer(${jsArg(post.id)}, 0)">
+                                <img src="${escapeAttr(firstImage)}" alt="${escapeAttr(post.title || 'post')}" onerror="this.src='https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=900&q=80'">
+                                ${imgs.length > 1 ? `<span class="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-slate-950/75 border border-white/10 text-xs font-bold text-white"><i class="fa-solid fa-images ml-1"></i>${imgs.length}</span>` : ''}
+                                <span class="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/20 transition-all"></span>
+                            </div>
+                            ${thumbs ? `<div class="p-3 flex gap-2 overflow-x-auto border-t border-white/5">${thumbs}</div>` : ''}
+                            <div class="p-4 md:p-5 space-y-3">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <img src="${escapeAttr(post.authorPhoto || avatarFallback(post.authorName))}" class="avatar-sm" alt="">
+                                        <div class="min-w-0">
+                                            <h4 class="text-white font-black truncate">${escapeHtml(post.title || 'منشور')}</h4>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(post.authorName || 'لاعب')} • ${formatTime(post.createdAt)}</p>
+                                        </div>
+                                    </div>
+                                    <span class="shrink-0 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/25 text-cyan-200 text-xs font-black">${escapeHtml(post.type || 'خطة')}</span>
+                                </div>
+                                <p class="text-sm text-slate-300 leading-relaxed whitespace-pre-line">${escapeHtml(post.body || '')}</p>
+                            </div>
+                        </section>
+                        <aside class="min-w-0 border-t xl:border-t-0 xl:border-r border-white/10 flex flex-col">
+                            <div class="p-4 border-b border-white/10 flex items-center justify-between gap-3">
+                                <div>
+                                    <p class="text-white font-black text-sm">التعليقات</p>
+                                    <p class="text-xs text-slate-500">${postComments.length} تعليق</p>
+                                </div>
+                                ${adminControls ? `<div class="flex items-center gap-2">${adminControls}</div>` : ''}
+                            </div>
+                            <div class="p-4 space-y-2 max-h-[280px] overflow-y-auto">
+                                ${preview.length ? preview.map(c => renderCommentMini(c, post.id)).join('') : '<p class="text-xs text-slate-500 bg-slate-950/35 rounded-xl p-3">مفيش تعليقات لسه.</p>'}
+                            </div>
+                            <form data-inline-comment-form data-post-id="${escapeAttr(post.id)}" class="p-4 border-t border-white/10 mt-auto space-y-2">
+                                <input name="commentText" class="field py-2.5 text-sm" placeholder="اكتب تعليقك هنا...">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button type="submit" class="px-4 py-2 rounded-xl bg-cyan-400 text-slate-950 text-xs font-black hover:brightness-110">
+                                        <i class="fa-solid fa-comment-dots ml-1"></i> تعليق
+                                    </button>
+                                </div>
+                            </form>
+                        </aside>
+                    </div>
+                </article>`;
+        }
+
+        function renderCommentMini(comment, postId) {
+            const replies = comments
+                .filter(c => c.parentId === comment.id)
+                .sort((a,b) => tsToMillis(a.createdAt) - tsToMillis(b.createdAt));
+            const safeId = escapeAttr(comment.id);
+            const safePostId = escapeAttr(postId || comment.postId || '');
+            const replyTitle = replies.length === 1 ? 'رد واحد' : `${replies.length} ردود`;
+            return `
+                <div class="bg-slate-950/35 border border-white/5 rounded-xl p-3" data-comment-id="${safeId}">
+                    <div class="flex items-center gap-2 mb-1">
+                        <img src="${escapeAttr(comment.authorPhoto || avatarFallback(comment.authorName))}" class="w-6 h-6 rounded-full object-cover" alt="">
+                        <span class="text-xs font-black text-white">${escapeHtml(comment.authorName || 'لاعب')}</span>
+                        <span class="text-[10px] text-slate-500">${formatTime(comment.createdAt)}</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(comment.text || '')}</p>
+                    <button type="button" data-mini-reply-toggle data-target-form="mini-reply-form-${safeId}" class="mt-2 inline-flex items-center gap-1 text-[11px] text-cyan-300 hover:text-white font-black">
+                        <i class="fa-solid fa-reply"></i> رد على الكومنت
+                    </button>
+                    <form data-card-reply-form data-post-id="${safePostId}" data-parent-id="${safeId}" id="mini-reply-form-${safeId}" class="hidden mt-2 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2 space-y-2">
+                        <div class="text-[11px] text-cyan-200 font-bold">رد على ${escapeHtml(comment.authorName || 'لاعب')}</div>
+                        <div class="flex gap-2">
+                            <input name="replyText" class="field py-2 text-xs" placeholder="اكتب الرد هنا...">
+                            <button type="submit" class="px-3 rounded-xl bg-cyan-400 text-slate-950 text-[11px] font-black">إرسال</button>
+                        </div>
+                    </form>
+                    ${replies.length ? `
+                        <details class="mt-2 rounded-xl border border-cyan-500/15 bg-slate-950/25 overflow-hidden">
+                            <summary class="cursor-pointer select-none px-2.5 py-2 text-[11px] font-black text-cyan-200 bg-cyan-500/5">
+                                <i class="fa-solid fa-chevron-down ml-1"></i> ${replyTitle}
+                            </summary>
+                            <div class="p-2 space-y-2 border-t border-white/5">
+                                ${replies.map(r => renderCommentMini(r, postId)).join('')}
+                            </div>
+                        </details>` : ''}
+                </div>`;
+        }
+
+        function renderChallenges() {
+            const container = document.getElementById('challenges-list');
+            const visible = challenges;
+            if (!visible.length) {
+                container.innerHTML = emptyCard('مفيش تحديات مفتوحة حالياً.');
+                return;
+            }
+            container.innerHTML = visible.map(renderChallengeCard).join('');
+        }
+
+function renderChallengeCard(ch) {
+            const userId = currentUser?.id || '';
+            const isOwner = ch.ownerId === userId;
+            const isAcceptedByMe = ch.acceptedById === userId;
+            const accepted = ch.status === 'accepted';
+            const canAccept = !accepted && !isOwner && !currentUser?.disabled;
+            const adminControls = isAdmin ? `<button type="button" data-admin-action="delete-challenge" data-target-id="${escapeAttr(ch.id)}" class="px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash-can ml-1"></i> حذف</button>` : '';
+
+            const revealInfo = getChallengePhoneAccess(ch);
+            const canRevealPhone = !!revealInfo.canReveal;
+            const adminContacts = isAdmin && accepted ? `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                    ${contactButton(ch.ownerPhone, `أنا أدمن eFootball Community بخصوص التحدي بتاعك`)}
+                    ${contactButton(ch.acceptedPhone, `أنا أدمن eFootball Community بخصوص التحدي المقبول`)}
+                </div>` : '';
+
+            return `
+                <article class="glass-card rounded-2xl overflow-hidden">
+                    <div class="relative aspect-square bg-slate-950">
+                        <img src="${escapeAttr(ch.imageUrl || '')}" class="w-full h-full object-cover cursor-pointer" alt="challenge" onclick="openImageUrl(${jsArg(ch.imageUrl || '')})" onerror="this.src='https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=900&q=80'">
+                        ${accepted ? `
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/92 via-slate-950/45 to-slate-950/15 flex items-end justify-center p-4">
+                                <button type="button"
+                                    ${canRevealPhone ? `data-reveal-challenge-id="${escapeAttr(ch.id)}"` : ''}
+                                    class="w-full rounded-2xl border ${canRevealPhone ? 'border-emerald-400/50 hover:border-emerald-300 hover:bg-emerald-500/20 cursor-pointer' : 'border-white/15 cursor-default'} bg-slate-950/62 backdrop-blur-md px-4 py-3 text-center shadow-[0_18px_45px_rgba(0,0,0,.55)] transition-all">
+                                    <div class="mx-auto mb-2 w-11 h-11 rounded-full bg-emerald-400/20 border border-emerald-400/45 flex items-center justify-center">
+                                        <i class="fa-solid fa-circle-check text-emerald-300 text-xl"></i>
+                                    </div>
+                                    <p class="text-white text-base font-black leading-tight">${escapeHtml(ch.acceptedByName || 'لاعب')}</p>
+                                    <p class="text-emerald-200 text-xs font-black mt-1">قبل التحدي</p>
+                                    <p class="text-[11px] text-slate-300 mt-2">${canRevealPhone ? 'اضغط هنا لإظهار رقم الواتساب' : 'رقم التواصل ظاهر لصاحب التحدي واللاعب اللي قبل فقط'}</p>
+                                </button>
+                            </div>` : ''}
+                    </div>
+                    <div class="p-3 space-y-2">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <img src="${escapeAttr(ch.ownerPhoto || avatarFallback(ch.ownerName))}" class="avatar-sm" alt="">
+                                <div class="min-w-0">
+                                    <p class="text-white text-sm font-black truncate">${escapeHtml(ch.ownerName || 'لاعب')}</p>
+                                    <p class="text-xs text-slate-500">${formatTime(ch.createdAt)}</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-[11px] font-black ${accepted ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/25' : 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/25'}">${accepted ? 'مقبول' : 'مفتوح'}</span>
+                        </div>
+                        ${accepted ? `<p class="text-xs text-slate-300">صاحب التحدي: <b class="text-white">${escapeHtml(ch.ownerName || '')}</b><br>اللي قبل: <b class="text-emerald-300">${escapeHtml(ch.acceptedByName || '')}</b></p>` : '<p class="text-xs text-slate-400">تحدي مفتوح. أول لاعب يقبل التحدي هيظهر اسمه على الصورة.</p>'}
+                        <div id="challenge-phone-panel-${escapeAttr(ch.id)}" class="hidden"></div>
+                        <div class="flex gap-2 flex-wrap">
+                            ${canAccept ? `<button type="button" data-accept-challenge-id="${escapeAttr(ch.id)}" class="flex-1 min-w-[110px] py-2.5 rounded-xl bg-emerald-400 text-slate-950 text-sm font-black hover:brightness-110">قبول التحدي</button>` : ''}
+                            ${canRevealPhone ? `<button type="button" data-reveal-challenge-id="${escapeAttr(ch.id)}" class="flex-1 min-w-[150px] py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-sm font-black hover:bg-emerald-500/25"><i class="fa-brands fa-whatsapp ml-1"></i> إظهار الرقم</button>` : ''}
+                            ${adminContacts}
+                            ${adminControls}
+                        </div>
+                    </div>
+                </article>`;
+        }
+
+        function renderAdminState() {
+            const badge = document.getElementById('admin-badge');
+            const adminTab = document.getElementById('admin-tab-button');
+            badge.classList.toggle('hidden', !isAdmin);
+            badge.classList.toggle('flex', isAdmin);
+            adminTab.classList.toggle('hidden', !isAdmin);
+            if (currentTab === 'admin' && !isAdmin) switchTab('home');
+        }
+
+        function renderAdminPanel() {
+            if (!isAdmin) return;
+            renderAdminUsers();
+            renderAdminPosts();
+            renderAdminChallenges();
+        }
+
+function renderAdminUsers() {
+            const box = document.getElementById('admin-users-pane');
+            if (!adminUsers.length) {
+                box.innerHTML = emptyCard('اضغط تحديث لتحميل المستخدمين.');
+                return;
+            }
+            box.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead><tr class="text-slate-400 border-b border-white/10">
+                            <th class="text-right py-3 px-2">اليوزر</th><th class="text-right py-3 px-2">الإيميل</th><th class="text-right py-3 px-2">الحالة</th><th class="text-right py-3 px-2">تحكم</th>
+                        </tr></thead>
+                        <tbody>${adminUsers.map(u => `
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 px-2"><div class="flex items-center gap-2"><img src="${escapeAttr(u.photoURL || avatarFallback(u.name))}" class="avatar-sm"><span class="font-bold text-white">${escapeHtml(u.name || '-')}</span></div></td>
+                                <td class="py-3 px-2 text-cyan-200" dir="ltr">${escapeHtml(u.email || '-')}</td>
+                                <td class="py-3 px-2">${u.deleted ? '<span class="text-slate-400 font-black">Deleted</span>' : (u.disabled ? '<span class="text-rose-300 font-black">Disabled</span>' : '<span class="text-emerald-300 font-black">Active</span>')}</td>
+                                <td class="py-3 px-2">
+                                    <div class="flex flex-wrap gap-2">
+                                        <button type="button" data-admin-action="toggle-user" data-target-id="${escapeAttr(u.id)}" data-next-disabled="${u.disabled ? 'false' : 'true'}" class="px-3 py-2 rounded-xl ${u.disabled ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/25' : 'bg-rose-500/10 text-rose-300 border border-rose-500/25'} text-xs font-black">${u.disabled ? 'Enable' : 'Disable'}</button>
+                                        <button type="button" data-admin-action="delete-user" data-target-id="${escapeAttr(u.id)}" class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-black hover:border-rose-400 hover:text-rose-200">حذف</button>
+                                    </div>
+                                </td>
+                            </tr>`).join('')}</tbody>
+                    </table>
+                </div>`;
+        }
+
+        function renderAdminPosts() {
+            document.getElementById('admin-posts-pane').innerHTML = posts.length
+                ? `<div class="space-y-3">${posts.map(p => `<div class="glass-card rounded-2xl p-4 flex items-center justify-between gap-3"><div class="min-w-0"><p class="text-white font-black truncate">${escapeHtml(p.title || '-')}</p><p class="text-xs text-slate-400">${escapeHtml(p.authorName || '')} • ${formatTime(p.createdAt)}</p></div><button type="button" data-admin-action="delete-post" data-target-id="${escapeAttr(p.id)}" class="px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash-can"></i></button></div>`).join('')}</div>`
+                : emptyCard('مفيش منشورات.');
+        }
+
+        function renderAdminChallenges() {
+            document.getElementById('admin-challenges-pane').innerHTML = challenges.length
+                ? `<div class="space-y-3">${challenges.map(c => `<div class="glass-card rounded-2xl p-4 flex items-center justify-between gap-3"><div class="min-w-0"><p class="text-white font-black truncate">تحدي ${escapeHtml(c.ownerName || '-')}</p><p class="text-xs text-slate-400">${escapeHtml(c.status || 'active')} • ${formatTime(c.createdAt)}</p></div><button type="button" data-admin-action="delete-challenge" data-target-id="${escapeAttr(c.id)}" class="px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold"><i class="fa-solid fa-trash-can"></i></button></div>`).join('')}</div>`
+                : emptyCard('مفيش تحديات.');
+        }
+
+        async function loadAdminData() {
+            if (!isAdmin) return;
+            try {
+                const snap = await db.collection(FS.users).get();
+                adminUsers = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+                renderAdminPanel();
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر تحميل بيانات الأدمن.');
+            }
+        }
+
+        async function handleCreatePost(e) {
+            e.preventDefault();
+            if (!requireUser()) return;
+            const title = document.getElementById('post-title').value.trim();
+            const type = document.getElementById('post-type').value;
+            const body = document.getElementById('post-body').value.trim();
+            const files = Array.from(document.getElementById('post-images').files).slice(0, 8);
+            const btn = document.getElementById('post-submit-btn');
+            if (!title || !body || !files.length) return showToast('كمل العنوان والكلام والصور.');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري رفع الصور...';
+            try {
+                const images = [];
+                for (const file of files) images.push(await uploadImage(file));
+                await db.collection(FS.posts).add({
+                    title, type, body, images,
+                    status: 'active',
+                    authorId: currentUser.id,
+                    authorName: currentUser.name,
+                    authorPhoto: currentUser.photoURL,
+                    createdAt: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp()
+                });
+                closePostModal();
+                showToast('تم نشر المنشور.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر نشر المنشور.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'نشر';
+            }
+        }
+
+        async function handleCreateChallenge(e) {
+            e.preventDefault();
+            if (!requireUser()) return;
+            const countryCode = document.getElementById('challenge-country').value;
+            const rawPhone = document.getElementById('challenge-phone').value;
+            const file = document.getElementById('challenge-image').files[0];
+            const btn = document.getElementById('challenge-submit-btn');
+            if (!rawPhone || !file) return showToast('اكتب رقم الواتساب وارفع صورة.');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري نشر التحدي...';
+            try {
+                const imageUrl = await uploadImage(file);
+                await db.collection(FS.challenges).add({
+                    ownerId: currentUser.id,
+                    ownerName: currentUser.name,
+                    ownerPhoto: currentUser.photoURL,
+                    ownerPhone: cleanPhone(countryCode, rawPhone),
+                    imageUrl,
+                    status: 'active',
+                    createdAt: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp()
+                });
+                closeChallengeModal();
+                showToast('التحدي اتنشر.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر نشر التحدي.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'نشر التحدي';
+            }
+        }
+
+async function handleAcceptChallenge(e) {
+            e.preventDefault();
+            if (!(await ensureUserReady()) || !activeAcceptChallengeId) return;
+            const countryCode = document.getElementById('accept-country').value;
+            const rawPhone = document.getElementById('accept-phone').value;
+            const btn = document.getElementById('accept-submit-btn');
+            const phone = cleanPhone(countryCode, rawPhone);
+            if (!String(rawPhone || '').trim()) return showToast('اكتب رقم الواتساب الأول.');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري القبول...';
+            try {
+                const ref = db.collection(FS.challenges).doc(activeAcceptChallengeId);
+                let originalData = null;
+                await db.runTransaction(async tx => {
+                    const snap = await tx.get(ref);
+                    if (!snap.exists) throw new Error('not-found');
+                    const data = snap.data();
+                    originalData = data;
+                    if (data.status === 'accepted') throw new Error('accepted');
+                    if (data.ownerId === currentUser.id) throw new Error('owner');
+                    tx.update(ref, {
+                        status: 'accepted',
+                        acceptedById: currentUser.id,
+                        acceptedByName: currentUser.name,
+                        acceptedByPhoto: currentUser.photoURL,
+                        acceptedPhone: phone,
+                        acceptedAt: FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp()
+                    });
+                });
+
+                challenges = challenges.map(ch => ch.id === activeAcceptChallengeId ? {
+                    ...ch,
+                    status: 'accepted',
+                    acceptedById: currentUser.id,
+                    acceptedByName: currentUser.name,
+                    acceptedByPhoto: currentUser.photoURL,
+                    acceptedPhone: phone,
+                    acceptedAt: new Date()
+                } : ch);
+                createNotification(originalData?.ownerId, {
+                    type: 'challengeAccepted',
+                    title: 'تم قبول التحدي',
+                    body: `${currentUser.name} قبل التحدي بتاعك.`,
+                    challengeId: activeAcceptChallengeId,
+                    fromUserId: currentUser.id,
+                    fromName: currentUser.name,
+                    fromPhoto: currentUser.photoURL
+                }).catch(err => console.warn('Notification failed', err));
+                closeAcceptModal();
+                renderAll();
+                showToast('تم قبول التحدي. اضغط على الاسم فوق الصورة لإظهار رقم الواتساب.');
+            } catch (err) {
+                console.error(err);
+                const msg = err.message === 'accepted'
+                    ? 'التحدي اتقبل قبل كده.'
+                    : (err.message === 'owner' ? 'مينفعش تقبل تحدي أنت صاحبه.' : 'تعذر قبول التحدي. غالباً Firestore Rules محتاجة تحديث للـ update على communityChallenges.');
+                showToast(msg);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'تأكيد قبول التحدي';
+            }
+        }
+
+async function handleInlineComment(event, postId, form = null) {
+            event.preventDefault();
+            if (!(await ensureUserReady())) return;
+            const targetForm = form || event.target.closest('[data-inline-comment-form]');
+            const input = targetForm?.querySelector('[name="commentText"]');
+            const text = (input?.value || '').trim();
+            if (!text) return;
+            input.value = '';
+            try {
+                await addComment(postId, '', text);
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر نشر التعليق. غالباً Firestore Rules محتاجة تحديث.');
+            }
+        }
+
+        async function handleCardReply(event, postId, parentId, form = null) {
+            event.preventDefault();
+            if (!(await ensureUserReady())) return;
+            const targetForm = form || event.target.closest('[data-card-reply-form]');
+            const input = targetForm?.querySelector('[name="replyText"]');
+            const text = (input?.value || '').trim();
+            if (!text) return;
+            input.value = '';
+            try {
+                await addComment(postId, parentId || '', text);
+                targetForm?.classList.add('hidden');
+                showToast('تم نشر الرد.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر نشر الرد. غالباً Firestore Rules محتاجة تحديث.');
+            }
+        }
+
+        function toggleMiniReplyForm(formId) {
+            if (!formId) return;
+            const form = document.getElementById(formId);
+            if (!form) return;
+            document.querySelectorAll('[data-card-reply-form]').forEach(other => {
+                if (other !== form) other.classList.add('hidden');
+            });
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                form.querySelector('input[name="replyText"]')?.focus();
+            }
+        }
+
+        async function handleViewerComment(e) {
+            e.preventDefault();
+            if (!(await ensureUserReady()) || !activePostId) return;
+            const input = document.getElementById('viewer-comment-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            try {
+                await addComment(activePostId, activeReplyCommentId || '', text);
+                clearReply();
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر نشر التعليق.');
+            }
+        }
+
+        function openPostViewer(postId, index = 0) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+            activePostId = postId;
+            activePostImageIndex = index || 0;
+            document.getElementById('viewer-title').textContent = post.title || 'منشور';
+            document.getElementById('viewer-author').textContent = `${post.authorName || 'لاعب'} • ${formatTime(post.createdAt)}`;
+            document.getElementById('viewer-body').textContent = post.body || '';
+            renderViewerImage();
+            renderViewerComments();
+            document.getElementById('post-viewer-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function renderViewerImage() {
+            const post = posts.find(p => p.id === activePostId);
+            if (!post) return;
+            const imgs = normalizeImages(post.images);
+            if (!imgs.length) imgs.push('https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=1200&q=80');
+            activePostImageIndex = ((activePostImageIndex % imgs.length) + imgs.length) % imgs.length;
+            document.getElementById('viewer-image').src = imgs[activePostImageIndex];
+            document.getElementById('viewer-thumbs').innerHTML = imgs.map((url, i) => `
+                <button onclick="activePostImageIndex=${i};renderViewerImage()" class="w-20 h-14 rounded-xl overflow-hidden border ${i === activePostImageIndex ? 'border-cyan-300' : 'border-white/10'} bg-slate-950 shrink-0">
+                    <img src="${escapeAttr(url)}" class="w-full h-full object-cover" alt="">
+                </button>`).join('');
+        }
+
+        function moveViewerImage(delta) {
+            activePostImageIndex += delta;
+            renderViewerImage();
+        }
+
+        function renderViewerComments() {
+            const box = document.getElementById('viewer-comments');
+            if (!box || !activePostId) return;
+            const related = comments.filter(c => c.postId === activePostId);
+            const roots = related.filter(c => !c.parentId).sort((a,b) => tsToMillis(a.createdAt) - tsToMillis(b.createdAt));
+            if (!roots.length) {
+                box.innerHTML = '<div class="text-center text-slate-500 text-sm py-10">مفيش تعليقات. اكتب أول تعليق.</div>';
+                return;
+            }
+            box.innerHTML = roots.map(root => renderCommentTree(root, related)).join('');
+        }
+
+        function renderCommentTree(comment, all, depth = 0) {
+            const replies = all.filter(c => c.parentId === comment.id).sort((a,b) => tsToMillis(a.createdAt) - tsToMillis(b.createdAt));
+            const adminDelete = isAdmin ? `<button type="button" data-admin-action="delete-comment" data-target-id="${escapeAttr(comment.id)}" class="text-rose-300 hover:text-rose-200"><i class="fa-solid fa-trash-can"></i></button>` : '';
+            const safeId = escapeAttr(comment.id);
+            const replyTitle = replies.length === 1 ? 'رد واحد' : `${replies.length} ردود`;
+            return `
+                <div class="rounded-2xl bg-slate-950/35 border border-white/5 p-3" data-comment-id="${safeId}">
+                    <div class="flex items-start gap-2">
+                        <img src="${escapeAttr(comment.authorPhoto || avatarFallback(comment.authorName))}" class="avatar-sm" alt="">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm text-white font-black truncate">${escapeHtml(comment.authorName || 'لاعب')}</p>
+                                <div class="flex items-center gap-2 text-xs text-slate-500">${formatTime(comment.createdAt)} ${adminDelete}</div>
+                            </div>
+                            <p class="text-sm text-slate-300 leading-relaxed mt-1 whitespace-pre-line">${escapeHtml(comment.text || '')}</p>
+                            <button type="button" onclick="toggleInlineReplyForm(${jsArg(comment.id)})" class="mt-2 text-xs text-cyan-300 hover:text-white font-bold">
+                                <i class="fa-solid fa-reply ml-1"></i> رد
+                            </button>
+
+                            <form data-viewer-reply-form data-parent-id="${safeId}" id="reply-form-${safeId}" class="hidden mt-3 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-3 space-y-2">
+                                <div class="text-xs text-cyan-200 font-bold">رد على ${escapeHtml(comment.authorName || 'لاعب')}</div>
+                                <div class="flex gap-2">
+                                    <input name="replyText" class="field py-2 text-sm" placeholder="اكتب الرد هنا...">
+                                    <button type="submit" class="px-3 rounded-xl bg-cyan-400 text-slate-950 text-xs font-black">إرسال</button>
+                                </div>
+                            </form>
+
+                            ${replies.length ? `
+                                <details open class="mt-3 rounded-2xl border border-cyan-500/15 bg-slate-950/25 overflow-hidden">
+                                    <summary class="cursor-pointer select-none px-3 py-2 text-xs font-black text-cyan-200 bg-cyan-500/5">
+                                        <i class="fa-solid fa-chevron-down ml-1"></i> ${replyTitle}
+                                    </summary>
+                                    <div class="p-3 space-y-2 border-t border-white/5">
+                                        ${replies.map(r => renderCommentTree(r, all, depth + 1)).join('')}
+                                    </div>
+                                </details>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+async function toggleFavorite(postId) {
+            if (!(await ensureUserReady())) return;
+            const saved = (currentUser.favoritePostIds || []).includes(postId);
+            currentUser.favoritePostIds = saved
+                ? currentUser.favoritePostIds.filter(id => id !== postId)
+                : [...new Set([...(currentUser.favoritePostIds || []), postId])];
+            renderPosts();
+            try {
+                await db.collection(FS.users).doc(currentUser.id).set({
+                    favoritePostIds: currentUser.favoritePostIds,
+                    updatedAt: FieldValue.serverTimestamp()
+                }, { merge: true });
+                showToast(saved ? 'اتشال من المفضلة.' : 'اتحفظ في المفضلة.');
+            } catch (err) {
+                console.error(err);
+                currentUser.favoritePostIds = saved
+                    ? [...(currentUser.favoritePostIds || []), postId]
+                    : (currentUser.favoritePostIds || []).filter(id => id !== postId);
+                renderPosts();
+                showToast('تعذر تحديث المفضلة.');
+            }
+        }
+
+        function switchTab(tab) {
+            if (tab === 'favorites') tab = 'home';
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+            document.getElementById('home-layout').classList.toggle('hidden', tab === 'admin');
+            document.getElementById('admin-panel').classList.toggle('hidden', tab !== 'admin');
+            renderAll();
+        }
+
+        function switchAdminPane(pane) {
+            adminPane = pane;
+            document.querySelectorAll('.admin-tab').forEach(btn => {
+                const active = btn.dataset.adminPane === pane;
+                btn.classList.toggle('active', active);
+                btn.classList.toggle('border-transparent', !active);
+                btn.classList.toggle('text-slate-400', !active);
+            });
+            ['users','posts','challenges'].forEach(name => {
+                document.getElementById(`admin-${name}-pane`).classList.toggle('hidden', name !== pane);
+            });
+        }
+
+        async function handleAdminAction(action, targetId, nextDisabled) {
+            if (!action || !targetId) return;
+            if (action === 'toggle-user') return toggleUserDisabled(targetId, nextDisabled === 'true');
+            if (action === 'delete-user') return adminDeleteUser(targetId);
+            if (action === 'delete-post') return adminDeletePost(targetId);
+            if (action === 'delete-comment') return adminDeleteComment(targetId);
+            if (action === 'delete-challenge') return adminDeleteChallenge(targetId);
+        }
+
+async function toggleUserDisabled(userId, disabled) {
+            if (!(await requireAdmin())) return;
+            try {
+                await db.collection(FS.users).doc(userId).set({ disabled, updatedAt: FieldValue.serverTimestamp(), disabledBy: currentAdminUser?.email || '' }, { merge: true });
+                await writeAdminLog(disabled ? 'community_disable_user' : 'community_enable_user', { userId });
+                adminUsers = adminUsers.map(u => u.id === userId ? { ...u, disabled } : u);
+                chatUsers = chatUsers.filter(u => u.id !== userId || !disabled);
+                renderAdminPanel();
+                renderOnlineUsers();
+                showToast(disabled ? 'تم تعطيل الإيميل.' : 'تم تفعيل الإيميل.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر تعديل حالة اليوزر. راجع Firestore Rules.');
+            }
+        }
+
+        async function adminDeleteUser(userId) {
+            if (!(await requireAdmin())) return;
+            try {
+                await db.collection(FS.users).doc(userId).set({
+                    disabled: true,
+                    deleted: true,
+                    deletedAt: FieldValue.serverTimestamp(),
+                    deletedBy: currentAdminUser?.email || ''
+                }, { merge: true });
+                await writeAdminLog('community_delete_user', { userId });
+                adminUsers = adminUsers.filter(u => u.id !== userId);
+                chatUsers = chatUsers.filter(u => u.id !== userId);
+                renderAdminPanel();
+                renderOnlineUsers();
+                showToast('تم حذف/تعطيل اليوزر.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر حذف اليوزر. راجع Firestore Rules.');
+            }
+        }
+
+async function adminDeletePost(postId) {
+            if (!(await requireAdmin())) return;
+            try {
+                await adminDeleteContentDoc(FS.posts, postId, { status: 'deleted', deletedAt: FieldValue.serverTimestamp(), deletedBy: currentAdminUser?.email || '' });
+                await writeAdminLog('community_delete_post', { postId });
+                posts = posts.filter(p => p.id !== postId);
+                renderAll();
+                showToast('تم حذف المنشور.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر حذف المنشور. راجع Firestore Rules.');
+            }
+        }
+
+async function adminDeleteComment(commentId) {
+            if (!(await requireAdmin())) return;
+            try {
+                await adminDeleteContentDoc(FS.comments, commentId, { status: 'deleted', deletedAt: FieldValue.serverTimestamp(), deletedBy: currentAdminUser?.email || '' });
+                await writeAdminLog('community_delete_comment', { commentId });
+                comments = comments.filter(c => c.id !== commentId);
+                renderAll();
+                renderViewerComments();
+                showToast('تم حذف التعليق.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر حذف التعليق. راجع Firestore Rules.');
+            }
+        }
+
+async function adminDeleteChallenge(challengeId) {
+            if (!(await requireAdmin())) return;
+            try {
+                await adminDeleteContentDoc(FS.challenges, challengeId, { status: 'deleted', deletedAt: FieldValue.serverTimestamp(), deletedBy: currentAdminUser?.email || '' });
+                await writeAdminLog('community_delete_challenge', { challengeId });
+                challenges = challenges.filter(c => c.id !== challengeId);
+                renderAll();
+                showToast('تم حذف التحدي.');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر حذف التحدي. راجع Firestore Rules.');
+            }
+        }
+
+        async function adminDeleteContentDoc(collectionName, docId, softPayload) {
+            const ref = db.collection(collectionName).doc(docId);
+            try {
+                await ref.delete();
+            } catch (deleteErr) {
+                console.warn('Hard delete failed, trying soft delete', deleteErr);
+                await ref.set(softPayload, { merge: true });
+            }
+        }
+
+        async function createNotification(toUserId, payload) {
+            if (!toUserId) return;
+            await db.collection(FS.notifications).add({
+                ...payload,
+                toUserId,
+                read: false,
+                createdAt: FieldValue.serverTimestamp()
+            });
+        }
+
+        function renderNotifications() {
+            const unread = notifications.filter(n => !n.read);
+            const btn = document.getElementById('header-notification-btn');
+            const count = document.getElementById('notification-count');
+            btn.classList.toggle('notify-pulse', unread.length > 0);
+            count.classList.toggle('hidden', unread.length === 0);
+            count.textContent = unread.length;
+            const box = document.getElementById('notifications-list');
+            if (!notifications.length) {
+                box.innerHTML = '<div class="text-center text-slate-500 py-8 text-sm">مفيش إشعارات.</div>';
+                return;
+            }
+            box.innerHTML = notifications.map(n => `
+                <button onclick="openNotificationTarget(${jsArg(n.id)})" class="w-full text-right rounded-2xl p-3 ${n.read ? 'bg-white/5' : 'bg-yellow-500/10 border border-yellow-500/25'} hover:bg-white/10 transition-all">
+                    <p class="text-white text-sm font-black">${escapeHtml(n.title || 'إشعار')}</p>
+                    <p class="text-xs text-slate-300 mt-1">${escapeHtml(n.body || '')}</p>
+                    <p class="text-[10px] text-slate-500 mt-2">${formatTime(n.createdAt)}</p>
+                </button>`).join('');
+        }
+
+        async function openNotificationTarget(notificationId) {
+            const n = notifications.find(x => x.id === notificationId);
+            if (!n) return;
+            await db.collection(FS.notifications).doc(notificationId).set({ read: true, readAt: FieldValue.serverTimestamp() }, { merge: true });
+            toggleNotifications(false);
+            if (n.challengeId) {
+                switchTab('challenges');
+                const ch = challenges.find(c => c.id === n.challengeId);
+                if (ch) showToast(`التحدي المقبول من ${ch.acceptedByName || n.fromName || 'لاعب'} ظهر في القائمة.`);
+            }
+        }
+
+        function renderOnlineUsers() {
+            const pill = document.getElementById('online-count-pill');
+            const onlineIds = new Set(onlineUsers.map(u => u.id));
+            pill.textContent = chatUsers.length ? chatUsers.length : '';
+            const visibleChatUsers = privateSearchTerm
+                ? chatUsers.filter(u => normalizeSearch(`${u.name || ''} ${u.email || ''}`).includes(privateSearchTerm))
+                : chatUsers;
+            const html = chatUsers.length ? chatUsers.map(u => {
+                const online = onlineIds.has(u.id);
+                return `
+                <button type="button" data-private-user-id="${escapeAttr(u.id)}" class="shrink-0 flex flex-col items-center gap-1 w-16">
+                    <span class="relative"><img src="${escapeAttr(u.photoURL || avatarFallback(u.name))}" class="avatar-sm" alt="">${online ? '<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-slate-950"></span>' : ''}</span>
+                    <span class="text-[10px] text-slate-300 truncate w-full text-center">${escapeHtml(u.name || 'لاعب')}</span>
+                </button>`;
+            }).join('') : '<p class="text-xs text-slate-500">مفيش يوزرات مسجلة لسه.</p>';
+            document.getElementById('online-users-list').innerHTML = html;
+            document.getElementById('private-users-list').innerHTML = visibleChatUsers.length ? visibleChatUsers.map(u => `
+                <button type="button" data-private-user-id="${escapeAttr(u.id)}" class="w-full rounded-xl p-2 ${privateTargetUser?.id === u.id ? 'bg-pink-500/15 border border-pink-500/30' : 'bg-white/5'} hover:bg-white/10 transition-all">
+                    <img src="${escapeAttr(u.photoURL || avatarFallback(u.name))}" class="avatar-sm mx-auto" alt="">
+                    <span class="block text-[10px] text-white font-bold truncate mt-1">${escapeHtml(u.name || 'لاعب')}</span>
+                </button>`).join('') : `<div class="text-[11px] text-slate-500 px-1">${chatUsers.length ? 'مفيش نتيجة بالاسم ده.' : 'مفيش يوزرات مسجلة.'}</div>`;
+        }
+
+        function renderPublicMessages(messages) {
+            const box = document.getElementById('public-messages');
+            box.innerHTML = messages.length ? messages.map(renderChatMessage).join('') : '<div class="text-center text-slate-500 text-sm py-10">ابدأ الشات العام.</div>';
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function renderPrivateMessages(messages) {
+            const box = document.getElementById('private-messages');
+            box.innerHTML = messages.length ? messages.map(renderChatMessage).join('') : '<div class="text-center text-slate-500 text-sm py-10">ابدأ المحادثة.</div>';
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function renderChatMessage(msg) {
+            const mine = msg.userId === currentUser?.id;
+            return `
+                <div class="flex gap-2 ${mine ? 'justify-start' : 'justify-end'}">
+                    ${mine ? '' : `<img src="${escapeAttr(msg.photoURL || avatarFallback(msg.name))}" class="avatar-sm" alt="">`}
+                    <div class="max-w-[78%] rounded-2xl px-3 py-2 ${mine ? 'bg-cyan-400 text-slate-950' : 'bg-white/7 border border-white/10 text-slate-100'}">
+                        <p class="text-[11px] font-black ${mine ? 'text-slate-800' : 'text-cyan-200'}">${escapeHtml(msg.name || 'لاعب')}</p>
+                        <p class="text-sm leading-relaxed break-words">${escapeHtml(msg.text || '')}</p>
+                    </div>
+                </div>`;
+        }
+
+async function sendPublicMessage(e) {
+            e.preventDefault();
+            if (!requireUser()) return;
+            const input = document.getElementById('public-chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            try {
+                await db.collection(FS.publicChatMessages).add(chatPayloadFirestore(text));
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر إرسال رسالة الشات العام.');
+            }
+        }
+
+async function sendPrivateMessage(e) {
+            e.preventDefault();
+            if (!(await ensureUserReady()) || !privateTargetUser) return showToast('اختار لاعب الأول.');
+            const input = document.getElementById('private-chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = '';
+            try {
+                const threadRef = db.collection(FS.privateChatThreads).doc(pairKey(currentUser.id, privateTargetUser.id));
+                await threadRef.set({
+                    participants: [currentUser.id, privateTargetUser.id],
+                    participantNames: {
+                        [currentUser.id]: currentUser.name,
+                        [privateTargetUser.id]: privateTargetUser.name || 'لاعب'
+                    },
+                    updatedAt: FieldValue.serverTimestamp()
+                }, { merge: true });
+                await threadRef
+                    .collection('messages')
+                    .add(chatPayloadFirestore(text));
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر إرسال الرسالة البرايفت.');
+            }
+        }
+
+        async function openPrivateChat(userId) {
+            if (!(await ensureUserReady())) return;
+            const user = chatUsers.find(u => u.id === userId) || onlineUsers.find(u => u.id === userId);
+            if (!user) return;
+            privateTargetUser = user;
+            switchChatMode('private');
+            document.getElementById('private-chat-header').textContent = user.name || 'برايفت';
+            if (privateMessagesUnsubscribe) privateMessagesUnsubscribe();
+            privateMessagesUnsubscribe = db.collection(FS.privateChatThreads)
+                .doc(pairKey(currentUser.id, user.id))
+                .collection('messages')
+                .orderBy('createdAt', 'asc')
+                .limit(120)
+                .onSnapshot(snap => {
+                    const messages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderPrivateMessages(messages);
+                }, err => {
+                    console.warn('Private chat failed', err);
+                    showToast('الشات البرايفت محتاج صلاحيات Firestore.');
+                });
+            renderOnlineUsers();
+            document.getElementById('private-chat-input').focus();
+            toggleChat(true);
+        }
+
+        function switchChatMode(mode) {
+            document.getElementById('public-chat-pane').classList.toggle('hidden', mode !== 'public');
+            document.getElementById('private-chat-pane').classList.toggle('hidden', mode !== 'private');
+            document.getElementById('private-chat-pane').classList.toggle('flex', mode === 'private');
+            document.getElementById('chat-public-tab').className = mode === 'public' ? 'flex-1 py-2 rounded-xl bg-cyan-400 text-slate-950 font-black text-sm' : 'flex-1 py-2 rounded-xl bg-white/5 text-slate-300 font-black text-sm';
+            document.getElementById('chat-private-tab').className = mode === 'private' ? 'flex-1 py-2 rounded-xl bg-pink-500 text-white font-black text-sm' : 'flex-1 py-2 rounded-xl bg-white/5 text-slate-300 font-black text-sm';
+        }
+
+        function openProfileEditor() {
+            if (!currentUser) return;
+            document.getElementById('profile-edit-name').value = currentUser.name || '';
+            document.getElementById('profile-edit-photo').value = '';
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeProfileEditor() { document.getElementById('profile-modal').classList.add('hidden'); }
+        function openPostModal() { if (requireUser()) document.getElementById('post-modal').classList.remove('hidden'); }
+        function closePostModal() { document.getElementById('post-modal').classList.add('hidden'); document.getElementById('post-form').reset(); }
+        function openChallengeModal() { if (requireUser()) document.getElementById('challenge-modal').classList.remove('hidden'); }
+        function closeChallengeModal() { document.getElementById('challenge-modal').classList.add('hidden'); document.getElementById('challenge-form').reset(); fillCountrySelects(); }
+        function closePostViewer() { document.getElementById('post-viewer-modal').classList.add('hidden'); document.body.classList.remove('overflow-hidden'); clearReply(); activePostId = ''; }
+        async function openAcceptModal(challengeId) {
+            if (!(await ensureUserReady())) return;
+            const ch = challenges.find(c => c.id === challengeId);
+            if (!ch) {
+                showToast('تعذر فتح التحدي. اعمل تحديث وجرب تاني.');
+                return;
+            }
+            if (ch.ownerId === currentUser.id) {
+                showToast('مينفعش تقبل تحدي أنت صاحبه.');
+                return;
+            }
+            if (ch.status === 'accepted') {
+                showToast('التحدي اتقبل قبل كده.');
+                return;
+            }
+            activeAcceptChallengeId = challengeId;
+            document.getElementById('accept-text').textContent = `هتقبل تحدي ${ch.ownerName || 'لاعب'}. رقمك هيظهر لك وله فقط للتواصل على واتساب.`;
+            document.getElementById('accept-modal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+function closeAcceptModal() {
+            activeAcceptChallengeId = '';
+            document.getElementById('accept-modal').classList.add('hidden');
+            document.getElementById('accept-form').reset();
+            document.body.classList.remove('overflow-hidden');
+            fillCountrySelects();
+        }
+        function toggleChat(force) { document.getElementById('chat-panel').classList.toggle('open', typeof force === 'boolean' ? force : undefined); }
+        function toggleNotifications(force) {
+            const panel = document.getElementById('notifications-panel');
+            if (typeof force === 'boolean') panel.classList.toggle('hidden', !force);
+            else panel.classList.toggle('hidden');
+        }
+        function setReply(commentId, name) {
+            activeReplyCommentId = commentId;
+            document.getElementById('reply-chip').classList.remove('hidden');
+            document.getElementById('reply-chip-text').textContent = `رد على ${name}`;
+            document.getElementById('viewer-comment-input').focus();
+        }
+        function clearReply() {
+            activeReplyCommentId = '';
+            document.getElementById('reply-chip').classList.add('hidden');
+        }
+
+        async function addComment(postId, parentId, text) {
+            await db.collection(FS.comments).add({
+                postId,
+                parentId: parentId || '',
+                text,
+                status: 'active',
+                authorId: currentUser.id,
+                authorName: currentUser.name,
+                authorPhoto: currentUser.photoURL,
+                createdAt: FieldValue.serverTimestamp()
+            });
+        }
+
+        function toggleInlineReplyForm(commentId) {
+            const form = document.getElementById(`reply-form-${commentId}`);
+            if (!form) return;
+            document.querySelectorAll('[data-viewer-reply-form]').forEach(other => {
+                if (other !== form) other.classList.add('hidden');
+            });
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                form.querySelector('input[name="replyText"]')?.focus();
+            }
+        }
+
+        async function handleInlineReply(event, parentId, form = null) {
+            event.preventDefault();
+            if (!(await ensureUserReady()) || !activePostId) return;
+            const targetForm = form || event.target.closest('[data-viewer-reply-form]');
+            const input = targetForm?.querySelector('[name="replyText"]');
+            const text = (input?.value || '').trim();
+            if (!text) return;
+            input.value = '';
+            try {
+                await addComment(activePostId, parentId || '', text);
+                targetForm?.classList.add('hidden');
+            } catch (err) {
+                console.error(err);
+                showToast('تعذر نشر الرد.');
+            }
+        }
+
+        async function adminLogin() {
+            const email = document.getElementById('admin-email').value.trim();
+            const pass = document.getElementById('admin-password').value;
+            const err = document.getElementById('admin-login-error');
+            err.classList.add('hidden');
+            try {
+                const cred = await auth.signInWithEmailAndPassword(email, pass);
+                const allowed = await syncAdminFromAuth(cred.user, { announce: true });
+                if (!allowed) throw new Error('not-admin');
+                closeAdminLogin();
+                await writeAdminLog('community_admin_login', { email });
+            } catch (e) {
+                console.error(e);
+                await auth.signOut().catch(() => {});
+                err.classList.remove('hidden');
+            }
+        }
+
+        function openAdminLogin() { document.getElementById('admin-login-modal').classList.remove('hidden'); setTimeout(() => document.getElementById('admin-email').focus(), 50); }
+        function closeAdminLogin() { document.getElementById('admin-login-modal').classList.add('hidden'); document.getElementById('admin-login-error').classList.add('hidden'); }
+        async function adminLogout() {
+            await writeAdminLog('community_admin_logout', { email: currentAdminUser?.email || '' });
+            await auth.signOut().catch(() => {});
+            isAdmin = false;
+            currentAdminUser = null;
+            clearCommunitySession();
+            renderAdminState();
+            await autoRestoreCommunityUser();
+            if (!currentUser) showEntryGate();
+            showToast('تم خروج الأدمن.');
+        }
+
+        async function uploadImage(file) {
+            const form = new FormData();
+            form.append('key', IMGBB_API_KEY);
+            form.append('image', file);
+            const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
+            const data = await res.json();
+            if (!data.success) throw new Error('imgbb-upload-failed');
+            return data.data.url;
+        }
+
+        function updateCurrentUserUI() {
+            if (!currentUser) return;
+            ['header-avatar', 'hero-avatar'].forEach(id => document.getElementById(id).src = currentUser.photoURL || avatarFallback(currentUser.name));
+            document.getElementById('header-name').textContent = currentUser.name || 'لاعب';
+        }
+
+        function normalizeProfile(profile) {
+            return {
+                id: profile.id || currentUserId,
+                email: normalizeEmail(profile.email || pendingEmail),
+                name: profile.name || 'لاعب',
+                photoURL: profile.photoURL || avatarFallback(profile.name || 'لاعب'),
+                disabled: !!profile.disabled,
+                deleted: !!profile.deleted,
+                adminProfile: !!profile.adminProfile,
+                favoritePostIds: Array.isArray(profile.favoritePostIds) ? profile.favoritePostIds : []
+            };
+        }
+
+        function normalizeImages(images) {
+            if (Array.isArray(images)) return images.filter(Boolean);
+            if (typeof images === 'string') return images.split(/[\s,]+/).filter(x => /^https?:\/\//.test(x));
+            return [];
+        }
+
+        function publicUserPayload(extra = {}) {
+            return { userId: currentUser.id, name: currentUser.name, photoURL: currentUser.photoURL, ...extra };
+        }
+
+        function chatPayload(text) {
+            return { userId: currentUser.id, name: currentUser.name, photoURL: currentUser.photoURL, text, createdAt: DbServerValue.TIMESTAMP };
+        }
+
+        function chatPayloadFirestore(text) {
+            return {
+                userId: currentUser.id,
+                name: currentUser.name,
+                photoURL: currentUser.photoURL,
+                text,
+                createdAt: FieldValue.serverTimestamp()
+            };
+        }
+
+function requireUser() {
+            if (!currentUser) { showToast('ادخل بإيميلك الأول.'); return false; }
+            if (currentUser.disabled || currentUser.deleted) { showBlocked(); return false; }
+            return true;
+        }
+
+        async function requireAdmin() {
+            const authUser = auth.currentUser;
+            if (authUser && await checkAdminAccess(authUser)) {
+                isAdmin = true;
+                currentAdminUser = authUser;
+                renderAdminState();
+                return true;
+            }
+            isAdmin = false;
+            currentAdminUser = null;
+            renderAdminState();
+            showToast('سجل دخول أدمن الأول.');
+            return false;
+        }
+
+        function showBlocked() {
+            document.getElementById('entry-gate').classList.add('hidden');
+            document.getElementById('community-app').classList.add('hidden');
+            document.getElementById('blocked-state').classList.remove('hidden');
+            document.getElementById('chat-float-btn').classList.add('hidden');
+        }
+
+        async function communityLogout() {
+            clearCommunitySession();
+            if (isAdmin && currentAdminUser) {
+                await loadAdminCommunityProfile(currentAdminUser);
+                showToast('خرجت من يوزر الكوميونتي، ولسه داخل أدمن.');
+                return;
+            }
+            showEntryGate();
+            showToast('تم خروج اليوزر.');
+        }
+
+        function resetEntry() {
+            clearCommunitySession();
+            showEntryGate();
+        }
+
+        function clearCommunitySession() {
+            clearUnsubscribes();
+            if (privateMessagesUnsubscribe) {
+                try { privateMessagesUnsubscribe(); } catch (e) {}
+                privateMessagesUnsubscribe = null;
+            }
+            rtdb.ref(RT.presence).off();
+            if (presenceRef) {
+                const oldPresenceRef = presenceRef;
+                presenceRef = null;
+                oldPresenceRef.remove().catch(() => {});
+            }
+            clearInterval(window.efcPresenceTimer);
+            localStorage.removeItem('efc_current_email');
+            currentUser = null;
+            currentUserId = '';
+            pendingEmail = '';
+            currentUserSource = '';
+            posts = [];
+            comments = [];
+            challenges = [];
+            notifications = [];
+            onlineUsers = [];
+            chatUsers = [];
+            privateTargetUser = null;
+            activePostId = '';
+            activeAcceptChallengeId = '';
+        }
+
+        function showEntryGate() {
+            document.getElementById('entry-gate').classList.remove('hidden');
+            document.getElementById('community-app').classList.add('hidden');
+            document.getElementById('blocked-state').classList.add('hidden');
+            document.getElementById('profile-create-form').classList.add('hidden');
+            document.getElementById('chat-float-btn').classList.add('hidden');
+            document.getElementById('chat-panel').classList.remove('open');
+            document.getElementById('header-profile-btn').classList.add('hidden');
+            document.getElementById('header-profile-btn').classList.remove('flex');
+            document.getElementById('community-logout-btn').classList.add('hidden');
+            document.getElementById('header-notification-btn').classList.add('hidden');
+            hideEntryError();
+        }
+
+        function clearUnsubscribes() {
+            while (unsub.length) {
+                try { unsub.pop()(); } catch (e) {}
+            }
+        }
+
+        function refreshAll() {
+            renderAll();
+            showToast('تم تحديث العرض.');
+        }
+
+        function onDataError(err) {
+            console.error(err);
+            document.getElementById('posts-list').innerHTML = emptyCard('تعذر تحميل البيانات. راجع Firestore Rules أو الاتصال.');
+        }
+
+        async function writeAdminLog(action, details = {}) {
+            try {
+                await db.collection(FS.adminLogs).add({
+                    action,
+                    details,
+                    adminEmail: currentAdminUser?.email || '',
+                    adminUid: currentAdminUser?.uid || '',
+                    createdAt: FieldValue.serverTimestamp()
+                });
+            } catch (e) { console.warn('Admin log failed', e); }
+        }
+
+        function contactButton(phone, message) {
+            const clean = String(phone || '').replace(/\D/g, '');
+            if (!clean) return '';
+            return `<a href="https://wa.me/${clean}?text=${encodeURIComponent(message)}" target="_blank" class="py-2.5 px-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-black text-center hover:bg-emerald-500/25"><i class="fa-brands fa-whatsapp ml-1"></i> تواصل واتساب</a>`;
+        }
+
+        function getChallengePhoneAccess(ch) {
+            const userId = currentUser?.id || '';
+            const accepted = ch?.status === 'accepted';
+            const isOwner = ch?.ownerId === userId;
+            const isAcceptedByMe = ch?.acceptedById === userId;
+            if (!accepted) return { canReveal: false, phone: '', name: '', label: '' };
+            if (isAcceptedByMe) {
+                return {
+                    canReveal: true,
+                    phone: ch.ownerPhone || ch.phone || ch.whatsapp || '',
+                    name: ch.ownerName || 'صاحب التحدي',
+                    label: 'رقم صاحب التحدي'
+                };
+            }
+            if (isOwner) {
+                return {
+                    canReveal: true,
+                    phone: ch.acceptedPhone || ch.acceptPhone || ch.acceptedByPhone || '',
+                    name: ch.acceptedByName || 'اللاعب اللي قبل التحدي',
+                    label: 'رقم اللي قبل التحدي'
+                };
+            }
+            return { canReveal: false, phone: '', name: '', label: '' };
+        }
+
+        async function getFreshChallengePhoneInfo(challengeId) {
+            let ch = challenges.find(c => c.id === challengeId) || null;
+            let info = ch ? getChallengePhoneAccess(ch) : { canReveal: false, phone: '', name: '', label: '' };
+            if (info.canReveal && String(info.phone || '').replace(/\D/g, '')) return info;
+
+            try {
+                const snap = await db.collection(FS.challenges).doc(challengeId).get();
+                if (snap.exists) {
+                    ch = { id: snap.id, ...snap.data() };
+                    challenges = challenges.map(item => item.id === ch.id ? { ...item, ...ch } : item);
+                    if (!challenges.some(item => item.id === ch.id)) challenges.unshift(ch);
+                    info = getChallengePhoneAccess(ch);
+                }
+            } catch (err) {
+                console.warn('Could not fetch challenge phone', err);
+            }
+            return info;
+        }
+
+        async function revealChallengePhone(challengeId, phone = '', playerName = '', label = '') {
+            if (!(await ensureUserReady())) return;
+            let info = {
+                canReveal: true,
+                phone: phone || '',
+                name: playerName || 'لاعب',
+                label: label || 'رقم الواتساب'
+            };
+            if (!String(info.phone || '').replace(/\D/g, '')) {
+                info = await getFreshChallengePhoneInfo(challengeId);
+            }
+            const clean = String(info.phone || '').replace(/\D/g, '');
+            if (!info.canReveal || !clean) {
+                showToast('الرقم مش ظاهر لك أو غير متاح. اعمل تحديث وجرب تاني.');
+                return;
+            }
+
+            const message = encodeURIComponent(`أنا ${currentUser?.name || ''} بخصوص التحدي في eFootball Community`);
+            const box = document.getElementById(`challenge-phone-panel-${challengeId}`);
+            if (box) {
+                box.innerHTML = `
+                    <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+                        <p class="text-[11px] text-emerald-200 font-black mb-1">${escapeHtml(info.label || 'رقم الواتساب')}</p>
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <div class="min-w-0">
+                                <p class="text-xs text-slate-300 truncate">${escapeHtml(info.name || 'لاعب')}</p>
+                                <p dir="ltr" class="text-white font-black text-sm">${escapeHtml(info.phone)}</p>
+                            </div>
+                            <a href="https://wa.me/${clean}?text=${message}" target="_blank" class="px-3 py-2 rounded-xl bg-emerald-400 text-slate-950 text-xs font-black hover:brightness-110">
+                                <i class="fa-brands fa-whatsapp ml-1"></i> فتح واتساب
+                            </a>
+                        </div>
+                    </div>`;
+                box.classList.remove('hidden');
+            }
+
+            const modal = document.getElementById('challenge-phone-modal');
+            const title = document.getElementById('challenge-phone-modal-title');
+            const name = document.getElementById('challenge-phone-modal-name');
+            const number = document.getElementById('challenge-phone-modal-number');
+            const link = document.getElementById('challenge-phone-whatsapp-link');
+            if (modal && title && name && number && link) {
+                title.textContent = info.label || 'رقم الواتساب';
+                name.textContent = info.name || '';
+                number.textContent = info.phone || '';
+                link.href = `https://wa.me/${clean}?text=${message}`;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeChallengePhoneModal() {
+            document.getElementById('challenge-phone-modal')?.classList.add('hidden');
+        }
+
+
+        function openImageUrl(url) {
+            if (url) window.open(url, '_blank', 'noopener');
+        }
+
+        function pairKey(a, b) {
+            return [a, b].sort().join('__');
+        }
+
+        function cleanPhone(code, phone) {
+            const c = String(code || '').replace(/\D/g, '');
+            let p = String(phone || '').replace(/\D/g, '');
+            while (p.startsWith('0')) p = p.slice(1);
+            if (p.startsWith(c)) return p;
+            return c + p;
+        }
+
+        function normalizeEmail(email) {
+            return String(email || '').trim().toLowerCase();
+        }
+
+        function normalizeSearch(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function makeUserId(email) {
+            return btoa(unescape(encodeURIComponent(normalizeEmail(email)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+
+        function avatarFallback(name) {
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'EF')}&background=0f172a&color=67e8f9&bold=true`;
+        }
+
+        function tsToMillis(ts) {
+            if (!ts) return 0;
+            if (typeof ts === 'number') return ts;
+            if (ts.toMillis) return ts.toMillis();
+            if (ts.seconds) return ts.seconds * 1000;
+            return new Date(ts).getTime() || 0;
+        }
+
+        function formatTime(ts) {
+            const ms = tsToMillis(ts);
+            if (!ms) return 'الآن';
+            return new Intl.DateTimeFormat('ar-EG', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(ms));
+        }
+
+        function emptyCard(text) {
+            return `<div class="glass-card rounded-3xl p-8 text-center text-slate-400 text-sm">${escapeHtml(text)}</div>`;
+        }
+
+        function showEntryError(text) {
+            const el = document.getElementById('entry-error');
+            el.textContent = text;
+            el.classList.remove('hidden');
+        }
+
+        function hideEntryError() {
+            document.getElementById('entry-error').classList.add('hidden');
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toast');
+            toast.textContent = text;
+            toast.classList.remove('hidden');
+            clearTimeout(window.efcToastTimer);
+            window.efcToastTimer = setTimeout(() => toast.classList.add('hidden'), 2800);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[ch]));
+        }
+
+        function escapeAttr(value) {
+            return escapeHtml(value).replace(/`/g, '&#096;');
+        }
+
+        function jsArg(value) {
+            return JSON.stringify(String(value ?? '')).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+        }
+
+        Object.assign(window, {
+            openAdminLogin,
+            closeAdminLogin,
+            adminLogin,
+            adminLogout,
+            communityLogout,
+            resetEntry,
+            openProfileEditor,
+            closeProfileEditor,
+            openPostModal,
+            closePostModal,
+            openChallengeModal,
+            closeChallengeModal,
+            openAcceptModal,
+            closeAcceptModal,
+            closeChallengePhoneModal,
+            openPostViewer,
+            closePostViewer,
+            moveViewerImage,
+            toggleChat,
+            toggleNotifications,
+            switchTab,
+            switchAdminPane,
+            loadAdminData,
+            refreshAll,
+            clearReply,
+            setReply,
+            toggleInlineReplyForm,
+            toggleMiniReplyForm,
+            revealChallengePhone,
+            openImageUrl
+        });
+    </script>
+</body>
+</html>

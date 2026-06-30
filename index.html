@@ -367,6 +367,16 @@
                     <span class="en-only">Reviews</span>
                 </button>
 
+                <a href="tournament.html" class="text-sm font-bold text-yellow-300 hover:text-yellow-200 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-trophy"></i>
+                    <span class="ar-only">البطولة</span><span class="en-only">Tournament</span>
+                </a>
+
+                <a href="community.html" class="text-sm font-bold text-cyan-300 hover:text-white transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-users"></i>
+                    <span class="ar-only">الكوميونتي</span><span class="en-only">Community</span>
+                </a>
+
                 <button onclick="toggleLanguage()" class="glass-panel px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:text-cyan-400 transition-colors flex items-center gap-2">
                     <i class="fa-solid fa-globe text-cyan-400"></i> <span id="lang-text">English</span>
                 </button>
@@ -421,6 +431,12 @@
                 <button onclick="openReviewsModal()" class="md:hidden text-yellow-400 hover:text-yellow-300 text-lg mx-2">
                     <i class="fa-solid fa-star"></i>
                 </button>
+                <a href="tournament.html" class="md:hidden w-10 h-10 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 flex items-center justify-center" title="البطولة">
+                    <i class="fa-solid fa-trophy"></i>
+                </a>
+                <a href="community.html" class="md:hidden w-10 h-10 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 flex items-center justify-center" title="الكوميونتي">
+                    <i class="fa-solid fa-users"></i>
+                </a>
                 <!-- Facebook Flash Icon (Modified to open multiple pages modal) -->
                 <button onclick="openFbModal()" class="fb-flash-btn relative flex items-center justify-center w-10 h-10 rounded-full bg-[#1877F2] hover:bg-[#1565d8] transition-all shadow-lg" title="صفحاتنا على فيسبوك">
                     <i class="fa-brands fa-facebook-f text-white text-lg"></i>
@@ -942,6 +958,12 @@
                 <div>
                     <div class="relative h-[280px] md:h-[400px] w-full bg-slate-950 rounded-2xl overflow-hidden border border-slate-800">
                         <img id="modal-primary-img" src="" alt="Account Screenshot" class="w-full h-full object-contain">
+                        <button onclick="changeModalGalleryImage(-1)" class="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-950/75 border border-white/10 text-white hover:border-cyan-400 hover:text-cyan-300 transition-all">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button onclick="changeModalGalleryImage(1)" class="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-slate-950/75 border border-white/10 text-white hover:border-cyan-400 hover:text-cyan-300 transition-all">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
                     </div>
                     <div id="modal-thumbnails" class="flex gap-3 overflow-x-auto mt-4 pb-2"></div>
                 </div>
@@ -1496,6 +1518,8 @@
         let activePlatforms = ["steam", "xbox", "ps", "mobile"];
         let currentStatusFilter = "all"; 
         let adminMode = false;
+        let modalGalleryImages = [];
+        let modalGalleryIndex = 0;
         let currentCarouselIndex = 0;
         let carouselInterval;
         let currentLang = "ar";
@@ -2286,7 +2310,7 @@
             if (acc.brokerCode === 'A') { brokerImgSrc = 'abdo.png'; brokerInitial = 'A'; }
             if (acc.brokerCode === 'Y') { brokerImgSrc = 'Yousef.png'; brokerInitial = 'Y'; }
 
-            div.className = `glass-card rounded-2xl overflow-hidden relative group flex flex-col justify-between ${isSold ? 'opacity-70 saturate-50' : ''}`;
+            div.className = `glass-card rounded-2xl overflow-hidden relative group flex flex-col justify-between cursor-pointer ${isSold ? 'opacity-70 saturate-50' : ''}`;
             
             div.innerHTML = `
                 <div class="relative overflow-hidden aspect-[16/10] bg-slate-950">
@@ -2352,6 +2376,10 @@
                     </div>
                 </div>
             `;
+            div.addEventListener('click', function(event) {
+                if (event.target.closest('button, a, input, select, textarea, label')) return;
+                openModal(acc);
+            });
             return div;
         }
 
@@ -2396,20 +2424,19 @@
                 const splits = acc.galleryImages.split(/[\s,]+/).filter(url => url.trim().startsWith('http'));
                 allImages.push(...splits);
             }
+            modalGalleryImages = allImages.filter(Boolean);
+            modalGalleryIndex = 0;
 
             allImages.forEach((imgUrl, idx) => {
                 const btn = document.createElement('button');
                 btn.className = `w-16 h-12 rounded-lg bg-slate-950 border ${idx === 0 ? 'border-cyan-400' : 'border-slate-800'} overflow-hidden shrink-0 transition-all`;
                 btn.innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1540747737956-378724044453?auto=format&fit=crop&w=100&q=80'">`;
                 btn.onclick = function() {
-                    document.getElementById('modal-primary-img').src = imgUrl;
-                    Array.from(thumbnailBox.children).forEach(child => child.classList.add('border-slate-800'));
-                    Array.from(thumbnailBox.children).forEach(child => child.classList.remove('border-cyan-400'));
-                    btn.classList.add('border-cyan-400');
-                    btn.classList.remove('border-slate-800');
+                    setModalGalleryImage(idx);
                 };
                 thumbnailBox.appendChild(btn);
             });
+            setModalGalleryImage(0);
 
             // ROUTE WHATSAPP DYNAMICALLY: Route dynamically based on brokerCode
             const brokerKey = acc.brokerCode || 'B';
@@ -2427,6 +2454,22 @@
 
             document.getElementById('details-modal').classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
+        }
+
+        function setModalGalleryImage(index) {
+            if (!modalGalleryImages.length) return;
+            modalGalleryIndex = ((index % modalGalleryImages.length) + modalGalleryImages.length) % modalGalleryImages.length;
+            const primaryImg = document.getElementById('modal-primary-img');
+            const thumbnailBox = document.getElementById('modal-thumbnails');
+            primaryImg.src = modalGalleryImages[modalGalleryIndex];
+            Array.from(thumbnailBox.children).forEach((child, idx) => {
+                child.classList.toggle('border-cyan-400', idx === modalGalleryIndex);
+                child.classList.toggle('border-slate-800', idx !== modalGalleryIndex);
+            });
+        }
+
+        function changeModalGalleryImage(delta) {
+            setModalGalleryImage(modalGalleryIndex + delta);
         }
 
         function closeModal() {

@@ -93,6 +93,12 @@
             </a>
 
             <div class="flex items-center gap-2">
+                <a href="index.html" class="hidden sm:flex text-xs px-3 py-1.5 glass-panel rounded-xl text-slate-300 hover:text-white transition-all items-center gap-1.5">
+                    <i class="fa-solid fa-store text-cyan-300"></i> المتجر
+                </a>
+                <a href="community.html" class="text-xs px-3 py-1.5 glass-panel rounded-xl text-cyan-300 hover:text-white transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-users"></i> الكوميونتي
+                </a>
                 <!-- Status badge -->
                 <span id="header-status-badge" class="hidden text-xs px-3 py-1.5 rounded-full font-bold border"></span>
                 <!-- Admin login btn -->
@@ -1187,7 +1193,7 @@
                 </div>`).join('');
         }
 
-        function renderGroupMatches(players, gi) {
+function renderGroupMatches(players, gi) {
             let html = '';
             for (let i = 0; i < players.length; i++) {
                 for (let j = i+1; j < players.length; j++) {
@@ -1195,8 +1201,15 @@
                     const matchId = `g${gi}_${i}_${j}`;
                     const existing = p1.matches?.find(m => m.matchId === matchId || m.opponent === p2.name);
                     const middle = existing ? escapeHtml(existing.score || '?-?') : (isAdmin ? 'سجّل نتيجة' : 'إرسال نتيجة');
-                    const btnClass = existing ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-300' : (isAdmin ? 'border-yellow-500/30 bg-yellow-500/5 text-yellow-300 hover:bg-yellow-500/10' : 'border-cyan-500/25 bg-cyan-500/5 text-cyan-300 hover:bg-cyan-500/10');
-                    html += `<button onclick='openScoreModal(${jsArg(matchId)}, ${jsArg(p1.name)}, ${jsArg(p2.name)}, ${jsArg(p1.rowIndex || i)}, ${jsArg(p2.rowIndex || j)})' class="flex items-center justify-between px-3 py-2 rounded-xl border ${btnClass} text-xs transition-all"><span class="font-bold text-white truncate">${escapeHtml(p1.name)}</span><span class="mx-2 flex-shrink-0 font-black">${middle}</span><span class="font-bold text-white truncate text-left">${escapeHtml(p2.name)}</span></button>`;
+                    const isLockedForUser = !!existing && !isAdmin;
+                    const btnClass = existing
+                        ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-300'
+                        : (isAdmin ? 'border-yellow-500/30 bg-yellow-500/5 text-yellow-300 hover:bg-yellow-500/10' : 'border-cyan-500/25 bg-cyan-500/5 text-cyan-300 hover:bg-cyan-500/10');
+                    const actionAttr = isLockedForUser
+                        ? 'disabled aria-disabled="true"'
+                        : `onclick='openScoreModal(${jsArg(matchId)}, ${jsArg(p1.name)}, ${jsArg(p2.name)}, ${jsArg(p1.rowIndex || i)}, ${jsArg(p2.rowIndex || j)})'`;
+                    const lockClass = isLockedForUser ? 'cursor-default opacity-95' : '';
+                    html += `<button ${actionAttr} class="flex items-center justify-between px-3 py-2 rounded-xl border ${btnClass} ${lockClass} text-xs transition-all"><span class="font-bold text-white truncate">${escapeHtml(p1.name)}</span><span class="mx-2 flex-shrink-0 font-black">${middle}</span><span class="font-bold text-white truncate text-left">${escapeHtml(p2.name)}</span></button>`;
                 }
             }
             return html || '<p class="text-xs text-slate-500">لا توجد مباريات</p>';
@@ -1212,14 +1225,14 @@
             } catch(e) { container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500">تعذر تحميل البيانات</div>'; }
         }
 
-        function renderLiveMatches(matches = []) {
+function renderLiveMatches(matches = []) {
             const panel = document.getElementById('live-matches-panel');
             if (!panel) return;
             liveMatches = matches.map(normalizeLiveMatch);
             const visible = liveMatches.filter(match => !['deleted', 'cancelled', 'ended'].includes(match.status));
             if (!visible.length) { panel.classList.add('hidden'); panel.innerHTML = ''; return; }
             panel.classList.remove('hidden');
-            panel.innerHTML = `<div class="flex items-center justify-between gap-3 mb-4"><h3 class="text-sm font-extrabold text-white flex items-center gap-2"><i class="fa-solid fa-satellite-dish text-cyan-400"></i> مباريات الداشبورد</h3><span class="text-[11px] px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">${visible.length} مباشر</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${visible.map(match => { const hasScore = match.score1 !== '' && match.score2 !== ''; const statusText = hasScore ? `${escapeHtml(match.score1)} - ${escapeHtml(match.score2)}` : 'بانتظار النتيجة'; const statusClass = hasScore ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25' : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/25'; return `<div class="glass-card rounded-2xl p-4 border border-cyan-500/10"><div class="flex items-center justify-between gap-3"><span class="font-bold text-white truncate flex-1">${escapeHtml(match.p1Name)}</span><span class="px-3 py-1 rounded-xl border text-xs font-black ${statusClass}">${statusText}</span><span class="font-bold text-white truncate flex-1 text-left">${escapeHtml(match.p2Name)}</span></div><button onclick='openScoreModal(${jsArg(match.id)}, ${jsArg(match.p1Name)}, ${jsArg(match.p2Name)}, ${jsArg(match.p1idx)}, ${jsArg(match.p2idx)})' class="mt-3 w-full py-2 rounded-xl ${isAdmin ? 'bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/25' : 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25'} text-xs font-black transition-all"><i class="fa-solid ${isAdmin ? 'fa-pen-to-square' : 'fa-paper-plane'} ml-1"></i> ${isAdmin ? (hasScore ? 'تعديل النتيجة' : 'إدخال النتيجة') : 'إرسال النتيجة للأدمن'}</button></div>`; }).join('')}</div>`;
+            panel.innerHTML = `<div class="flex items-center justify-between gap-3 mb-4"><h3 class="text-sm font-extrabold text-white flex items-center gap-2"><i class="fa-solid fa-satellite-dish text-cyan-400"></i> مباريات الداشبورد</h3><span class="text-[11px] px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">${visible.length} مباشر</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${visible.map(match => { const hasScore = match.score1 !== '' && match.score2 !== ''; const statusText = hasScore ? `${escapeHtml(match.score1)} - ${escapeHtml(match.score2)}` : 'بانتظار النتيجة'; const statusClass = hasScore ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/25' : 'text-yellow-300 bg-yellow-500/10 border-yellow-500/25'; const action = (isAdmin || !hasScore) ? `<button onclick='openScoreModal(${jsArg(match.id)}, ${jsArg(match.p1Name)}, ${jsArg(match.p2Name)}, ${jsArg(match.p1idx)}, ${jsArg(match.p2idx)})' class="mt-3 w-full py-2 rounded-xl ${isAdmin ? 'bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/25' : 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25'} text-xs font-black transition-all"><i class="fa-solid ${isAdmin ? 'fa-pen-to-square' : 'fa-paper-plane'} ml-1"></i> ${isAdmin ? (hasScore ? 'تعديل النتيجة' : 'إدخال النتيجة') : 'إرسال النتيجة للأدمن'}</button>` : `<div class="mt-3 w-full py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs font-black text-center"><i class="fa-solid fa-circle-check ml-1"></i> تم تسجيل النتيجة</div>`; return `<div class="glass-card rounded-2xl p-4 border border-cyan-500/10"><div class="flex items-center justify-between gap-3"><span class="font-bold text-white truncate flex-1">${escapeHtml(match.p1Name)}</span><span class="px-3 py-1 rounded-xl border text-xs font-black ${statusClass}">${statusText}</span><span class="font-bold text-white truncate flex-1 text-left">${escapeHtml(match.p2Name)}</span></div>${action}</div>`; }).join('')}</div>`;
         }
 
         // ===== PHONE REGISTRATION =====
