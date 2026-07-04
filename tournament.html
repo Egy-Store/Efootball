@@ -76,6 +76,11 @@
         .bracket-match .team.winner { background: rgba(234,179,8,0.12); color: #fbbf24; }
         .bracket-match .score { background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 6px; font-size: 12px; }
 
+        /* All knockout matches screenshot popup */
+        .all-matches-screenshot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+        .all-matches-screenshot-card { break-inside: avoid; page-break-inside: avoid; }
+        .all-matches-screenshot-card .player-line { min-width: 0; }
+
         /* Country codes dropdown */
         .country-select { background: rgba(8,12,30,0.8); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 12px; border-radius: 12px 0 0 12px; font-family: 'Cairo',sans-serif; outline: none; }
         .country-select:focus { border-color: #00f0ff; }
@@ -622,6 +627,23 @@
                 <p id="public-announcement-desc" class="text-sm text-slate-300 leading-7 whitespace-pre-wrap"></p>
                 <button onclick="closePublicAnnouncementModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-black">تمام</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ALL KNOCKOUT MATCHES MODAL -->
+    <div id="all-knockout-matches-modal" class="fixed inset-0 z-[127] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closeAllKnockoutMatchesModal()"></div>
+        <div class="glass-panel w-full max-w-6xl rounded-3xl overflow-hidden relative z-10 max-h-[92vh] flex flex-col border border-cyan-500/20">
+            <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-slate-800 bg-gradient-to-r from-cyan-900/20 to-yellow-900/20">
+                <div>
+                    <h3 class="text-lg font-extrabold text-white flex items-center gap-2"><i class="fa-solid fa-table-cells-large text-cyan-300"></i> عرض المباريات</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">كل مباريات الشجرة في مربعات مرتبة، مناسبة إنك تاخدها سكرين.</p>
+                </div>
+                <button onclick="closeAllKnockoutMatchesModal()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div id="all-knockout-matches-content" class="overflow-y-auto p-5"></div>
         </div>
     </div>
 
@@ -1655,13 +1677,110 @@ function renderLiveMatches(matches = []) {
                         <h3 class="text-xl font-extrabold text-white flex items-center gap-2"><i class="fa-solid fa-sitemap text-yellow-400"></i> شجرة خروج المغلوب</h3>
                         <p class="text-xs text-slate-400 mt-1">سجل النتائج من كل مباراة، وبعد اكتمال الدور يقدر الأدمن ينقل الفائزين للدور التالي.</p>
                     </div>
-                    ${isAdmin ? '<button onclick="loadTournamentStatus()" class="px-3 py-2 rounded-xl bg-slate-800 text-cyan-300 text-xs font-bold"><i class="fa-solid fa-rotate-right ml-1"></i> تحديث</button>' : ''}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="openAllKnockoutMatchesModal()" class="px-4 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 hover:bg-cyan-500/25 hover:text-white text-xs font-black transition-all"><i class="fa-solid fa-table-cells-large ml-1"></i> عرض المباريات</button>
+                        ${isAdmin ? '<button onclick="loadTournamentStatus()" class="px-3 py-2 rounded-xl bg-slate-800 text-cyan-300 text-xs font-bold"><i class="fa-solid fa-rotate-right ml-1"></i> تحديث</button>' : ''}
+                    </div>
                 </div>
                 ${champion ? `<div class="mb-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-center"><div class="text-xs text-emerald-300 font-black mb-1">بطل البطولة</div><div class="text-2xl font-black text-white">${escapeHtml(champion.name || champion.winner || '-')}</div></div>` : ''}
                 ${isAdmin ? renderKnockoutAdminControls(rounds, currentIndex) : ''}
                 ${isAdmin ? renderKnockoutAdvancePanel(rounds, currentIndex) : ''}
                 <div class="overflow-x-auto pb-2"><div class="flex gap-4 min-w-max">${rounds.map((round, index) => renderKnockoutRound(round, index, currentIndex)).join('')}</div></div>
             </div>`;
+        }
+
+        function getAllKnockoutMatchesForPopup(rounds) {
+            const currentIndex = getCurrentKnockoutRoundIndex(rounds);
+            const items = [];
+            (rounds || []).forEach((round, roundIndex) => {
+                (round.matches || []).forEach((match, matchIndex) => {
+                    const winner = getKnockoutMatchWinner(match);
+                    const hasScore = match?.score1 !== undefined && match?.score1 !== '' && match?.score2 !== undefined && match?.score2 !== '';
+                    const playable = isKnockoutMatchPlayable(match);
+                    const hasBye = (isKnockoutRealPlayer(match?.p1) && isKnockoutBye(match?.p2)) || (isKnockoutRealPlayer(match?.p2) && isKnockoutBye(match?.p1));
+                    let statusText = 'بانتظار الفائزين';
+                    let statusClass = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+                    if (hasBye && winner) {
+                        statusText = 'تأهل تلقائي';
+                        statusClass = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25';
+                    } else if (winner || match?.status === 'scored') {
+                        statusText = 'انتهت';
+                        statusClass = 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25';
+                    } else if (playable && roundIndex === currentIndex) {
+                        statusText = 'جاهزة للعب';
+                        statusClass = 'bg-yellow-500/10 text-yellow-300 border-yellow-500/25';
+                    } else if (playable) {
+                        statusText = 'مؤجلة';
+                        statusClass = 'bg-cyan-500/10 text-cyan-300 border-cyan-500/25';
+                    }
+                    items.push({ round, roundIndex, match, matchIndex, winner, hasScore, statusText, statusClass });
+                });
+            });
+            return items;
+        }
+
+        function renderAllKnockoutMatchesPopupContent(rounds) {
+            const items = getAllKnockoutMatchesForPopup(rounds);
+            if (!items.length) return '<div class="text-center py-12 text-slate-500">لا توجد مباريات لعرضها</div>';
+            const roundGroups = items.reduce((acc, item) => {
+                const key = `${item.roundIndex}`;
+                if (!acc[key]) acc[key] = { label: item.round?.label || ('Round ' + (item.roundIndex + 1)), items: [] };
+                acc[key].items.push(item);
+                return acc;
+            }, {});
+            return Object.values(roundGroups).map(group => `<div class="mb-6 last:mb-0">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <h4 class="text-sm font-black text-yellow-300"><i class="fa-solid fa-layer-group ml-1"></i>${escapeHtml(group.label)}</h4>
+                    <span class="text-[11px] px-2.5 py-1 rounded-full bg-slate-950/60 border border-white/10 text-slate-400">${group.items.length} مباراة</span>
+                </div>
+                <div class="all-matches-screenshot-grid">
+                    ${group.items.map(item => renderAllKnockoutMatchCard(item)).join('')}
+                </div>
+            </div>`).join('');
+        }
+
+        function renderPopupPlayerLine(player, match, side) {
+            const isBye = isKnockoutBye(player);
+            const isPlaceholder = isKnockoutPlaceholder(player);
+            const winner = getKnockoutMatchWinner(match);
+            const isWinner = winner && isKnockoutRealPlayer(player) && (String(winner.rowIndex || '') === String(player?.rowIndex || '') || String(winner.name || '') === String(player?.name || ''));
+            const score = side === 'p1' ? match?.score1 : match?.score2;
+            const scoreText = score !== undefined && score !== '' ? escapeHtml(score) : (player?.seed ? `#${escapeHtml(player.seed)}` : '-');
+            return `<div class="player-line flex items-center justify-between gap-2 rounded-xl px-3 py-2 ${isWinner ? 'bg-yellow-500/15 border border-yellow-500/25 text-yellow-200' : 'bg-slate-950/55 border border-white/5 text-slate-100'} ${isBye || isPlaceholder ? 'opacity-55' : ''}">
+                <span class="truncate font-black text-sm">${escapeHtml(player?.name || '---')}</span>
+                <span class="min-w-9 text-center rounded-lg bg-black/30 px-2 py-1 text-xs font-black">${scoreText}</span>
+            </div>`;
+        }
+
+        function renderAllKnockoutMatchCard(item) {
+            const match = item.match || {};
+            const scoreLine = item.hasScore ? `${escapeHtml(match.score1)} - ${escapeHtml(match.score2)}` : 'VS';
+            const winnerHtml = item.winner ? `<div class="mt-2 text-[11px] text-emerald-300 font-black text-center"><i class="fa-solid fa-crown text-yellow-300 ml-1"></i>الفائز: ${escapeHtml(item.winner.name || '-')}</div>` : '';
+            return `<div class="all-matches-screenshot-card rounded-2xl p-3 bg-slate-950/55 border border-cyan-500/15 shadow-lg">
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <span class="text-[11px] px-2 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-black">مباراة ${item.matchIndex + 1}</span>
+                    <span class="text-[11px] px-2 py-1 rounded-lg border font-black ${item.statusClass}">${item.statusText}</span>
+                </div>
+                <div class="space-y-2">
+                    ${renderPopupPlayerLine(match.p1, match, 'p1')}
+                    <div class="text-center text-xs font-black text-slate-400">${scoreLine}</div>
+                    ${renderPopupPlayerLine(match.p2, match, 'p2')}
+                </div>
+                ${winnerHtml}
+            </div>`;
+        }
+
+        function openAllKnockoutMatchesModal() {
+            const rounds = Array.isArray(currentTournamentData.knockout) ? currentTournamentData.knockout : [];
+            const modal = document.getElementById('all-knockout-matches-modal');
+            const content = document.getElementById('all-knockout-matches-content');
+            if (!modal || !content) return;
+            content.innerHTML = renderAllKnockoutMatchesPopupContent(rounds);
+            modal.classList.remove('hidden');
+        }
+
+        function closeAllKnockoutMatchesModal() {
+            document.getElementById('all-knockout-matches-modal')?.classList.add('hidden');
         }
 
         function getKnockoutAdvanceState(rounds, currentIndex) {
