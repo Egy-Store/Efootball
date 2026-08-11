@@ -83,8 +83,12 @@
         .all-matches-screenshot-card .player-line { min-width: 0; }
 
         .archive-player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
-        .admin-tabs-scroll { overflow-x: auto; scrollbar-width: thin; }
-        .admin-tabs-scroll .admin-tab { min-width: 118px; }
+        .admin-tabs-scroll { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: visible; }
+        .admin-tabs-scroll .admin-tab { min-width: 0; min-height: 50px; padding: 9px 6px; line-height: 1.35; white-space: normal; }
+
+        @media (max-width: 900px) {
+            .admin-tabs-scroll { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
 
         @media (max-width: 640px) {
             header { padding-inline: 8px !important; }
@@ -98,6 +102,10 @@
             .standings-table th { padding: 9px 8px; font-size: 10px; }
             .standings-table td { padding: 10px 8px; font-size: 12px; }
             .all-matches-screenshot-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 440px) {
+            .admin-tabs-scroll { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         /* Country codes dropdown */
@@ -181,8 +189,26 @@
                 <form id="registration-form" class="space-y-4">
                     <!-- الاسم -->
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1.5 font-bold">الاسم أو الاسم المستعار / اسم الأكونت *</label>
+                        <label id="reg-name-label" class="block text-xs text-slate-400 mb-1.5 font-bold">الاسم أو الاسم المستعار / اسم الأكونت *</label>
                         <input type="text" id="reg-name" required placeholder="اكتب اسمك أو اسم اكونتك..." class="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 outline-none rounded-xl px-4 py-3 text-sm text-white text-right">
+                    </div>
+
+                    <!-- بيانات فريق Co-op -->
+                    <div id="coop-registration-fields" class="hidden rounded-2xl border border-purple-500/25 bg-purple-500/5 p-4 space-y-3">
+                        <div class="text-sm font-black text-purple-200"><i class="fa-solid fa-people-group ml-1"></i> بيانات فريق Co-op</div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-bold">اسم الفريق *</label>
+                            <input type="text" id="reg-team-name" placeholder="مثال: Cairo Kings" class="w-full bg-slate-950 border border-slate-700 focus:border-purple-400 outline-none rounded-xl px-4 py-3 text-sm text-white text-right">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-bold">اسم اللاعب الثاني *</label>
+                            <input type="text" id="reg-partner-name" placeholder="اسم زميلك في الفريق" class="w-full bg-slate-950 border border-slate-700 focus:border-purple-400 outline-none rounded-xl px-4 py-3 text-sm text-white text-right">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-bold">رقم واتساب اللاعب الثاني *</label>
+                            <input type="tel" id="reg-partner-phone" dir="ltr" placeholder="10XXXXXXXX" class="w-full bg-slate-950 border border-slate-700 focus:border-purple-400 outline-none rounded-xl px-4 py-3 text-sm text-white">
+                            <p class="text-[10px] text-slate-500 mt-1">هيتم استخدام نفس كود الدولة المختار تحت.</p>
+                        </div>
                     </div>
 
                     <!-- المنصة -->
@@ -328,7 +354,7 @@
             </div>
 
             <!-- Tabs -->
-            <div class="admin-tabs-scroll flex border-b border-slate-800 bg-slate-900/40">
+            <div class="admin-tabs-scroll border-b border-slate-800 bg-slate-900/40">
                 <button onclick="switchAdminTab('players')" id="tab-players" class="admin-tab active flex-1 py-3 text-xs font-bold text-white border-b-2 border-cyan-400 transition-all">
                     <i class="fa-solid fa-users ml-1"></i> المسجلون
                 </button>
@@ -352,6 +378,9 @@
 
             <!-- Tab Contents -->
             <div class="admin-panel-body overflow-y-auto flex-1 p-6">
+                <div id="admin-no-active-warning" class="hidden mb-4 rounded-2xl border border-yellow-500/25 bg-yellow-500/10 p-3 text-center text-xs font-bold text-yellow-200">
+                    <i class="fa-solid fa-circle-info ml-1"></i> لا توجد بطولة شغالة الآن؛ النتائج القديمة مخفية وموجودة فقط داخل الأرشيف.
+                </div>
                 <!-- Players Tab -->
                 <div id="admin-tab-players">
                     <div class="flex items-center justify-between mb-4">
@@ -407,7 +436,7 @@
 
                 <!-- Manual Control Tab -->
                 <div id="admin-tab-manual" class="hidden space-y-4">
-                    <div class="glass-card rounded-2xl p-4">
+                    <div id="manual-match-create-card" class="glass-card rounded-2xl p-4">
                         <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-solid fa-users-gear text-cyan-400 ml-1"></i> إنشاء مباراة يدوية</h4>
                         <p class="text-xs text-slate-500 mb-3">اختار لاعبين من المسجلين وابدأ مباراة بينهم مباشرة</p>
                         <div class="grid grid-cols-2 gap-3 mb-3">
@@ -545,7 +574,10 @@
                 <div id="admin-tab-history" class="hidden">
                     <div class="flex items-center justify-between mb-4">
                         <h4 class="text-sm font-bold text-slate-300">هيستوري البطولات السابقة</h4>
-                        <button onclick="loadTournamentHistory()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all"><i class="fa-solid fa-rotate-right ml-1"></i> تحديث</button>
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <button onclick="recoverLegacyTournamentArchive()" class="text-xs px-3 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/25 text-yellow-200 hover:bg-yellow-500/20 transition-all"><i class="fa-solid fa-life-ring ml-1"></i> أرشفة وتنظيف البيانات القديمة</button>
+                            <button onclick="loadTournamentHistory()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-400 hover:text-white transition-all"><i class="fa-solid fa-rotate-right ml-1"></i> تحديث</button>
+                        </div>
                     </div>
                     <div id="tournament-history-container" class="space-y-3"><div class="text-center py-8 text-slate-500">افتح التاب لتحميل الهيستوري</div></div>
                 </div>
@@ -921,6 +953,12 @@
                 timeFrom: pick(data, ['timeFrom', 'TimeFrom', 'C'], ''),
                 timeTo: pick(data, ['timeTo', 'TimeTo', 'D'], ''),
                 phone: pick(data, ['phone', 'Phone', 'whatsapp', 'WhatsApp', 'E'], ''),
+                teamName: String(pick(data, ['teamName', 'TeamName'], '')).trim(),
+                player1Name: String(pick(data, ['player1Name', 'captainName'], '')).trim(),
+                player2Name: String(pick(data, ['player2Name', 'partnerName'], '')).trim(),
+                partnerPhone: pick(data, ['partnerPhone', 'player2Phone'], ''),
+                tournamentId: String(pick(data, ['tournamentId', 'TournamentId'], '')).trim(),
+                preparedForNextTournament: Boolean(pick(data, ['preparedForNextTournament'], false)),
                 wins, draws, losses, goalsFor, goalsAgainst, played,
                 points: rawPoints === '' ? (wins * 3) + draws : toNumber(rawPoints),
                 groupNum: toNumber(pick(data, ['groupNum', 'GroupNum', 'group', 'Group', 'M', 'المجموعة'])),
@@ -943,6 +981,7 @@
                 p2idx: pick(data, ['p2idx', 'p2RowIndex', 'player2Row', 'row2'], ''),
                 score1, score2,
                 winner: String(pick(data, ['winner', 'Winner'], '')),
+                tournamentId: String(pick(data, ['tournamentId', 'TournamentId'], '')).trim(),
                 status: String(pick(data, ['status', 'Status'], score1 !== '' && score2 !== '' ? 'scored' : 'active')).toLowerCase(),
                 createdAt: pick(data, ['createdAt', 'date', 'Date'], '')
             };
@@ -950,6 +989,24 @@
 
         function isActivePlayer(player) {
             return !['deleted', 'delete', 'removed', 'inactive'].includes(String(player.status || '').toLowerCase());
+        }
+
+        function belongsToCurrentTournament(player) {
+            if (!isActivePlayer(player)) return false;
+            const currentId = String(currentTournamentData.tournamentId || '').trim();
+            const playerId = String(player.tournamentId || '').trim();
+            if (currentTournamentStatus === 'STOP' || !currentTournamentStatus) return Boolean(player.preparedForNextTournament);
+            if (!currentId) return true;
+            if (playerId) return playerId === currentId;
+            return Boolean(player.preparedForNextTournament) || !playerHasAnyResult(player);
+        }
+
+        function isCurrentTournamentMatch(match) {
+            const status = String(match?.status || '').toLowerCase();
+            if (['ended', 'archived', 'deleted', 'cancelled'].includes(status)) return false;
+            const currentId = String(currentTournamentData.tournamentId || '').trim();
+            const matchId = String(match?.tournamentId || '').trim();
+            return !currentId || !matchId || matchId === currentId;
         }
 
         function goalDiff(player) { return (player.goalsFor || 0) - (player.goalsAgainst || 0); }
@@ -1006,8 +1063,8 @@
             ]);
             const state = stateSnap.exists ? normalizeTournamentState(stateSnap.data()) : currentTournamentData;
             currentTournamentData = { ...currentTournamentData, ...state };
-            const players = playersSnap.docs.map((doc, index) => normalizePlayer(doc, index));
-            const matches = matchesSnap.docs.map((doc, index) => normalizeLiveMatch(doc, index));
+            const players = playersSnap.docs.map((doc, index) => normalizePlayer(doc, index)).filter(belongsToCurrentTournament);
+            const matches = matchesSnap.docs.map((doc, index) => normalizeLiveMatch(doc, index)).filter(isCurrentTournamentMatch);
             return { ...state, players, liveMatches: matches };
         }
 
@@ -1025,6 +1082,7 @@
             attachPhoneSanitizers();
             await loadTournamentStatus();
             loadPublicHistoryPreview();
+            applyLocalUiTestMode();
             setInterval(() => {
                 const announcement = currentTournamentData.announcement || {};
                 if (announcement.active && isAnnouncementExpired(announcement)) {
@@ -1033,6 +1091,38 @@
                 }
             }, 30000);
         };
+
+        function applyLocalUiTestMode() {
+            const host = String(window.location.hostname || '');
+            const mode = new URLSearchParams(window.location.search).get('ui_test');
+            if (!['localhost','127.0.0.1'].includes(host) || !mode) return;
+            if (mode === 'admin') {
+                currentTournamentStatus = 'STOP';
+                currentTournamentData = { status: 'STOP', tournamentId: 'local-admin-test' };
+                setTournamentAdminState(true, { email: 'local-ui-test' });
+                document.getElementById('admin-panel-modal').classList.remove('hidden');
+                updateAdminPanelAvailability();
+                switchAdminTab('results');
+                return;
+            }
+            if (mode === 'coop-register') {
+                renderState({ status: 'REGISTER_OPEN', tournamentType: 'coop', tournamentId: 'local-ui-test' });
+                return;
+            }
+            const coop = mode === 'coop';
+            const type = mode === 'champions' ? 'champions' : (coop ? 'coop' : 'league');
+            const players = Array.from({ length: 8 }, (_, index) => normalizePlayer({
+                rowIndex: index + 2,
+                name: coop ? `Team ${index + 1}` : `Player ${index + 1}`,
+                teamName: coop ? `Team ${index + 1}` : '',
+                player1Name: coop ? `A${index + 1}` : '',
+                player2Name: coop ? `B${index + 1}` : '',
+                platform: 'ps', status: 'active', tournamentId: 'local-ui-test', groupNum: Math.floor(index / 4) + 1,
+                wins: index % 3, draws: index % 2, losses: 0, goalsFor: index + 2, goalsAgainst: index, points: (index % 3) * 3 + (index % 2), matches: []
+            }, index));
+            const groups = [{ name: 1, players: players.slice(0, 4) }, { name: 2, players: players.slice(4) }];
+            renderState({ status: 'START', tournamentType: type, tournamentId: 'local-ui-test', groups, players, liveMatches: [] });
+        }
 
         auth.onAuthStateChanged(user => {
             setTournamentAdminState(!!user, user || null);
@@ -1080,13 +1170,14 @@
             if (status === 'STOP' || !status) {
                 renderLiveMatches([]); showState('idle'); loadPublicHistoryPreview();
             } else if (status === 'REGISTER_OPEN') {
-                renderLiveMatches([]); showState('registration');
+                renderLiveMatches([]); showState('registration'); updateRegistrationMode(state);
             } else if (status === 'START') {
                 showState('tournament'); renderTournamentContent(state);
             } else {
                 renderLiveMatches([]); showState('idle');
             }
             maybeShowTournamentAnnouncement(state);
+            updateAdminPanelAvailability();
         }
 
         function updateHeaderBadge(status) {
@@ -1112,7 +1203,7 @@
             const type = data.tournamentType || 'league';
             const container = document.getElementById('tournament-content');
             const subtitle = document.getElementById('tournament-subtitle');
-            subtitle.textContent = type === 'knockout' ? 'خروج مغلوب - شجرة نوك أوت' : (type === 'champions' ? 'دوري أبطال - مجموعات + ناك أوت' : 'نظام الدوري - ترتيب حسب النقاط');
+            subtitle.textContent = type === 'knockout' ? `${data.sourceTournamentType === 'coop' ? 'Co-op · ' : ''}خروج مغلوب - شجرة نوك أوت` : (type === 'champions' ? 'دوري أبطال - مجموعات + ناك أوت' : (type === 'coop' ? 'Co-op - كل فريق مكوّن من لاعبين' : 'نظام الدوري - ترتيب حسب النقاط'));
             if (type === 'knockout' || Array.isArray(data.knockout) && data.knockout.length) renderKnockout(data, container);
             else if (type === 'champions') renderChampions(data, container);
             else renderLeague(data, container);
@@ -1168,11 +1259,12 @@
 
         function renderPublicPlayerContactButton(player) {
             const name = player?.name || '-';
+            const roster = [player?.player1Name, player?.player2Name].filter(Boolean).join(' + ');
             const phone = cleanWhatsAppNumber(player?.phone || '').replace(/\D/g, '');
             const disabledClass = phone ? 'hover:text-emerald-300 hover:underline cursor-pointer' : 'cursor-not-allowed opacity-70';
             const icon = phone ? '<i class="fa-brands fa-whatsapp text-emerald-400 text-[12px]"></i>' : '';
-            if (!phone) return `<span class="text-white font-bold text-sm" title="لا يوجد رقم واتساب لهذا اللاعب">${escapeHtml(name)}</span>`;
-            return `<button type="button" onclick='openPlayerWhatsAppFromStandings(${jsArg(player.rowIndex || '')}, ${jsArg(name)}, ${jsArg(player.phone || '')}, ${jsArg(player.timeFrom || '')}, ${jsArg(player.timeTo || '')})' class="inline-flex items-center gap-1 text-white font-bold text-sm ${disabledClass} transition-all" title="كلم اللاعب على واتساب">${icon}<span>${escapeHtml(name)}</span></button>`;
+            if (!phone) return `<span class="text-white font-bold text-sm" title="لا يوجد رقم واتساب لهذا اللاعب">${escapeHtml(name)}${roster ? `<small class="block text-[10px] text-purple-300 mt-0.5">${escapeHtml(roster)}</small>` : ''}</span>`;
+            return `<button type="button" onclick='openPlayerWhatsAppFromStandings(${jsArg(player.rowIndex || '')}, ${jsArg(name)}, ${jsArg(player.phone || '')}, ${jsArg(player.timeFrom || '')}, ${jsArg(player.timeTo || '')})' class="inline-flex flex-col items-start text-white font-bold text-sm ${disabledClass} transition-all" title="كلم الفريق على واتساب"><span class="inline-flex items-center gap-1">${icon}<span>${escapeHtml(name)}</span></span>${roster ? `<small class="text-[10px] text-purple-300 mt-0.5">${escapeHtml(roster)}</small>` : ''}</button>`;
         }
 
         async function openPlayerWhatsAppFromStandings(rowIndex, targetName, targetPhone, timeFrom, timeTo) {
@@ -1316,6 +1408,12 @@ function renderGroupMatches(players, gi) {
         }
 
         async function renderChampions(data, container) {
+            if (Array.isArray(data?.groups) && data.groups.length) {
+                const payload = normalizeTournamentPayload(data, 'champions');
+                renderLiveMatches(payload.liveMatches);
+                renderLeagueGroups(payload.groups, container);
+                return;
+            }
             container.innerHTML = renderTournamentTopCards() + '<div class="text-center py-16 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>جاري تحميل دوري الأبطال...</div>';
             try {
                 const loaded = await fetchTournamentBundle();
@@ -1350,12 +1448,29 @@ function renderLiveMatches(matches = []) {
             document.getElementById('reg-platform').value = platform;
         }
 
+        function updateRegistrationMode(state = currentTournamentData) {
+            const isCoop = String(state?.tournamentType || '').toLowerCase() === 'coop';
+            const fields = document.getElementById('coop-registration-fields');
+            const team = document.getElementById('reg-team-name');
+            const partner = document.getElementById('reg-partner-name');
+            const partnerPhone = document.getElementById('reg-partner-phone');
+            fields?.classList.toggle('hidden', !isCoop);
+            [team, partner, partnerPhone].forEach(input => { if (input) input.required = isCoop; });
+            const nameLabel = document.getElementById('reg-name-label');
+            if (nameLabel) nameLabel.textContent = isCoop ? 'اسم اللاعب الأول / كابتن الفريق *' : 'الاسم أو الاسم المستعار / اسم الأكونت *';
+            const formTitle = document.querySelector('#state-registration h3');
+            if (formTitle) formTitle.innerHTML = isCoop
+                ? '<i class="fa-solid fa-people-group text-purple-400"></i> تسجيل فريق Co-op'
+                : '<i class="fa-solid fa-clipboard-list text-cyan-400"></i> فورم التسجيل';
+        }
+
         function normalizeLocalPhoneInput(value) {
             return String(value || '').replace(/\D/g, '').replace(/^0+/, '');
         }
 
         function attachPhoneSanitizers() {
             const phone = document.getElementById('reg-phone');
+            const partnerPhone = document.getElementById('reg-partner-phone');
             const code = document.getElementById('reg-country-code');
             if (!phone) return;
             const apply = () => {
@@ -1365,6 +1480,7 @@ function renderLiveMatches(matches = []) {
                 if (before !== phone.value) phone.setSelectionRange(phone.value.length, phone.value.length);
             };
             phone.addEventListener('input', apply);
+            if (partnerPhone) partnerPhone.addEventListener('input', () => { partnerPhone.value = normalizeLocalPhoneInput(partnerPhone.value); });
             if (code) code.addEventListener('change', apply);
             apply();
         }
@@ -1372,19 +1488,26 @@ function renderLiveMatches(matches = []) {
         document.getElementById('registration-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
+            const isCoop = String(currentTournamentData.tournamentType || '').toLowerCase() === 'coop';
+            const teamName = (document.getElementById('reg-team-name')?.value || '').trim();
+            const partnerName = (document.getElementById('reg-partner-name')?.value || '').trim();
+            const partnerPhoneLocal = normalizeLocalPhoneInput(document.getElementById('reg-partner-phone')?.value || '');
             const platform = document.getElementById('reg-platform').value;
             const timeFrom = document.getElementById('reg-time-from').value;
             const timeTo = document.getElementById('reg-time-to').value;
             const code = document.getElementById('reg-country-code').value;
             const phoneLocal = normalizeLocalPhoneInput(document.getElementById('reg-phone').value);
             const errEl = document.getElementById('reg-error');
-            if (!name || !platform || !timeFrom || !timeTo || !phoneLocal) { errEl.textContent = 'الرجاء ملء جميع الحقول المطلوبة'; errEl.classList.remove('hidden'); return; }
+            if (!name || !platform || !timeFrom || !timeTo || !phoneLocal || (isCoop && (!teamName || !partnerName || !partnerPhoneLocal))) { errEl.textContent = 'الرجاء ملء جميع الحقول المطلوبة'; errEl.classList.remove('hidden'); return; }
             if (phoneLocal.length < 8) { errEl.textContent = 'رقم الواتساب قصير أو غير صحيح'; errEl.classList.remove('hidden'); return; }
+            if (isCoop && partnerPhoneLocal.length < 8) { errEl.textContent = 'رقم واتساب اللاعب الثاني قصير أو غير صحيح'; errEl.classList.remove('hidden'); return; }
             const btn = document.getElementById('reg-submit-btn'); btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-2"></i> جاري التسجيل...'; errEl.classList.add('hidden');
             try {
                 const fullPhone = code + phoneLocal;
+                const partnerPhone = isCoop ? code + partnerPhoneLocal : '';
                 await db.collection(FS.tournamentPlayers).add({
-                    rowIndex: Date.now(), name, platform, timeFrom, timeTo, phone: fullPhone,
+                    rowIndex: Date.now(), name: isCoop ? teamName : name, teamName: isCoop ? teamName : '', player1Name: isCoop ? name : '', player2Name: isCoop ? partnerName : '', partnerPhone,
+                    platform, timeFrom, timeTo, phone: fullPhone, tournamentId: currentTournamentData.tournamentId || '', tournamentType: currentTournamentData.tournamentType || 'league', preparedForNextTournament: false,
                     wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0,
                     matches: [], status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp()
                 });
@@ -1412,8 +1535,13 @@ function renderLiveMatches(matches = []) {
         function adminLogout() { writeAdminLog('admin_logout', { email: auth.currentUser?.email || '' }); auth.signOut(); setTournamentAdminState(false, null); closeAdminPanel(); }
 
         // ===== ADMIN PANEL =====
-        async function openAdminPanel() { if (!isAdmin) return openAdminLogin(); document.getElementById('admin-panel-modal').classList.remove('hidden'); await refreshPlayers(); loadGroupLinkInput(); loadAnnouncementInputs(); updatePendingScoreReportsBadge(); }
+        async function openAdminPanel() { if (!isAdmin) return openAdminLogin(); document.getElementById('admin-panel-modal').classList.remove('hidden'); updateAdminPanelAvailability(); await refreshPlayers(); loadGroupLinkInput(); loadAnnouncementInputs(); updatePendingScoreReportsBadge(); }
         function closeAdminPanel() { document.getElementById('admin-panel-modal').classList.add('hidden'); }
+        function updateAdminPanelAvailability() {
+            const active = currentTournamentStatus === 'START';
+            document.getElementById('admin-no-active-warning')?.classList.toggle('hidden', active);
+            document.getElementById('manual-match-create-card')?.classList.toggle('hidden', !active);
+        }
         function switchAdminTab(tab) {
             ['players','results','pending-results','manual','logs','history'].forEach(t => {
                 const pane = document.getElementById('admin-tab-' + t); const btn = document.getElementById('tab-' + t);
@@ -1435,14 +1563,14 @@ function renderLiveMatches(matches = []) {
             container.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>';
             try {
                 const snap = await db.collection(FS.tournamentPlayers).get();
-                allPlayers = snap.docs.map((doc, index) => normalizePlayer(doc, index)).filter(isActivePlayer);
+                allPlayers = snap.docs.map((doc, index) => normalizePlayer(doc, index)).filter(belongsToCurrentTournament);
                 renderPlayersList(container, allPlayers); populateManualSelects(allPlayers);
             } catch(e) { console.error('refreshPlayers failed', e); container.innerHTML = '<div class="text-center py-6 text-rose-400">تعذر تحميل اللاعبين من Firebase<br><span class="text-xs text-slate-500" dir="ltr">' + escapeHtml(e.message || e.code || e) + '</span></div>'; }
         }
 
         function renderPlayersList(container, players) {
             if (!players.length) { container.innerHTML = '<div class="text-center py-8 text-slate-500">لا يوجد مسجلون بعد</div>'; return; }
-            container.innerHTML = `<div class="overflow-x-auto"><table class="w-full standings-table"><thead><tr><th class="text-right">#</th><th class="text-right">الاسم</th><th class="text-right">الجروب</th><th class="text-right">المنصة</th><th class="text-right">الوقت</th><th class="text-right">واتساب</th><th class="text-right">رسالة</th><th></th></tr></thead><tbody>${players.map((p,i) => `<tr><td class="text-slate-500 text-xs">${i+1}</td><td><span class="font-bold text-sm text-white">${escapeHtml(p.name || '-')}</span></td><td class="text-xs text-yellow-300 font-bold">${escapeHtml(p.groupNum || '-')}</td><td><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">${getPlatformIcon(p.platform)} ${escapeHtml(p.platform || '-')}</span></td><td class="text-xs text-slate-400">${escapeHtml(p.timeFrom||'?')} - ${escapeHtml(p.timeTo||'?')}</td><td class="text-xs text-emerald-400" dir="ltr">${escapeHtml(cleanWhatsAppNumber(p.phone) || '-')}</td><td><button onclick="sendWhatsAppToPlayer(${jsArg(p.rowIndex)})" class="text-emerald-300 hover:text-white text-xs px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/40 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> إرسال</button></td><td><button onclick="deletePlayer(${jsArg(p.rowIndex)})" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition-all"><i class="fa-solid fa-trash-can"></i></button></td></tr>`).join('')}</tbody></table></div>`;
+            container.innerHTML = `<div class="overflow-x-auto"><table class="w-full standings-table"><thead><tr><th class="text-right">#</th><th class="text-right">الاسم / الفريق</th><th class="text-right">الجروب</th><th class="text-right">المنصة</th><th class="text-right">الوقت</th><th class="text-right">واتساب</th><th class="text-right">رسالة</th><th></th></tr></thead><tbody>${players.map((p,i) => { const roster = [p.player1Name,p.player2Name].filter(Boolean).join(' + '); return `<tr><td class="text-slate-500 text-xs">${i+1}</td><td><span class="font-bold text-sm text-white">${escapeHtml(p.name || '-')}</span>${roster ? `<span class="block text-[10px] text-purple-300 mt-1">${escapeHtml(roster)}</span>` : ''}</td><td class="text-xs text-yellow-300 font-bold">${escapeHtml(p.groupNum || '-')}</td><td><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">${getPlatformIcon(p.platform)} ${escapeHtml(p.platform || '-')}</span></td><td class="text-xs text-slate-400">${escapeHtml(p.timeFrom||'?')} - ${escapeHtml(p.timeTo||'?')}</td><td class="text-xs text-emerald-400" dir="ltr">${escapeHtml(cleanWhatsAppNumber(p.phone) || '-')}</td><td><button onclick="sendWhatsAppToPlayer(${jsArg(p.rowIndex)})" class="text-emerald-300 hover:text-white text-xs px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/40 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> إرسال</button></td><td><button onclick="deletePlayer(${jsArg(p.rowIndex)})" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition-all"><i class="fa-solid fa-trash-can"></i></button></td></tr>`; }).join('')}</tbody></table></div>`;
         }
 
         async function findPlayerDocByRowIndex(rowIndex) {
@@ -1463,6 +1591,11 @@ function renderLiveMatches(matches = []) {
 
         async function loadMatchesForAdmin() {
             const container = document.getElementById('matches-container'); if (!container) return;
+            if (currentTournamentStatus !== 'START') {
+                allMatchesFlat = [];
+                container.innerHTML = '<div class="text-center py-12 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 text-yellow-200"><i class="fa-solid fa-trophy text-2xl mb-3 block"></i>لا توجد بطولة شغالة الآن<br><span class="text-xs text-slate-500">نتائج البطولة السابقة موجودة في تبويب الهيستوري فقط.</span></div>';
+                return;
+            }
             container.innerHTML = '<div class="text-center py-6 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-xl mb-2 block"></i>جاري التحميل...</div>';
             try { const data = await fetchTournamentBundle(); const payload = normalizeTournamentPayload(data, currentTournamentData.tournamentType || 'league'); renderMatchesForAdmin(payload.groups || [], container, payload.liveMatches || []); }
             catch(e) { container.innerHTML = '<div class="text-center py-6 text-slate-500">تعذر التحميل</div>'; }
@@ -1488,7 +1621,7 @@ function renderLiveMatches(matches = []) {
             if (!p1id || !p2id || p1id === p2id) { showTAlert('تنبيه', 'اختار لاعبين مختلفين', false); return; }
             const p1 = allPlayers.find(p => String(p.rowIndex) === String(p1id)); const p2 = allPlayers.find(p => String(p.rowIndex) === String(p2id)); if (!p1 || !p2) return;
             const matchId = `manual_${Date.now()}_${p1.rowIndex}_${p2.rowIndex}`;
-            try { await db.collection(FS.tournamentMatches).doc(matchId).set({ matchId, p1name: p1.name, p2name: p2.name, p1idx: p1.rowIndex, p2idx: p2.rowIndex, status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp() }); document.getElementById('manual-player1').value = ''; document.getElementById('manual-player2').value = ''; await writeAdminLog('create_manual_match', { matchId, p1: p1.name, p2: p2.name }); showTAlert('تم إنشاء المباراة', 'المباراة ظهرت في الداشبورد وهيفضل مكانها لحد نهاية البطولة.', false); await loadTournamentStatus(); }
+            try { await db.collection(FS.tournamentMatches).doc(matchId).set({ matchId, p1name: p1.name, p2name: p2.name, p1idx: p1.rowIndex, p2idx: p2.rowIndex, tournamentId: currentTournamentData.tournamentId || '', status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp() }); document.getElementById('manual-player1').value = ''; document.getElementById('manual-player2').value = ''; await writeAdminLog('create_manual_match', { matchId, p1: p1.name, p2: p2.name }); showTAlert('تم إنشاء المباراة', 'المباراة ظهرت في الداشبورد وهيفضل مكانها لحد نهاية البطولة.', false); await loadTournamentStatus(); }
             catch(e) { showTAlert('خطأ', 'تعذر حفظ المباراة في Firebase', true); }
         }
 
@@ -1735,7 +1868,7 @@ function renderLiveMatches(matches = []) {
                 const qualifiers = getQualifiersFromGroups(payload.groups || [], mode, bestThirdsCount);
                 if (qualifiers.length < 2) return showTAlert('تنبيه', 'لازم يكون فيه لاعبين مؤهلين على الأقل عشان نعمل نوك أوت.', true);
                 const bracket = buildKnockoutBracket(qualifiers);
-                await db.collection(FS.tournamentState).doc('current').set({ status: 'START', tournamentType: 'knockout', knockout: bracket, knockoutChampion: '', knockoutQualifiers: qualifiers.map(p => ({ name: p.name, rowIndex: p.rowIndex || '', phone: p.phone || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '', group: p.sourceGroup || '', rank: p.sourceRank || '', points: p.points || 0, goalsFor: p.goalsFor || 0, goalsAgainst: p.goalsAgainst || 0 })), leagueFinalized: true, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+                await db.collection(FS.tournamentState).doc('current').set({ status: 'START', sourceTournamentType: currentTournamentData.sourceTournamentType || currentTournamentData.tournamentType || 'league', tournamentType: 'knockout', knockout: bracket, knockoutChampion: '', knockoutQualifiers: qualifiers.map(p => ({ name: p.name, rowIndex: p.rowIndex || '', phone: p.phone || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '', group: p.sourceGroup || '', rank: p.sourceRank || '', points: p.points || 0, goalsFor: p.goalsFor || 0, goalsAgainst: p.goalsAgainst || 0 })), leagueFinalized: true, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
                 await writeAdminLog('finish_league_create_knockout', { mode, bestThirdsCount, qualifiersCount: qualifiers.length, bracketSize: bracket[0]?.size || 0 });
                 showTAlert('تم إنشاء النوك أوت ✅', `تم تأهيل ${qualifiers.length} لاعب ورسم شجرة ${bracket[0]?.label || 'نوك أوت'}.`, false);
                 await loadTournamentStatus();
@@ -2411,7 +2544,7 @@ function renderLiveMatches(matches = []) {
                 p2matches.push({ matchId, opponent: p1name, score: `${score2}-${score1}`, result: winner === p2name ? 'win' : winner === 'draw' ? 'draw' : 'loss', date: new Date().toISOString(), approvedFromReportId: reportId || '' });
                 tx.update(p1ref, { matches: p1matches, ...statsFromMatches(p1matches), updatedAt: fsTimestamp() });
                 tx.update(p2ref, { matches: p2matches, ...statsFromMatches(p2matches), updatedAt: fsTimestamp() });
-                tx.set(matchRef, { matchId, p1name, p2name, p1idx, p2idx, score1, score2, winner, status: 'scored', approvedFromReportId: reportId || '', updatedAt: fsTimestamp(), createdAt: fsTimestamp() }, { merge: true });
+                tx.set(matchRef, { matchId, p1name, p2name, p1idx, p2idx, score1, score2, winner, tournamentId: currentTournamentData.tournamentId || '', status: 'scored', approvedFromReportId: reportId || '', updatedAt: fsTimestamp(), createdAt: fsTimestamp() }, { merge: true });
             });
             await writeAdminLog(reportId ? 'approve_player_score_report' : 'submit_score', { matchId, p1name, p2name, score1, score2, winner, reportId });
             return winner;
@@ -2446,6 +2579,7 @@ function renderLiveMatches(matches = []) {
                         matchType: isKnockoutMatch ? 'knockout' : 'group',
                         tournamentStatus: currentTournamentStatus || '',
                         tournamentType: currentTournamentData.tournamentType || '',
+                        tournamentId: currentTournamentData.tournamentId || '',
                         platformFilter: currentTournamentData.platformFilter || '',
                         createdAt: fsTimestamp(),
                         updatedAt: fsTimestamp()
@@ -2467,9 +2601,11 @@ function renderLiveMatches(matches = []) {
         async function updatePendingScoreReportsBadge() {
             const badge = document.getElementById('pending-results-badge');
             if (!badge || !isAdmin) return;
+            if (currentTournamentStatus !== 'START') { badge.classList.add('hidden'); return; }
             try {
                 const snap = await db.collection(FS.scoreReports).where('status', '==', 'pending').get();
-                const count = snap.size;
+                const currentId = String(currentTournamentData.tournamentId || '');
+                const count = snap.docs.filter(doc => !currentId || !doc.data().tournamentId || String(doc.data().tournamentId) === currentId).length;
                 badge.textContent = count;
                 badge.classList.toggle('hidden', count === 0);
                 badge.classList.toggle('flex', count > 0);
@@ -2479,10 +2615,12 @@ function renderLiveMatches(matches = []) {
         async function loadPendingScoreReports() {
             const c = document.getElementById('pending-results-container');
             if (!c) return;
+            if (currentTournamentStatus !== 'START') { c.innerHTML = '<div class="text-center py-10 text-yellow-200">لا توجد بطولة شغالة الآن، لذلك مفيش نتائج معلقة حالية.</div>'; return; }
             c.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل النتائج المعلقة...</div>';
             try {
                 const snap = await db.collection(FS.scoreReports).where('status', '==', 'pending').get();
-                const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => tsToMillis(b.createdAt) - tsToMillis(a.createdAt));
+                const currentId = String(currentTournamentData.tournamentId || '');
+                const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => !currentId || !r.tournamentId || String(r.tournamentId) === currentId).sort((a,b) => tsToMillis(b.createdAt) - tsToMillis(a.createdAt));
                 await updatePendingScoreReportsBadge();
                 if (!rows.length) { c.innerHTML = '<div class="text-center py-8 text-slate-500">لا توجد نتائج معلقة</div>'; return; }
                 c.innerHTML = rows.map(r => { const isKo = String(r.matchType || '').toLowerCase() === 'knockout' || String(r.matchId || '').startsWith('ko_'); return `<div class="glass-card rounded-2xl p-4 border border-yellow-500/20" id="score-report-${escapeHtml(r.id)}">
@@ -2876,16 +3014,48 @@ function renderLiveMatches(matches = []) {
                     <div class="bg-slate-950/50 rounded-xl p-2"><div class="text-cyan-400 font-black">${matches.length}</div><div class="text-[10px] text-slate-500">نتيجة دوري</div></div>
                     <div class="bg-slate-950/50 rounded-xl p-2"><div class="text-emerald-400 font-black">${(state.knockout || []).reduce((n, r) => n + (r.matches || []).filter(m => getKnockoutMatchWinner(m)).length, 0)}</div><div class="text-[10px] text-slate-500">نتيجة نوك أوت</div></div>
                 </div>
-                <p class="text-xs text-slate-400 mt-3">النظام: ${escapeHtml(state.tournamentType || '-')} · المنصة: ${escapeHtml(state.platformFilter || 'all')}</p>
+                <p class="text-xs text-slate-400 mt-3">النظام: ${escapeHtml(state.sourceTournamentType || state.tournamentType || '-')} · المنصة: ${escapeHtml(state.platformFilter || 'all')}</p>
                 <button onclick='openTournamentArchive(${jsArg(history.id)})' class="w-full mt-3 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-200 text-xs font-black hover:bg-cyan-500/20"><i class="fa-solid fa-eye ml-1"></i> عرض اللاعبين والنتائج${publicMode ? '' : ' ونقل المشاركين'}</button>
             </div>`;
         }
 
+        function getLocalTournamentHistory() {
+            try {
+                const rows = JSON.parse(localStorage.getItem('efb_tournament_history_fallback') || '[]');
+                return Array.isArray(rows) ? rows : [];
+            } catch(e) { return []; }
+        }
+
+        function saveLocalTournamentHistory(history) {
+            try {
+                const rows = getLocalTournamentHistory().filter(row => String(row.id || row.archiveId) !== String(history.id || history.archiveId));
+                localStorage.setItem('efb_tournament_history_fallback', JSON.stringify([history, ...rows].slice(0, 10)));
+            } catch(e) { console.warn('Could not save local history fallback', e); }
+        }
+
+        function mergeTournamentHistoryRows(...sources) {
+            const map = new Map();
+            sources.flat().filter(Boolean).forEach((row, index) => {
+                const id = String(row.id || row.archiveId || `fallback_${parseAnnouncementDate(row.archivedAtText) || index}`);
+                if (!map.has(id)) map.set(id, { ...row, id });
+            });
+            return [...map.values()].sort((a, b) => (tsToMillis(b.createdAt) || parseAnnouncementDate(b.archivedAtText)) - (tsToMillis(a.createdAt) || parseAnnouncementDate(a.archivedAtText)));
+        }
+
         async function fetchTournamentHistoryRows(limit = 30) {
-            const snap = await db.collection(FS.tournamentHistory).get();
-            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                .sort((a, b) => (tsToMillis(b.createdAt) || parseAnnouncementDate(b.archivedAtText)) - (tsToMillis(a.createdAt) || parseAnnouncementDate(a.archivedAtText)))
-                .slice(0, limit);
+            let firestoreRows = [];
+            let stateFallbackRows = Array.isArray(currentTournamentData.historyFallback) ? currentTournamentData.historyFallback : [];
+            try {
+                const snap = await db.collection(FS.tournamentHistory).get();
+                firestoreRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            } catch(e) {
+                console.warn('Tournament history collection unavailable, using fallback archive.', e);
+                try {
+                    const stateSnap = await db.collection(FS.tournamentState).doc('current').get();
+                    if (stateSnap.exists && Array.isArray(stateSnap.data().historyFallback)) stateFallbackRows = stateSnap.data().historyFallback;
+                } catch(ignore) {}
+            }
+            const rows = mergeTournamentHistoryRows(firestoreRows, stateFallbackRows, getLocalTournamentHistory()).slice(0, limit);
             rows.forEach(row => tournamentHistoryCache.set(row.id, row));
             return rows;
         }
@@ -2896,7 +3066,66 @@ function renderLiveMatches(matches = []) {
             try {
                 const rows = await fetchTournamentHistoryRows(30);
                 c.innerHTML = rows.length ? rows.map((h, i) => renderHistoryCard(h, i, false)).join('') : '<div class="text-center py-8 text-slate-500">لا يوجد أرشيف بطولات حتى الآن</div>';
-            } catch(e) { console.error(e); c.innerHTML = '<div class="text-center py-8 text-slate-500">تعذر تحميل الأرشيف</div>'; }
+            } catch(e) { console.error(e); c.innerHTML = '<div class="text-center py-8 text-rose-300">تعذر تحميل الأرشيف من Firebase أو النسخة الاحتياطية.<br><span class="text-[11px] text-slate-500">راجع Firestore Rules لمجموعة tournamentHistory.</span></div>'; }
+        }
+
+        async function recoverLegacyTournamentArchive() {
+            if (!isAdmin) return openAdminLogin();
+            if (currentTournamentStatus === 'START') return showTAlert('البطولة شغالة', 'اقفل البطولة الحالية بالطريقة العادية الأول عشان النتائج تتأرشف صح.', true);
+            if (!confirm('هيتم حفظ اللاعبين والنتائج القديمة في الأرشيف، وبعدها تنظيفهم من البطولة الحالية. تكمل؟')) return;
+            try {
+                const [stateSnap, playersSnap, matchesSnap] = await Promise.all([
+                    db.collection(FS.tournamentState).doc('current').get(),
+                    db.collection(FS.tournamentPlayers).get(),
+                    db.collection(FS.tournamentMatches).get()
+                ]);
+                const legacyPlayerDocs = playersSnap.docs.filter(doc => {
+                    const row = doc.data();
+                    return isActivePlayer(row) && !row.preparedForNextTournament;
+                });
+                const legacyMatchDocs = matchesSnap.docs.filter(doc => !['archived','deleted'].includes(String(doc.data().status || '').toLowerCase()));
+                if (!legacyPlayerDocs.length && !legacyMatchDocs.length) return showTAlert('مفيش بيانات قديمة', 'لا يوجد لاعبين أو نتائج قديمة محتاجة استرجاع.', false);
+                const state = stateSnap.exists ? stateSnap.data() : {};
+                const players = legacyPlayerDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const matches = legacyMatchDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const archiveId = `recovered_${Date.now()}`;
+                const history = {
+                    id: archiveId,
+                    archiveId,
+                    title: `بطولة مسترجعة ${new Date().toLocaleDateString('ar-EG')}`,
+                    state: JSON.parse(JSON.stringify({ ...state, status: 'STOP' })),
+                    players,
+                    matches,
+                    champion: getArchivedTournamentChampion({ state, players, matches }),
+                    archivedAtText: new Date().toISOString(),
+                    archiveVersion: 3,
+                    recovered: true,
+                    archivedBy: getAdminMeta().email || ''
+                };
+                saveLocalTournamentHistory(history);
+                let firestoreSaved = false;
+                try { await db.collection(FS.tournamentHistory).doc(archiveId).set({ ...history, createdAt: fsTimestamp() }); firestoreSaved = true; } catch(e) { console.warn('Recovered archive saved to fallback only', e); }
+                try {
+                    const existing = Array.isArray(state.historyFallback) ? state.historyFallback : [];
+                    const historyFallback = [history, ...existing.filter(row => String(row.id || row.archiveId) !== archiveId)].slice(0, 3);
+                    await db.collection(FS.tournamentState).doc('current').set({ historyFallback }, { merge: true });
+                    currentTournamentData.historyFallback = historyFallback;
+                } catch(e) {}
+                const updates = [
+                    ...legacyPlayerDocs.map(doc => ({ ref: doc.ref, data: { status: 'deleted', archivedIn: archiveId, updatedAt: fsTimestamp() } })),
+                    ...legacyMatchDocs.map(doc => ({ ref: doc.ref, data: { status: 'ended', archivedIn: archiveId, updatedAt: fsTimestamp() } }))
+                ];
+                for (let offset = 0; offset < updates.length; offset += 400) {
+                    const batch = db.batch();
+                    updates.slice(offset, offset + 400).forEach(item => batch.update(item.ref, item.data));
+                    await batch.commit();
+                }
+                try { await writeAdminLog('recover_legacy_tournament_archive', { archiveId, players: players.length, matches: matches.length, firestoreSaved }); } catch(e) {}
+                tournamentHistoryCache.set(archiveId, history);
+                await loadTournamentHistory();
+                await refreshPlayers();
+                showTAlert('تم الاسترجاع ✅', `اتحفظت البطولة القديمة (${players.length} لاعب و${matches.length} نتيجة) واتنظفت البيانات الحالية${firestoreSaved ? '.' : ' في النسخة الاحتياطية لأن صلاحية tournamentHistory مرفوضة.'}`, false);
+            } catch(e) { console.error(e); showTAlert('تعذر الاسترجاع', 'مقدرتش أحفظ البيانات القديمة. راجع صلاحيات Firebase وحاول تاني.', true); }
         }
 
         function archiveMatchRows(history) {
@@ -2926,7 +3155,7 @@ function renderLiveMatches(matches = []) {
             document.getElementById('archive-modal-meta').textContent = `${getArchiveDateText(history)} · ${players.length} لاعب · ${matches.length} مباراة`;
             const playerCards = players.map((p, index) => `<label class="archive-player-card flex items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-950/45 p-3 ${isAdmin ? 'cursor-pointer' : ''}">
                 ${isAdmin ? `<input type="checkbox" class="archive-player-checkbox accent-emerald-400 w-4 h-4" value="${index}">` : ''}
-                <span class="min-w-0"><span class="block text-sm font-black text-white truncate">${escapeHtml(p.name)}</span><span class="block text-[11px] text-slate-500">${escapeHtml(p.platform || '-')} · ${escapeHtml(p.phone || 'بدون رقم')}</span></span>
+                <span class="min-w-0"><span class="block text-sm font-black text-white truncate">${escapeHtml(p.name)}</span>${p.player1Name || p.player2Name ? `<span class="block text-[10px] text-purple-300">${escapeHtml([p.player1Name,p.player2Name].filter(Boolean).join(' + '))}</span>` : ''}<span class="block text-[11px] text-slate-500">${escapeHtml(p.platform || '-')} · ${escapeHtml(p.phone || 'بدون رقم')}</span></span>
                 <span class="mr-auto text-[11px] text-yellow-300 font-black">${p.points || 0} نقطة</span>
             </label>`).join('');
             const resultRows = matches.map(m => `<tr><td>${escapeHtml(m.stage)}</td><td class="font-bold text-white">${escapeHtml(m.p1)}</td><td class="text-center font-black text-yellow-300" dir="ltr">${escapeHtml(m.score1)} - ${escapeHtml(m.score2)}</td><td class="font-bold text-white">${escapeHtml(m.p2)}</td><td class="text-emerald-300">${escapeHtml(m.winner || '-')}</td></tr>`).join('');
@@ -2966,8 +3195,8 @@ function renderLiveMatches(matches = []) {
                     const oldId = String(raw.id || raw.docId || p.docId || '').trim();
                     const ref = oldId ? db.collection(FS.tournamentPlayers).doc(oldId) : db.collection(FS.tournamentPlayers).doc();
                     batch.set(ref, {
-                        name: p.name, phone: p.phone || '', platform: p.platform || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '',
-                        rowIndex: Date.now() + order, groupNum: 1, status: 'active', wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [],
+                        name: p.name, teamName: p.teamName || '', player1Name: p.player1Name || '', player2Name: p.player2Name || '', partnerPhone: p.partnerPhone || '', phone: p.phone || '', platform: p.platform || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '',
+                        rowIndex: Date.now() + order, groupNum: 1, status: 'active', preparedForNextTournament: true, tournamentId: '', wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [],
                         importedFromArchiveId: history.id, importedAt: fsTimestamp(), updatedAt: fsTimestamp()
                     }, { merge: true });
                     operations++;
