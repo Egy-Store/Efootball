@@ -624,8 +624,8 @@
                     <span class="ar-only">الحسابات المتاحة</span><span class="en-only">Available Accounts</span>
                 </h3>
                 <p class="text-sm text-slate-400">
-                    <span class="ar-only">عرض <span id="displayed-count">0</span> من الفرص المطابقة</span>
-                    <span class="en-only">Displaying <span id="displayed-count">0</span> matching opportunities</span>
+                    <span class="ar-only">عرض <span class="displayed-count">0</span> من الفرص المطابقة</span>
+                    <span class="en-only">Displaying <span class="displayed-count">0</span> matching opportunities</span>
                 </p>
             </div>
             
@@ -2303,7 +2303,7 @@
                 return 0;
             });
 
-            document.getElementById('displayed-count').textContent = filtered.length;
+            document.querySelectorAll('.displayed-count').forEach(el => { el.textContent = filtered.length; });
 
             if (filtered.length === 0) {
                 emptyEl.classList.remove('hidden');
@@ -3414,24 +3414,33 @@
     <!-- ============================================================ -->
     <div id="tournament-popup" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm"></div>
-        <div class="relative z-10 glass-panel rounded-3xl p-8 max-w-sm w-full text-center border border-yellow-500/30 shadow-2xl" style="box-shadow: 0 0 60px rgba(234,179,8,0.2);">
+        <div class="relative z-10 glass-panel rounded-3xl overflow-hidden max-w-md w-full text-center border border-yellow-500/30 shadow-2xl" style="box-shadow: 0 0 60px rgba(234,179,8,0.2);">
             <!-- Close Button -->
-            <button onclick="closeTournamentPopup()" class="absolute top-4 left-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+            <button onclick="closeTournamentPopup()" class="absolute z-20 top-4 left-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-all">
                 <i class="fa-solid fa-times text-xs"></i>
             </button>
-            <!-- Trophy Icon -->
-            <div class="w-24 h-24 mx-auto mb-4 relative">
-                <div class="absolute inset-0 rounded-full bg-yellow-500/10 animate-ping"></div>
-                <div class="relative w-full h-full rounded-full bg-gradient-to-b from-yellow-400/20 to-yellow-600/10 border border-yellow-500/30 flex items-center justify-center">
-                    <i class="fa-solid fa-trophy text-5xl text-yellow-400" style="filter: drop-shadow(0 0 20px rgba(234,179,8,0.8));"></i>
-                </div>
+            <div id="tournament-popup-image-wrap" class="hidden bg-slate-950">
+                <img id="tournament-popup-image" class="w-full max-h-80 object-contain" alt="إعلان البطولة">
             </div>
-            <h3 class="text-2xl font-extrabold text-white mb-2">🏆 البطولة</h3>
-            <p id="tournament-popup-status" class="text-slate-300 text-sm mb-4 leading-relaxed"></p>
-            <a id="tournament-popup-group-btn" href="#" target="_blank" class="hidden w-full py-3 mb-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-extrabold text-sm hover:bg-emerald-500/25 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> دخول جروب الواتس</a>
-            <button onclick="goToTournamentPage()" class="w-full py-3.5 font-extrabold text-slate-900 rounded-2xl transition-all text-base" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 25px rgba(245,158,11,0.5);">
-                <i class="fa-solid fa-arrow-left ml-2"></i> اذهب لصفحة البطولة
-            </button>
+            <div class="p-7">
+                <!-- Trophy Icon -->
+                <div id="tournament-popup-icon" class="w-20 h-20 mx-auto mb-4 relative">
+                    <div class="absolute inset-0 rounded-full bg-yellow-500/10 animate-ping"></div>
+                    <div class="relative w-full h-full rounded-full bg-gradient-to-b from-yellow-400/20 to-yellow-600/10 border border-yellow-500/30 flex items-center justify-center">
+                        <i class="fa-solid fa-trophy text-4xl text-yellow-400" style="filter: drop-shadow(0 0 20px rgba(234,179,8,0.8));"></i>
+                    </div>
+                </div>
+                <h3 id="tournament-popup-title" class="text-2xl font-extrabold text-white mb-2">🏆 البطولة</h3>
+                <p id="tournament-popup-status" class="text-slate-300 text-sm mb-4 leading-relaxed whitespace-pre-wrap"></p>
+                <p id="tournament-popup-expiry" class="text-[11px] text-slate-500 mb-3"></p>
+                <label class="flex items-center justify-center gap-2 text-xs text-slate-300 mb-4 cursor-pointer select-none">
+                    <input id="tournament-popup-dont-show" type="checkbox" class="accent-yellow-400 w-4 h-4"> متظهرش الرسالة دي مرة تانية
+                </label>
+                <a id="tournament-popup-group-btn" href="#" target="_blank" class="hidden w-full py-3 mb-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-extrabold text-sm hover:bg-emerald-500/25 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> دخول جروب الواتس</a>
+                <button onclick="goToTournamentPage()" class="w-full py-3.5 font-extrabold text-slate-900 rounded-2xl transition-all text-base" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 25px rgba(245,158,11,0.5);">
+                    <i class="fa-solid fa-arrow-left ml-2"></i> اذهب لصفحة البطولة
+                </button>
+            </div>
         </div>
     </div>
 
@@ -3679,10 +3688,22 @@
             const matches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const activePlayers = players.filter(p => !['deleted', 'removed', 'inactive'].includes(String(p.status || '').toLowerCase()));
             if (!activePlayers.length && !matches.length) return;
+            const state = stateSnap.exists ? stateSnap.data() : {};
+            const standingsWinner = [...activePlayers].sort((a, b) =>
+                Number(b.points || 0) - Number(a.points || 0) ||
+                (Number(b.goalsFor || 0) - Number(b.goalsAgainst || 0)) - (Number(a.goalsFor || 0) - Number(a.goalsAgainst || 0)) ||
+                Number(b.goalsFor || 0) - Number(a.goalsFor || 0)
+            )[0] || null;
+            const champion = state.knockoutChampion?.name ? state.knockoutChampion : (standingsWinner ? { name: standingsWinner.name || '', rowIndex: standingsWinner.rowIndex || '' } : null);
+            const archivedAtText = new Date().toISOString();
             await db.collection(FS.tournamentHistory).add({
-                state: stateSnap.exists ? stateSnap.data() : {},
+                title: `بطولة ${state.date || new Date().toLocaleDateString('ar-EG')}`,
+                state,
                 players: activePlayers,
                 matches,
+                champion,
+                archivedAtText,
+                archiveVersion: 2,
                 createdAt: fsTimestamp(),
                 archivedBy: getAdminMeta().email || ''
             });
@@ -3822,6 +3843,34 @@
                     saveTournamentStateFallback(data);
                 }
                 setTournamentEntryPulse(status);
+                const announcement = data.announcement || {};
+                const expiresMs = Date.parse(announcement.expiresAtText || announcement.expiresAt || '');
+                const expired = Number.isFinite(expiresMs) && expiresMs > 0 && Date.now() >= expiresMs;
+                const announcementId = announcement.id || `${announcement.title || ''}_${announcement.imageUrl || ''}_${announcement.updatedAtText || ''}`;
+                const dismissKey = `ef_tournament_announcement_dismissed_${announcementId}`;
+                if (announcement.active && !expired && localStorage.getItem(dismissKey) !== '1') {
+                    document.getElementById('tournament-popup-title').textContent = announcement.title || '🏆 إعلان البطولة';
+                    document.getElementById('tournament-popup-status').textContent = announcement.description || '';
+                    document.getElementById('tournament-popup-expiry').textContent = announcement.expiresAtText ? `الإعلان متاح لحد ${new Date(announcement.expiresAtText).toLocaleString('ar-EG')}` : '';
+                    document.getElementById('tournament-popup-dont-show').checked = false;
+                    popup.dataset.announcementDismissKey = dismissKey;
+                    const image = document.getElementById('tournament-popup-image');
+                    const imageWrap = document.getElementById('tournament-popup-image-wrap');
+                    const icon = document.getElementById('tournament-popup-icon');
+                    if (announcement.imageUrl) {
+                        image.src = announcement.imageUrl;
+                        imageWrap.classList.remove('hidden');
+                        icon.classList.add('hidden');
+                    } else {
+                        image.removeAttribute('src');
+                        imageWrap.classList.add('hidden');
+                        icon.classList.remove('hidden');
+                    }
+                    const groupBtn = document.getElementById('tournament-popup-group-btn');
+                    if (data.groupLink) { groupBtn.href = data.groupLink; groupBtn.classList.remove('hidden'); }
+                    else groupBtn.classList.add('hidden');
+                    setTimeout(() => popup.classList.remove('hidden'), 350);
+                }
             } catch(e) {
                 console.warn('Could not fetch tournament status:', e);
                 setTournamentEntryPulse(getTournamentStateFallback().status);
@@ -3829,8 +3878,11 @@
         }
 
         function closeTournamentPopup() {
-            document.getElementById('tournament-popup').classList.add('hidden');
-            sessionStorage.setItem('tournament_popup_dismissed', '1');
+            const popup = document.getElementById('tournament-popup');
+            if (document.getElementById('tournament-popup-dont-show')?.checked && popup?.dataset.announcementDismissKey) {
+                localStorage.setItem(popup.dataset.announcementDismissKey, '1');
+            }
+            popup.classList.add('hidden');
         }
 
         function goToTournamentPage() {

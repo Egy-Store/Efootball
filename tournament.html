@@ -61,6 +61,7 @@
         .standings-table td { padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
         .standings-table tr:hover td { background: rgba(255,255,255,0.03); }
         .standings-table tr.winner td { background: rgba(234,179,8,0.06); border-right: 2px solid rgba(234,179,8,0.5); }
+        .standings-table { min-width: 760px; }
 
         /* Phone input flag */
         .phone-flag { width: 20px; height: 14px; display: inline-block; }
@@ -81,6 +82,24 @@
         .all-matches-screenshot-card { break-inside: avoid; page-break-inside: avoid; }
         .all-matches-screenshot-card .player-line { min-width: 0; }
 
+        .archive-player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+        .admin-tabs-scroll { overflow-x: auto; scrollbar-width: thin; }
+        .admin-tabs-scroll .admin-tab { min-width: 118px; }
+
+        @media (max-width: 640px) {
+            header { padding-inline: 8px !important; }
+            .header-brand-text, .mobile-nav-label { display: none; }
+            header .max-w-7xl { gap: 8px; }
+            header .glass-panel { padding-inline: 9px; }
+            #main-content { padding-inline: 10px; }
+            #admin-panel-modal { padding: 8px; }
+            #admin-panel-modal > .glass-panel { max-height: 96vh; border-radius: 18px; }
+            #admin-panel-modal .admin-panel-body { padding: 14px; }
+            .standings-table th { padding: 9px 8px; font-size: 10px; }
+            .standings-table td { padding: 10px 8px; font-size: 12px; }
+            .all-matches-screenshot-grid { grid-template-columns: 1fr; }
+        }
+
         /* Country codes dropdown */
         .country-select { background: rgba(8,12,30,0.8); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 12px; border-radius: 12px 0 0 12px; font-family: 'Cairo',sans-serif; outline: none; }
         .country-select:focus { border-color: #00f0ff; }
@@ -94,7 +113,7 @@
                 <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-400 to-pink-500 flex items-center justify-center">
                     <i class="fa-solid fa-gamepad text-white text-lg"></i>
                 </div>
-                <span class="font-extrabold text-white text-sm">eFOOTBALL <span class="text-cyan-400">STORE</span></span>
+                <span class="header-brand-text font-extrabold text-white text-sm">eFOOTBALL <span class="text-cyan-400">STORE</span></span>
             </a>
 
             <div class="flex items-center gap-2">
@@ -102,13 +121,13 @@
                     <i class="fa-solid fa-store text-cyan-300"></i> المتجر
                 </a>
                 <a href="community.html" class="text-xs px-3 py-1.5 glass-panel rounded-xl text-cyan-300 hover:text-white transition-all flex items-center gap-1.5">
-                    <i class="fa-solid fa-users"></i> الكوميونتي
+                    <i class="fa-solid fa-users"></i> <span class="mobile-nav-label">الكوميونتي</span>
                 </a>
                 <!-- Status badge -->
                 <span id="header-status-badge" class="hidden text-xs px-3 py-1.5 rounded-full font-bold border"></span>
                 <!-- Admin login btn -->
                 <button onclick="openAdminLogin()" id="admin-login-btn" class="text-xs px-3 py-1.5 glass-panel rounded-xl text-slate-400 hover:text-white transition-all flex items-center gap-1.5">
-                    <i class="fa-solid fa-shield-halved"></i> أدمن
+                    <i class="fa-solid fa-shield-halved"></i> <span class="mobile-nav-label">أدمن</span>
                 </button>
                 <span id="admin-indicator" class="hidden text-xs px-2.5 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse flex items-center gap-1.5">
                     <i class="fa-solid fa-user-shield"></i> أدمن
@@ -309,7 +328,7 @@
             </div>
 
             <!-- Tabs -->
-            <div class="flex border-b border-slate-800 bg-slate-900/40">
+            <div class="admin-tabs-scroll flex border-b border-slate-800 bg-slate-900/40">
                 <button onclick="switchAdminTab('players')" id="tab-players" class="admin-tab active flex-1 py-3 text-xs font-bold text-white border-b-2 border-cyan-400 transition-all">
                     <i class="fa-solid fa-users ml-1"></i> المسجلون
                 </button>
@@ -332,7 +351,7 @@
             </div>
 
             <!-- Tab Contents -->
-            <div class="overflow-y-auto flex-1 p-6">
+            <div class="admin-panel-body overflow-y-auto flex-1 p-6">
                 <!-- Players Tab -->
                 <div id="admin-tab-players">
                     <div class="flex items-center justify-between mb-4">
@@ -445,13 +464,34 @@
 
                     <div class="glass-card rounded-2xl p-4 border border-amber-500/15">
                         <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-solid fa-bullhorn text-amber-400 ml-1"></i> إعلان يظهر للاعبين</h4>
-                        <p class="text-xs text-slate-500 mb-3">اكتب إعلان للبطولة، وهيظهر كتنبيه Pop-up لأول ما اليوزر يفتح صفحة البطولة.</p>
+                        <p class="text-xs text-slate-500 mb-3">اعمل إعلان عادي أو إعلان للبطل. هيظهر Pop-up أول ما اليوزر يفتح الصفحة لحد الوقت اللي تحدده.</p>
                         <div class="space-y-3">
+                            <button id="announcement-champion-draft-btn" onclick="prepareChampionAnnouncement()" class="hidden w-full py-2.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-200 font-black hover:bg-yellow-500/25 transition-all"><i class="fa-solid fa-crown ml-1"></i> تجهيز إعلان البطل تلقائيًا</button>
                             <input id="announcement-title" type="text" placeholder="عنوان الإعلان" class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white text-right">
                             <textarea id="announcement-desc" rows="3" placeholder="وصف الإعلان / الرسالة" class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white text-right"></textarea>
-                            <input id="announcement-image" type="url" dir="ltr" placeholder="رابط صورة اختياري https://..." class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input id="announcement-image" type="url" dir="ltr" oninput="if(!selectedAnnouncementImageFile)setAnnouncementPreview(this.value.trim())" placeholder="رابط صورة اختياري https://..." class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white">
+                                <label class="flex items-center justify-center gap-2 cursor-pointer rounded-xl border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-2.5 text-xs font-black text-amber-200 hover:bg-amber-500/10">
+                                    <i class="fa-solid fa-image"></i> أو ارفع صورة من الجهاز
+                                    <input id="announcement-image-file" type="file" accept="image/*" class="hidden" onchange="handleAnnouncementImagePicked(event)">
+                                </label>
+                            </div>
+                            <div id="announcement-image-preview-wrap" class="hidden rounded-2xl overflow-hidden border border-amber-500/20 bg-slate-950">
+                                <img id="announcement-image-preview" class="w-full max-h-64 object-contain" alt="معاينة صورة الإعلان">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400 mb-2 block"><i class="fa-regular fa-clock ml-1"></i> وقت إيقاف الإعلان تلقائيًا</label>
+                                <input id="announcement-expires-at" type="datetime-local" class="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 outline-none rounded-xl px-3 py-2.5 text-sm text-white" dir="ltr">
+                                <div class="grid grid-cols-4 gap-2 mt-2">
+                                    <button onclick="setAnnouncementDuration(1)" class="py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-[11px] text-slate-300">ساعة</button>
+                                    <button onclick="setAnnouncementDuration(24)" class="py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-[11px] text-slate-300">يوم</button>
+                                    <button onclick="setAnnouncementDuration(72)" class="py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-[11px] text-slate-300">3 أيام</button>
+                                    <button onclick="setAnnouncementDuration(168)" class="py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-[11px] text-slate-300">أسبوع</button>
+                                </div>
+                            </div>
+                            <p id="announcement-status-text" class="text-[11px] text-slate-500"></p>
                             <div class="grid grid-cols-2 gap-3">
-                                <button onclick="saveTournamentAnnouncement()" class="py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black hover:bg-amber-500/25 transition-all"><i class="fa-solid fa-floppy-disk ml-1"></i> حفظ الإعلان</button>
+                                <button id="announcement-save-btn" onclick="saveTournamentAnnouncement()" class="py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-black hover:bg-amber-500/25 transition-all"><i class="fa-solid fa-floppy-disk ml-1"></i> نشر الإعلان</button>
                                 <button onclick="deleteTournamentAnnouncement()" class="py-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-black hover:bg-rose-500/25 transition-all"><i class="fa-solid fa-trash ml-1"></i> حذف الإعلان</button>
                             </div>
                         </div>
@@ -625,7 +665,34 @@
                 </div>
                 <h3 id="public-announcement-title" class="text-2xl font-extrabold text-white"></h3>
                 <p id="public-announcement-desc" class="text-sm text-slate-300 leading-7 whitespace-pre-wrap"></p>
+                <label class="flex items-center justify-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                    <input id="public-announcement-dont-show" type="checkbox" class="accent-yellow-400 w-4 h-4">
+                    متظهرش الرسالة دي مرة تانية على الجهاز ده
+                </label>
+                <div id="public-announcement-expiry" class="text-[11px] text-slate-500"></div>
                 <button onclick="closePublicAnnouncementModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-black">تمام</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOURNAMENT ARCHIVE DETAILS MODAL -->
+    <div id="tournament-archive-modal" class="fixed inset-0 z-[129] hidden flex items-center justify-center p-3 md:p-5">
+        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closeTournamentArchive()"></div>
+        <div class="glass-panel w-full max-w-5xl rounded-3xl overflow-hidden relative z-10 max-h-[94vh] flex flex-col border border-cyan-500/20">
+            <div class="px-5 py-4 flex items-center justify-between gap-3 border-b border-slate-800">
+                <div>
+                    <h3 id="archive-modal-title" class="text-lg font-extrabold text-white"><i class="fa-solid fa-box-archive text-cyan-300 ml-1"></i> أرشيف البطولة</h3>
+                    <p id="archive-modal-meta" class="text-xs text-slate-500 mt-1"></p>
+                </div>
+                <button onclick="closeTournamentArchive()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div id="archive-modal-content" class="overflow-y-auto p-4 md:p-6"></div>
+            <div id="archive-import-actions" class="hidden px-4 md:px-6 py-4 border-t border-slate-800 bg-slate-950/60">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <button onclick="toggleAllArchivePlayers(true)" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-black">تحديد الكل</button>
+                    <button onclick="toggleAllArchivePlayers(false)" class="py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs font-black">إلغاء التحديد</button>
+                    <button onclick="importSelectedArchivePlayers()" class="py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-black"><i class="fa-solid fa-user-plus ml-1"></i> نقل المحددين لبطولة جديدة</button>
+                </div>
             </div>
         </div>
     </div>
@@ -683,6 +750,9 @@
         let activeTournamentGroups = [];
         let selectedScoreProofFile = null;
         let activeAnnouncementKey = null;
+        let selectedAnnouncementImageFile = null;
+        let currentArchiveId = '';
+        let tournamentHistoryCache = new Map();
         let knockoutManualPairing = { roundKey: '', pairs: [] };
 
         // ===== BASIC HELPERS =====
@@ -955,6 +1025,13 @@
             attachPhoneSanitizers();
             await loadTournamentStatus();
             loadPublicHistoryPreview();
+            setInterval(() => {
+                const announcement = currentTournamentData.announcement || {};
+                if (announcement.active && isAnnouncementExpired(announcement)) {
+                    document.getElementById('public-announcement-modal')?.classList.add('hidden');
+                    loadAnnouncementInputs();
+                }
+            }, 30000);
         };
 
         auth.onAuthStateChanged(user => {
@@ -1684,7 +1761,7 @@ function renderLiveMatches(matches = []) {
                 </div>
                 ${champion ? `<div class="mb-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-center"><div class="text-xs text-emerald-300 font-black mb-1">بطل البطولة</div><div class="text-2xl font-black text-white">${escapeHtml(champion.name || champion.winner || '-')}</div></div>` : ''}
                 ${isAdmin ? renderKnockoutAdminControls(rounds, currentIndex) : ''}
-                ${isAdmin ? renderKnockoutAdvancePanel(rounds, currentIndex) : ''}
+                ${isAdmin ? renderKnockoutAdvancePanel(rounds, currentIndex, champion) : ''}
                 <div class="overflow-x-auto pb-2"><div class="flex gap-4 min-w-max">${rounds.map((round, index) => renderKnockoutRound(round, index, currentIndex)).join('')}</div></div>
             </div>`;
         }
@@ -1789,8 +1866,9 @@ function renderLiveMatches(matches = []) {
             const completed = matches.filter(match => Boolean(getKnockoutMatchWinner(match))).length;
             const winners = matches.map(getKnockoutMatchWinner).filter(Boolean);
             const roundComplete = matches.length > 0 && completed === matches.length;
+            const isFinal = currentIndex === (rounds || []).length - 1 && matches.length === 1;
             const nextLabel = winners.length <= 1 ? 'إعلان البطل' : roundLabel(winners.length);
-            return { round, matches, completed, winners, roundComplete, nextLabel, canAdvance: roundComplete && winners.length > 0 };
+            return { round, matches, completed, winners, roundComplete, isFinal, nextLabel, canAdvance: roundComplete && winners.length > 1 };
         }
 
         function renderKnockoutAdminControls(rounds, currentIndex) {
@@ -1800,22 +1878,16 @@ function renderLiveMatches(matches = []) {
             const advanceState = getKnockoutAdvanceState(rounds, currentIndex);
             const roundComplete = advanceState.roundComplete;
             const canArrange = !roundStarted && getKnockoutRoundPlayers(round).length > 1;
-            const canAdvance = advanceState.canAdvance;
             const swapOptions = getKnockoutSwapOptions(round);
-            const nextLabel = advanceState.nextLabel;
             const disabledArrange = canArrange ? '' : 'disabled';
             const disabledArrangeClass = canArrange ? 'hover:bg-purple-500/25' : 'opacity-50 cursor-not-allowed';
-            const disabledAdvance = canAdvance ? '' : 'disabled';
-            const disabledAdvanceClass = canAdvance ? 'hover:bg-emerald-500/25' : 'opacity-50 cursor-not-allowed';
             return `<div class="glass-card rounded-2xl p-4 mb-5 border border-purple-500/15">
                 <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
                     <div>
                         <h4 class="text-sm font-black text-white"><i class="fa-solid fa-shuffle text-purple-400 ml-1"></i> تحكم النوك أوت</h4>
                         <p class="text-[11px] text-slate-500 mt-1">الدور الحالي: ${escapeHtml(round.label || '')}. التبديل والعشوائي متاحين قبل تسجيل أي نتيجة في الدور.</p>
                     </div>
-                    <button onclick="advanceKnockoutRound()" ${disabledAdvance} class="px-4 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-black text-xs transition-all ${disabledAdvanceClass}">
-                        <i class="fa-solid fa-forward-step ml-1"></i> الانتقال إلى ${escapeHtml(nextLabel)}
-                    </button>
+                    <span class="px-3 py-1.5 rounded-xl bg-slate-950/60 border border-white/10 text-[11px] font-black text-yellow-300">${advanceState.completed} / ${advanceState.matches.length} مكتمل</span>
                 </div>
                 <div class="grid grid-cols-1 xl:grid-cols-[220px_1fr] gap-3">
                     <button onclick="randomizeKnockoutCurrentRound()" ${disabledArrange} class="py-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 font-black text-xs transition-all ${disabledArrangeClass}">
@@ -1834,9 +1906,17 @@ function renderLiveMatches(matches = []) {
             </div>`;
         }
 
-        function renderKnockoutAdvancePanel(rounds, currentIndex) {
+        function renderKnockoutAdvancePanel(rounds, currentIndex, champion = null) {
             const state = getKnockoutAdvanceState(rounds, currentIndex);
             if (!state.round) return '';
+            if (champion || (state.isFinal && state.roundComplete)) {
+                const winner = champion || state.winners[0] || getKnockoutChampion(rounds);
+                return `<div class="rounded-2xl border border-yellow-500/35 bg-yellow-500/10 p-4 mb-5 text-center">
+                    <div class="text-sm font-black text-white"><i class="fa-solid fa-crown text-yellow-300 ml-1"></i> البطولة انتهت والبطل اتحدد</div>
+                    <div class="text-2xl font-black text-yellow-200 mt-2">${escapeHtml(winner?.name || '-')}</div>
+                    <button onclick="prepareChampionAnnouncement()" class="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-yellow-500 to-amber-500 text-slate-950 font-black text-sm"><i class="fa-solid fa-bullhorn ml-1"></i> جهّز إعلان البطل بالصورة</button>
+                </div>`;
+            }
             const disabled = state.canAdvance ? '' : 'disabled';
             const buttonClass = state.canAdvance
                 ? 'bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-950 shadow-[0_0_28px_rgba(16,185,129,.35)] hover:brightness-110'
@@ -2156,7 +2236,7 @@ function renderLiveMatches(matches = []) {
                     nextLabel = next?.label || '';
                     return { patch: { knockoutChampion: '' }, logDetails: { fromRound: round.label || round.round, toRound: nextLabel } };
                 }, 'advance_knockout_round');
-                showTAlert('تم الانتقال ✅', championName ? `تم إعلان البطل: ${championName}` : `تم نقل الفائزين إلى ${nextLabel}.`, false);
+                showTAlert('تم الانتقال ✅', championName ? `تم تثبيت البطل: ${championName}` : `تم نقل الفائزين إلى ${nextLabel}.`, false);
                 await loadTournamentStatus();
             } catch(e) { console.error(e); showTAlert('تنبيه', knockoutErrorMessage(e), true); }
         }
@@ -2558,7 +2638,93 @@ function renderLiveMatches(matches = []) {
 
         function getAnnouncementFromState() {
             const a = currentTournamentData.announcement || {};
-            return a && a.active ? a : null;
+            return a && a.active && !isAnnouncementExpired(a) ? a : null;
+        }
+
+        function parseAnnouncementDate(value) {
+            if (!value) return 0;
+            const ms = Date.parse(value);
+            return Number.isFinite(ms) ? ms : 0;
+        }
+
+        function isAnnouncementExpired(announcement) {
+            const expiresMs = parseAnnouncementDate(announcement?.expiresAtText || announcement?.expiresAt);
+            return expiresMs > 0 && Date.now() >= expiresMs;
+        }
+
+        function announcementDismissKey(announcement) {
+            const id = announcement?.id || `${announcement?.title || ''}_${announcement?.imageUrl || ''}_${announcement?.updatedAtText || ''}`;
+            return `ef_tournament_announcement_dismissed_${id}`;
+        }
+
+        function isoToLocalDateTime(value) {
+            const ms = parseAnnouncementDate(value);
+            if (!ms) return '';
+            const date = new Date(ms - new Date(ms).getTimezoneOffset() * 60000);
+            return date.toISOString().slice(0, 16);
+        }
+
+        function localDateTimeToIso(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            return Number.isFinite(date.getTime()) ? date.toISOString() : '';
+        }
+
+        function setAnnouncementDuration(hours) {
+            const input = document.getElementById('announcement-expires-at');
+            if (!input) return;
+            input.value = isoToLocalDateTime(new Date(Date.now() + (Number(hours) * 3600000)).toISOString());
+        }
+
+        function setAnnouncementPreview(url) {
+            const wrap = document.getElementById('announcement-image-preview-wrap');
+            const image = document.getElementById('announcement-image-preview');
+            if (!wrap || !image) return;
+            if (url) {
+                image.src = url;
+                wrap.classList.remove('hidden');
+            } else {
+                image.removeAttribute('src');
+                wrap.classList.add('hidden');
+            }
+        }
+
+        function handleAnnouncementImagePicked(event) {
+            const file = event?.target?.files?.[0] || null;
+            selectedAnnouncementImageFile = file;
+            if (!file) return setAnnouncementPreview((document.getElementById('announcement-image')?.value || '').trim());
+            if (!String(file.type || '').startsWith('image/')) {
+                selectedAnnouncementImageFile = null;
+                event.target.value = '';
+                return showTAlert('ملف غير صالح', 'اختار صورة JPG أو PNG أو WEBP.', true);
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                selectedAnnouncementImageFile = null;
+                event.target.value = '';
+                return showTAlert('الصورة كبيرة', 'حجم صورة الإعلان لازم يكون أقل من 10MB.', true);
+            }
+            const reader = new FileReader();
+            reader.onload = () => setAnnouncementPreview(String(reader.result || ''));
+            reader.readAsDataURL(file);
+        }
+
+        function getCurrentChampion() {
+            const direct = currentTournamentData.knockoutChampion;
+            if (direct?.name) return direct;
+            return getKnockoutChampion(Array.isArray(currentTournamentData.knockout) ? currentTournamentData.knockout : []);
+        }
+
+        async function prepareChampionAnnouncement() {
+            if (!isAdmin) return openAdminLogin();
+            const champion = getCurrentChampion();
+            if (!champion?.name) return showTAlert('البطل لسه متحددش', 'سجّل نتيجة النهائي الأول عشان نجهّز إعلان البطل.', true);
+            const modal = document.getElementById('admin-panel-modal');
+            if (modal?.classList.contains('hidden')) await openAdminPanel();
+            switchAdminTab('manual');
+            document.getElementById('announcement-title').value = `🏆 بطل البطولة: ${champion.name}`;
+            document.getElementById('announcement-desc').value = `مبروك لـ ${champion.name} الفوز ببطولة eFootball${champion.score ? ` بنتيجة ${champion.score}` : ''} 🎉`;
+            if (!document.getElementById('announcement-expires-at').value) setAnnouncementDuration(72);
+            document.getElementById('announcement-title')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function loadAnnouncementInputs() {
@@ -2566,24 +2732,57 @@ function renderLiveMatches(matches = []) {
             const title = document.getElementById('announcement-title');
             const desc = document.getElementById('announcement-desc');
             const image = document.getElementById('announcement-image');
+            const expires = document.getElementById('announcement-expires-at');
+            const status = document.getElementById('announcement-status-text');
+            const championBtn = document.getElementById('announcement-champion-draft-btn');
             if (title) title.value = a.title || '';
             if (desc) desc.value = a.description || '';
             if (image) image.value = a.imageUrl || '';
+            if (expires) expires.value = isoToLocalDateTime(a.expiresAtText || a.expiresAt) || isoToLocalDateTime(new Date(Date.now() + 86400000).toISOString());
+            if (status) {
+                status.textContent = a.active
+                    ? (isAnnouncementExpired(a) ? 'الإعلان انتهى تلقائيًا ومش بيظهر للناس.' : `الإعلان شغال${a.expiresAtText ? ` لحد ${new Date(a.expiresAtText).toLocaleString('ar-EG')}` : ' لحد ما تحذفه'}.`)
+                    : 'لا يوجد إعلان نشط حاليًا.';
+            }
+            if (championBtn) championBtn.classList.toggle('hidden', !getCurrentChampion()?.name);
+            selectedAnnouncementImageFile = null;
+            const file = document.getElementById('announcement-image-file');
+            if (file) file.value = '';
+            setAnnouncementPreview(a.imageUrl || '');
         }
 
         async function saveTournamentAnnouncement() {
             if (!isAdmin) return openAdminLogin();
             const title = (document.getElementById('announcement-title')?.value || '').trim();
             const description = (document.getElementById('announcement-desc')?.value || '').trim();
-            const imageUrl = (document.getElementById('announcement-image')?.value || '').trim();
-            if (!title && !description && !imageUrl) return showTAlert('اكتب الإعلان', 'برجاء كتابة عنوان أو وصف أو رابط صورة للإعلان.', true);
-            const announcement = { active: true, title: title || 'إعلان البطولة', description, imageUrl, id: String(Date.now()), updatedAtText: new Date().toISOString() };
+            let imageUrl = (document.getElementById('announcement-image')?.value || '').trim();
+            const expiresAtText = localDateTimeToIso(document.getElementById('announcement-expires-at')?.value || '');
+            if (!title && !description && !imageUrl && !selectedAnnouncementImageFile) return showTAlert('اكتب الإعلان', 'برجاء كتابة عنوان أو وصف أو اختيار صورة للإعلان.', true);
+            if (expiresAtText && parseAnnouncementDate(expiresAtText) <= Date.now()) return showTAlert('وقت غير صحيح', 'اختار وقت انتهاء بعد الوقت الحالي.', true);
+            const saveBtn = document.getElementById('announcement-save-btn');
             try {
+                if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-1"></i> جاري النشر...'; }
+                if (selectedAnnouncementImageFile) imageUrl = await uploadScoreProofImage(selectedAnnouncementImageFile);
+                const champion = getCurrentChampion();
+                const announcement = {
+                    active: true,
+                    kind: champion?.name && (title.includes(champion.name) || description.includes(champion.name)) ? 'champion' : 'general',
+                    champion: champion?.name ? { name: champion.name, rowIndex: champion.rowIndex || '', score: champion.score || '' } : null,
+                    title: title || 'إعلان البطولة',
+                    description,
+                    imageUrl,
+                    expiresAtText,
+                    id: String(Date.now()),
+                    updatedAtText: new Date().toISOString()
+                };
                 await db.collection(FS.tournamentState).doc('current').set({ announcement, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
                 currentTournamentData.announcement = announcement;
-                await writeAdminLog('save_tournament_announcement', { hasTitle: !!title, hasDescription: !!description, hasImage: !!imageUrl });
-                showTAlert('تم حفظ الإعلان ✅', 'الإعلان هيظهر للاعبين عند فتح صفحة البطولة.', false);
-            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر حفظ الإعلان', true); }
+                selectedAnnouncementImageFile = null;
+                await writeAdminLog('save_tournament_announcement', { kind: announcement.kind, hasTitle: !!title, hasDescription: !!description, hasImage: !!imageUrl, expiresAtText });
+                loadAnnouncementInputs();
+                showTAlert('تم نشر الإعلان ✅', expiresAtText ? `هيظهر للناس لحد ${new Date(expiresAtText).toLocaleString('ar-EG')}.` : 'هيظهر للناس لحد ما تحذفه يدويًا.', false);
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر رفع الصورة أو حفظ الإعلان.', true); }
+            finally { if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk ml-1"></i> نشر الإعلان'; } }
         }
 
         async function deleteTournamentAnnouncement() {
@@ -2601,17 +2800,25 @@ function renderLiveMatches(matches = []) {
         function maybeShowTournamentAnnouncement(state) {
             try {
                 const a = (state && state.announcement && state.announcement.active) ? state.announcement : null;
-                if (!a || isAdmin) return;
+                if (!a || isAdmin || isAnnouncementExpired(a)) {
+                    document.getElementById('public-announcement-modal')?.classList.add('hidden');
+                    return;
+                }
                 const key = a.id || `${a.title || ''}_${a.description || ''}_${a.imageUrl || ''}`;
                 if (activeAnnouncementKey === key) return;
+                if (localStorage.getItem(announcementDismissKey(a)) === '1') return;
                 activeAnnouncementKey = key;
                 const modal = document.getElementById('public-announcement-modal');
                 const title = document.getElementById('public-announcement-title');
                 const desc = document.getElementById('public-announcement-desc');
                 const image = document.getElementById('public-announcement-image');
                 const imageWrap = document.getElementById('public-announcement-image-wrap');
+                const dontShow = document.getElementById('public-announcement-dont-show');
+                const expiry = document.getElementById('public-announcement-expiry');
                 if (title) title.textContent = a.title || 'إعلان البطولة';
                 if (desc) desc.textContent = a.description || '';
+                if (dontShow) dontShow.checked = false;
+                if (expiry) expiry.textContent = a.expiresAtText ? `الإعلان متاح لحد ${new Date(a.expiresAtText).toLocaleString('ar-EG')}` : '';
                 if (image && imageWrap) {
                     if (a.imageUrl) { image.src = a.imageUrl; imageWrap.classList.remove('hidden'); }
                     else { image.removeAttribute('src'); imageWrap.classList.add('hidden'); }
@@ -2621,6 +2828,10 @@ function renderLiveMatches(matches = []) {
         }
 
         function closePublicAnnouncementModal() {
+            const a = currentTournamentData.announcement || {};
+            if (document.getElementById('public-announcement-dont-show')?.checked && a.active) {
+                try { localStorage.setItem(announcementDismissKey(a), '1'); } catch(e) {}
+            }
             document.getElementById('public-announcement-modal')?.classList.add('hidden');
         }
 
@@ -2636,16 +2847,150 @@ function renderLiveMatches(matches = []) {
             catch(e) { c.innerHTML = '<div class="text-center py-8 text-slate-500">تعذر تحميل اللوجز</div>'; }
         }
 
+        function getArchivedTournamentChampion(history) {
+            const state = history?.state || {};
+            if (history?.champion?.name) return history.champion;
+            if (state.knockoutChampion?.name) return state.knockoutChampion;
+            const knockoutWinner = getKnockoutChampion(Array.isArray(state.knockout) ? state.knockout : []);
+            if (knockoutWinner?.name) return knockoutWinner;
+            return sortStandingsPlayers((history?.players || []).map(normalizePlayer).filter(isActivePlayer))[0] || null;
+        }
+
+        function getArchiveDateText(history) {
+            return tsToText(history?.createdAt) !== '-' ? tsToText(history?.createdAt) : (history?.archivedAtText ? new Date(history.archivedAtText).toLocaleString('ar-EG') : '-');
+        }
+
+        function renderHistoryCard(history, index = 0, publicMode = false) {
+            const players = history.players || [];
+            const matches = history.matches || [];
+            const state = history.state || {};
+            const champion = getArchivedTournamentChampion(history);
+            const label = history.title || `بطولة ${state.date || '#' + (index + 1)}`;
+            return `<div class="glass-card rounded-2xl p-4 border border-slate-700/40">
+                <div class="flex items-start justify-between gap-3">
+                    <div><h4 class="font-extrabold text-white">${escapeHtml(label)}</h4><p class="text-[11px] text-slate-500 mt-1">${escapeHtml(getArchiveDateText(history))}</p></div>
+                    ${champion ? `<span class="px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/25 text-yellow-200 text-xs font-black"><i class="fa-solid fa-crown ml-1"></i>${escapeHtml(champion.name)}</span>` : ''}
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+                    <div class="bg-slate-950/50 rounded-xl p-2"><div class="text-yellow-400 font-black">${players.length}</div><div class="text-[10px] text-slate-500">لاعب</div></div>
+                    <div class="bg-slate-950/50 rounded-xl p-2"><div class="text-cyan-400 font-black">${matches.length}</div><div class="text-[10px] text-slate-500">نتيجة دوري</div></div>
+                    <div class="bg-slate-950/50 rounded-xl p-2"><div class="text-emerald-400 font-black">${(state.knockout || []).reduce((n, r) => n + (r.matches || []).filter(m => getKnockoutMatchWinner(m)).length, 0)}</div><div class="text-[10px] text-slate-500">نتيجة نوك أوت</div></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3">النظام: ${escapeHtml(state.tournamentType || '-')} · المنصة: ${escapeHtml(state.platformFilter || 'all')}</p>
+                <button onclick='openTournamentArchive(${jsArg(history.id)})' class="w-full mt-3 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-cyan-200 text-xs font-black hover:bg-cyan-500/20"><i class="fa-solid fa-eye ml-1"></i> عرض اللاعبين والنتائج${publicMode ? '' : ' ونقل المشاركين'}</button>
+            </div>`;
+        }
+
+        async function fetchTournamentHistoryRows(limit = 30) {
+            const snap = await db.collection(FS.tournamentHistory).get();
+            const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (tsToMillis(b.createdAt) || parseAnnouncementDate(b.archivedAtText)) - (tsToMillis(a.createdAt) || parseAnnouncementDate(a.archivedAtText)))
+                .slice(0, limit);
+            rows.forEach(row => tournamentHistoryCache.set(row.id, row));
+            return rows;
+        }
+
         async function loadTournamentHistory() {
-            const c = document.getElementById('tournament-history-container'); c.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</div>';
-            try { const snap = await db.collection(FS.tournamentHistory).get(); const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>tsToMillis(b.createdAt)-tsToMillis(a.createdAt)).slice(0,30); if (!rows.length) { c.innerHTML = '<div class="text-center py-8 text-slate-500">لا يوجد هيستوري بطولات حتى الآن</div>'; return; } c.innerHTML = rows.map((h,i) => { const players = h.players || []; const matches = h.matches || []; const state = h.state || {}; const winner = sortStandingsPlayers(players.map(normalizePlayer).filter(isActivePlayer))[0]; return `<div class="glass-card rounded-2xl p-4"><div class="flex items-center justify-between gap-3"><h4 class="font-extrabold text-white">بطولة #${rows.length - i}</h4><span class="text-xs text-slate-500" dir="ltr">${escapeHtml(tsToText(h.createdAt))}</span></div><div class="grid grid-cols-3 gap-2 mt-3 text-center"><div class="bg-slate-950/50 rounded-xl p-2"><div class="text-yellow-400 font-black">${players.length}</div><div class="text-[10px] text-slate-500">لاعب</div></div><div class="bg-slate-950/50 rounded-xl p-2"><div class="text-cyan-400 font-black">${matches.length}</div><div class="text-[10px] text-slate-500">ماتش</div></div><div class="bg-slate-950/50 rounded-xl p-2"><div class="text-emerald-400 font-black truncate">${escapeHtml(winner?.name || '-')}</div><div class="text-[10px] text-slate-500">الأول</div></div></div><p class="text-xs text-slate-400 mt-3">النوع: ${escapeHtml(state.tournamentType || '-')} | المنصة: ${escapeHtml(state.platformFilter || 'all')}</p></div>`; }).join(''); }
-            catch(e) { c.innerHTML = '<div class="text-center py-8 text-slate-500">تعذر تحميل الهيستوري</div>'; }
+            const c = document.getElementById('tournament-history-container');
+            c.innerHTML = '<div class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</div>';
+            try {
+                const rows = await fetchTournamentHistoryRows(30);
+                c.innerHTML = rows.length ? rows.map((h, i) => renderHistoryCard(h, i, false)).join('') : '<div class="text-center py-8 text-slate-500">لا يوجد أرشيف بطولات حتى الآن</div>';
+            } catch(e) { console.error(e); c.innerHTML = '<div class="text-center py-8 text-slate-500">تعذر تحميل الأرشيف</div>'; }
+        }
+
+        function archiveMatchRows(history) {
+            const league = (history.matches || []).map(m => ({
+                stage: 'الدوري', p1: m.p1name || m.p1Name || m.p1 || '-', p2: m.p2name || m.p2Name || m.p2 || '-',
+                score1: m.score1 ?? '-', score2: m.score2 ?? '-', winner: m.winner || ''
+            }));
+            const knockout = (history.state?.knockout || []).flatMap(round => (round.matches || []).map(m => ({
+                stage: round.label || 'نوك أوت', p1: m.p1?.name || '-', p2: m.p2?.name || '-', score1: m.score1 ?? '-', score2: m.score2 ?? '-', winner: getKnockoutMatchWinner(m)?.name || m.winner || ''
+            })));
+            return [...league, ...knockout];
+        }
+
+        async function openTournamentArchive(archiveId) {
+            let history = tournamentHistoryCache.get(String(archiveId));
+            if (!history) {
+                const snap = await db.collection(FS.tournamentHistory).doc(String(archiveId)).get();
+                if (!snap.exists) return showTAlert('الأرشيف غير موجود', 'تعذر العثور على البطولة المؤرشفة.', true);
+                history = { id: snap.id, ...snap.data() };
+                tournamentHistoryCache.set(history.id, history);
+            }
+            currentArchiveId = history.id;
+            const players = (history.players || []).map(normalizePlayer);
+            const matches = archiveMatchRows(history);
+            const champion = getArchivedTournamentChampion(history);
+            document.getElementById('archive-modal-title').innerHTML = `<i class="fa-solid fa-box-archive text-cyan-300 ml-1"></i> ${escapeHtml(history.title || 'أرشيف البطولة')}`;
+            document.getElementById('archive-modal-meta').textContent = `${getArchiveDateText(history)} · ${players.length} لاعب · ${matches.length} مباراة`;
+            const playerCards = players.map((p, index) => `<label class="archive-player-card flex items-center gap-3 rounded-xl border border-slate-700/60 bg-slate-950/45 p-3 ${isAdmin ? 'cursor-pointer' : ''}">
+                ${isAdmin ? `<input type="checkbox" class="archive-player-checkbox accent-emerald-400 w-4 h-4" value="${index}">` : ''}
+                <span class="min-w-0"><span class="block text-sm font-black text-white truncate">${escapeHtml(p.name)}</span><span class="block text-[11px] text-slate-500">${escapeHtml(p.platform || '-')} · ${escapeHtml(p.phone || 'بدون رقم')}</span></span>
+                <span class="mr-auto text-[11px] text-yellow-300 font-black">${p.points || 0} نقطة</span>
+            </label>`).join('');
+            const resultRows = matches.map(m => `<tr><td>${escapeHtml(m.stage)}</td><td class="font-bold text-white">${escapeHtml(m.p1)}</td><td class="text-center font-black text-yellow-300" dir="ltr">${escapeHtml(m.score1)} - ${escapeHtml(m.score2)}</td><td class="font-bold text-white">${escapeHtml(m.p2)}</td><td class="text-emerald-300">${escapeHtml(m.winner || '-')}</td></tr>`).join('');
+            document.getElementById('archive-modal-content').innerHTML = `
+                ${champion ? `<div class="rounded-2xl border border-yellow-500/25 bg-yellow-500/10 p-4 text-center mb-5"><div class="text-xs text-yellow-300 font-black">بطل البطولة</div><div class="text-2xl text-white font-black mt-1">${escapeHtml(champion.name)}</div></div>` : ''}
+                <h4 class="text-sm font-black text-white mb-3"><i class="fa-solid fa-users text-cyan-300 ml-1"></i> المشاركون</h4>
+                <div class="archive-player-grid mb-6">${playerCards || '<div class="text-slate-500 text-sm">لا يوجد لاعبين محفوظين</div>'}</div>
+                <h4 class="text-sm font-black text-white mb-3"><i class="fa-solid fa-list-ol text-yellow-300 ml-1"></i> النتائج</h4>
+                <div class="overflow-x-auto rounded-2xl border border-slate-800"><table class="standings-table w-full"><thead><tr><th>الدور</th><th>اللاعب الأول</th><th>النتيجة</th><th>اللاعب الثاني</th><th>الفائز</th></tr></thead><tbody>${resultRows || '<tr><td colspan="5" class="text-center text-slate-500">لا توجد نتائج محفوظة</td></tr>'}</tbody></table></div>`;
+            document.getElementById('archive-import-actions').classList.toggle('hidden', !isAdmin || !players.length);
+            document.getElementById('tournament-archive-modal').classList.remove('hidden');
+        }
+
+        function closeTournamentArchive() {
+            document.getElementById('tournament-archive-modal')?.classList.add('hidden');
+            currentArchiveId = '';
+        }
+
+        function toggleAllArchivePlayers(checked) {
+            document.querySelectorAll('.archive-player-checkbox').forEach(box => { box.checked = !!checked; });
+        }
+
+        async function importSelectedArchivePlayers() {
+            if (!isAdmin) return openAdminLogin();
+            const history = tournamentHistoryCache.get(currentArchiveId);
+            if (!history) return showTAlert('خطأ', 'بيانات الأرشيف مش محملة.', true);
+            const indexes = [...document.querySelectorAll('.archive-player-checkbox:checked')].map(box => Number(box.value)).filter(Number.isFinite);
+            if (!indexes.length) return showTAlert('اختار لاعبين', 'علّم على لاعب واحد على الأقل للنقل.', true);
+            if (currentTournamentStatus === 'START' && !confirm('في بطولة شغالة حاليًا. نقل اللاعبين هيضيفهم للبطولة الحالية. تكمل؟')) return;
+            const sourcePlayers = history.players || [];
+            try {
+                let batch = db.batch();
+                let operations = 0;
+                for (const [order, index] of indexes.entries()) {
+                    const raw = sourcePlayers[index] || {};
+                    const p = normalizePlayer(raw, index);
+                    const oldId = String(raw.id || raw.docId || p.docId || '').trim();
+                    const ref = oldId ? db.collection(FS.tournamentPlayers).doc(oldId) : db.collection(FS.tournamentPlayers).doc();
+                    batch.set(ref, {
+                        name: p.name, phone: p.phone || '', platform: p.platform || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '',
+                        rowIndex: Date.now() + order, groupNum: 1, status: 'active', wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [],
+                        importedFromArchiveId: history.id, importedAt: fsTimestamp(), updatedAt: fsTimestamp()
+                    }, { merge: true });
+                    operations++;
+                    if (operations === 400) { await batch.commit(); batch = db.batch(); operations = 0; }
+                }
+                if (operations) await batch.commit();
+                await writeAdminLog('import_archive_players', { archiveId: history.id, players: indexes.length });
+                showTAlert('تم النقل ✅', `تم نقل ${indexes.length} لاعب وتجهيزهم بنتائج صفر للبطولة الجديدة.`, false);
+                closeTournamentArchive();
+                await refreshPlayers();
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر نقل اللاعبين من الأرشيف. راجع صلاحيات Firestore.', true); }
         }
 
         async function loadPublicHistoryPreview() {
             const idle = document.getElementById('state-idle');
-            if (!idle || document.getElementById('public-history-preview')) return;
-            try { const snap = await db.collection(FS.tournamentHistory).get(); const rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b)=>tsToMillis(b.createdAt)-tsToMillis(a.createdAt)).slice(0,3); if (!rows.length) return; const div = document.createElement('div'); div.id = 'public-history-preview'; div.className = 'mt-10 max-w-2xl mx-auto text-right'; div.innerHTML = `<h3 class="text-lg font-extrabold text-white mb-3 text-center"><i class="fa-solid fa-clock-rotate-left text-yellow-400 ml-1"></i> آخر البطولات</h3>${rows.map(h => `<div class="glass-card rounded-2xl p-4 mb-2"><div class="flex justify-between"><span class="text-white font-bold">بطولة سابقة</span><span class="text-xs text-slate-500" dir="ltr">${escapeHtml(tsToText(h.createdAt))}</span></div><p class="text-xs text-slate-400 mt-1">عدد اللاعبين: ${(h.players || []).length} | عدد المباريات: ${(h.matches || []).length}</p></div>`).join('')}`; idle.appendChild(div); } catch(e) {}
+            if (!idle) return;
+            try {
+                const rows = await fetchTournamentHistoryRows(6);
+                let div = document.getElementById('public-history-preview');
+                if (!rows.length) { div?.remove(); return; }
+                if (!div) { div = document.createElement('div'); div.id = 'public-history-preview'; div.className = 'mt-10 max-w-3xl mx-auto text-right'; idle.appendChild(div); }
+                div.innerHTML = `<h3 class="text-lg font-extrabold text-white mb-3 text-center"><i class="fa-solid fa-clock-rotate-left text-yellow-400 ml-1"></i> أرشيف البطولات</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${rows.map((h, i) => renderHistoryCard(h, i, true)).join('')}</div>`;
+            } catch(e) {}
         }
 
         // ===== HELPERS =====
