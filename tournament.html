@@ -83,12 +83,12 @@
         .all-matches-screenshot-card .player-line { min-width: 0; }
 
         .archive-player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
-        .admin-tabs-scroll { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: visible; }
+        .admin-tabs-scroll { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; }
         .admin-tabs-scroll .admin-tab { min-width: 0; min-height: 50px; padding: 9px 6px; line-height: 1.35; white-space: normal; }
-
-        @media (max-width: 900px) {
-            .admin-tabs-scroll { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        }
+        .admin-match-subtabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; padding: 6px; border: 1px solid rgba(56,189,248,.14); border-radius: 16px; background: rgba(2,6,23,.55); }
+        .admin-match-subtab { min-width: 0; padding: 10px 6px; border: 1px solid transparent; border-radius: 11px; color: #94a3b8; font-size: 12px; font-weight: 800; line-height: 1.35; transition: .2s ease; }
+        .admin-match-subtab:hover { color: white; background: rgba(15,23,42,.8); }
+        .admin-match-subtab.active { color: #cffafe; border-color: rgba(34,211,238,.28); background: rgba(6,182,212,.12); box-shadow: inset 0 0 0 1px rgba(34,211,238,.04); }
 
         @media (max-width: 640px) {
             header { padding-inline: 8px !important; }
@@ -106,6 +106,8 @@
 
         @media (max-width: 440px) {
             .admin-tabs-scroll { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .admin-match-subtabs { gap: 5px; padding: 5px; }
+            .admin-match-subtab { padding-inline: 3px; font-size: 10px; }
         }
 
         /* Country codes dropdown */
@@ -345,9 +347,14 @@
         <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closeAdminPanel()"></div>
         <div class="glass-panel w-full max-w-5xl rounded-3xl overflow-hidden relative z-10 max-h-[90vh] flex flex-col">
             <div class="px-6 py-4 flex items-center justify-between border-b border-slate-800 bg-gradient-to-r from-yellow-900/20 to-amber-900/20">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-crown text-yellow-400"></i> لوحة إدارة البطولة
-                </h3>
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-crown text-yellow-400"></i> لوحة إدارة البطولة
+                    </h3>
+                    <span id="admin-tournament-status" class="inline-flex mt-1 items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/80 px-2.5 py-1 text-[10px] font-bold text-slate-400">
+                        <i class="fa-solid fa-circle text-[6px]"></i> جاري تحديد حالة البطولة
+                    </span>
+                </div>
                 <button onclick="closeAdminPanel()" class="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white">
                     <i class="fa-solid fa-times"></i>
                 </button>
@@ -358,28 +365,24 @@
                 <button onclick="switchAdminTab('players')" id="tab-players" class="admin-tab active flex-1 py-3 text-xs font-bold text-white border-b-2 border-cyan-400 transition-all">
                     <i class="fa-solid fa-users ml-1"></i> المسجلون
                 </button>
-                <button onclick="switchAdminTab('results')" id="tab-results" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
-                    <i class="fa-solid fa-table-list ml-1"></i> النتائج
-                </button>
-                <button onclick="switchAdminTab('pending-results')" id="tab-pending-results" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all relative">
-                    <i class="fa-solid fa-hourglass-half ml-1"></i> نتائج معلقة
+                <button onclick="switchAdminTab('results')" id="tab-matches" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all relative">
+                    <i class="fa-solid fa-futbol ml-1"></i> إدارة المباريات
                     <span id="pending-results-badge" class="hidden absolute top-1 left-2 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-black items-center justify-center"></span>
                 </button>
-                <button onclick="switchAdminTab('manual')" id="tab-manual" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
-                    <i class="fa-solid fa-pen ml-1"></i> تحكم يدوي
-                </button>
                 <button onclick="switchAdminTab('logs')" id="tab-logs" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
-                    <i class="fa-solid fa-clock-rotate-left ml-1"></i> Logs
+                    <i class="fa-solid fa-clock-rotate-left ml-1"></i> سجل الإدارة
                 </button>
                 <button onclick="switchAdminTab('history')" id="tab-history" class="admin-tab flex-1 py-3 text-xs font-bold text-slate-400 border-b-2 border-transparent hover:text-white transition-all">
-                    <i class="fa-solid fa-box-archive ml-1"></i> هيستوري
+                    <i class="fa-solid fa-box-archive ml-1"></i> الأرشيف
                 </button>
             </div>
 
             <!-- Tab Contents -->
             <div class="admin-panel-body overflow-y-auto flex-1 p-6">
-                <div id="admin-no-active-warning" class="hidden mb-4 rounded-2xl border border-yellow-500/25 bg-yellow-500/10 p-3 text-center text-xs font-bold text-yellow-200">
-                    <i class="fa-solid fa-circle-info ml-1"></i> لا توجد بطولة شغالة الآن؛ النتائج القديمة مخفية وموجودة فقط داخل الأرشيف.
+                <div id="admin-match-subtabs" class="admin-match-subtabs hidden" aria-label="أقسام إدارة المباريات">
+                    <button onclick="switchAdminTab('results')" id="subtab-results" class="admin-match-subtab active"><i class="fa-solid fa-table-list ml-1"></i> تسجيل النتائج</button>
+                    <button onclick="switchAdminTab('pending-results')" id="subtab-pending-results" class="admin-match-subtab"><i class="fa-solid fa-hourglass-half ml-1"></i> النتائج المعلقة</button>
+                    <button onclick="switchAdminTab('manual')" id="subtab-manual" class="admin-match-subtab"><i class="fa-solid fa-sliders ml-1"></i> التحكم اليدوي</button>
                 </div>
                 <!-- Players Tab -->
                 <div id="admin-tab-players">
@@ -1539,18 +1542,33 @@ function renderLiveMatches(matches = []) {
         function closeAdminPanel() { document.getElementById('admin-panel-modal').classList.add('hidden'); }
         function updateAdminPanelAvailability() {
             const active = currentTournamentStatus === 'START';
-            document.getElementById('admin-no-active-warning')?.classList.toggle('hidden', active);
             document.getElementById('manual-match-create-card')?.classList.toggle('hidden', !active);
+            const status = document.getElementById('admin-tournament-status');
+            if (status) {
+                const registrationOpen = currentTournamentStatus === 'REGISTER_OPEN';
+                status.className = `inline-flex mt-1 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${active ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300' : registrationOpen ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300' : 'border-slate-700 bg-slate-900/80 text-slate-400'}`;
+                status.innerHTML = `<i class="fa-solid fa-circle text-[6px]"></i> ${active ? 'البطولة شغالة الآن' : registrationOpen ? 'التسجيل مفتوح — البطولة لم تبدأ' : 'لا توجد بطولة شغالة الآن'}`;
+            }
         }
         function switchAdminTab(tab) {
+            const matchTabs = ['results','pending-results','manual'];
+            const isMatchTab = matchTabs.includes(tab);
             ['players','results','pending-results','manual','logs','history'].forEach(t => {
-                const pane = document.getElementById('admin-tab-' + t); const btn = document.getElementById('tab-' + t);
+                const pane = document.getElementById('admin-tab-' + t);
                 if (pane) pane.classList.add('hidden');
+            });
+            ['players','matches','logs','history'].forEach(t => {
+                const btn = document.getElementById('tab-' + t);
                 if (btn) { btn.classList.remove('text-white','border-cyan-400'); btn.classList.add('text-slate-400','border-transparent'); }
             });
-            document.getElementById('admin-tab-' + tab).classList.remove('hidden');
-            document.getElementById('tab-' + tab).classList.add('text-white','border-cyan-400');
-            document.getElementById('tab-' + tab).classList.remove('text-slate-400','border-transparent');
+            matchTabs.forEach(t => document.getElementById('subtab-' + t)?.classList.toggle('active', t === tab));
+            const pane = document.getElementById('admin-tab-' + tab);
+            if (!pane) return;
+            pane.classList.remove('hidden');
+            document.getElementById('admin-match-subtabs')?.classList.toggle('hidden', !isMatchTab);
+            const primaryTab = isMatchTab ? 'matches' : tab;
+            document.getElementById('tab-' + primaryTab)?.classList.add('text-white','border-cyan-400');
+            document.getElementById('tab-' + primaryTab)?.classList.remove('text-slate-400','border-transparent');
             if (tab === 'results' || tab === 'manual') loadMatchesForAdmin();
             if (tab === 'pending-results') loadPendingScoreReports();
             if (tab === 'manual') { loadGroupLinkInput(); loadAnnouncementInputs(); }
