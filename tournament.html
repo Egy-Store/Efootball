@@ -89,6 +89,12 @@
         .admin-match-subtab { min-width: 0; padding: 10px 6px; border: 1px solid transparent; border-radius: 11px; color: #94a3b8; font-size: 12px; font-weight: 800; line-height: 1.35; transition: .2s ease; }
         .admin-match-subtab:hover { color: white; background: rgba(15,23,42,.8); }
         .admin-match-subtab.active { color: #cffafe; border-color: rgba(34,211,238,.28); background: rgba(6,182,212,.12); box-shadow: inset 0 0 0 1px rgba(34,211,238,.04); }
+        .tournament-hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; }
+        .tournament-hub-card { position: relative; overflow: hidden; transition: transform .2s ease, border-color .2s ease; }
+        .tournament-hub-card:hover { transform: translateY(-3px); border-color: rgba(34,211,238,.35); }
+        .tournament-hub-card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--card-accent, #64748b); }
+        .tournament-status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; }
+        .participant-transfer-list { max-height: 260px; overflow-y: auto; }
 
         @media (max-width: 640px) {
             header { padding-inline: 8px !important; }
@@ -149,11 +155,33 @@
 
     <!-- MAIN CONTENT - يتغير حسب حالة البطولة -->
     <main id="main-content" class="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+        <div id="selected-tournament-back" class="hidden mb-4">
+            <button onclick="goToTournamentHub()" class="px-4 py-2 rounded-xl bg-slate-900/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-black"><i class="fa-solid fa-arrow-right ml-1"></i> كل البطولات</button>
+        </div>
 
         <!-- ===== LOADING STATE ===== -->
         <div id="state-loading" class="flex flex-col items-center justify-center py-32 gap-4">
             <div class="spinner"></div>
             <p class="text-slate-400 text-sm">جاري تحميل حالة البطولة...</p>
+        </div>
+
+        <!-- ===== TOURNAMENT HUB: عدة بطولات في نفس الوقت ===== -->
+        <div id="state-hub" class="hidden space-y-6">
+            <div class="glass-panel rounded-3xl p-6 md:p-8 flex items-center justify-between gap-5 flex-wrap border border-cyan-500/15">
+                <div>
+                    <p class="text-xs font-black text-cyan-300 mb-2"><i class="fa-solid fa-layer-group ml-1"></i> مركز البطولات</p>
+                    <h1 class="text-2xl md:text-3xl font-black text-white">اختار البطولة اللي عايز تدخلها</h1>
+                    <p class="text-sm text-slate-400 mt-2">كل بطولة مستقلة بلاعبيها ونتائجها وحالتها الحالية.</p>
+                </div>
+                <button id="hub-new-tournament-btn" onclick="openCreateTournamentModal()" class="hidden px-5 py-3 rounded-2xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-200 font-black hover:bg-yellow-500/25 transition-all"><i class="fa-solid fa-plus ml-1"></i> بطولة جديدة</button>
+            </div>
+            <div id="tournament-hub-empty" class="hidden text-center py-20 glass-panel rounded-3xl border border-slate-800">
+                <i class="fa-solid fa-trophy text-5xl text-slate-700 mb-4"></i>
+                <h2 class="text-xl font-black text-slate-300">لا توجد بطولات متاحة حاليًا</h2>
+                <p class="text-sm text-slate-500 mt-2">الأدمن يقدر ينشئ أول بطولة من الزر بالأعلى.</p>
+            </div>
+            <div id="tournament-hub-grid" class="tournament-hub-grid"></div>
+            <div id="hub-public-history" class="mt-8"></div>
         </div>
 
         <!-- ===== STATE: IDLE (لا شيء نشط) ===== -->
@@ -172,7 +200,7 @@
                 <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center">
                     <i class="fa-solid fa-user-plus text-3xl text-cyan-400"></i>
                 </div>
-                <h2 class="text-2xl font-extrabold text-white mb-1">🎮 باب التسجيل مفتوح!</h2>
+                <h2 id="registration-tournament-title" class="text-2xl font-extrabold text-white mb-1">🎮 باب التسجيل مفتوح!</h2>
                 <p class="text-cyan-300 text-sm">سجل بياناتك دلوقتي للمشاركة في البطولة القادمة</p>
             </div>
 
@@ -386,8 +414,22 @@
                 </div>
                 <!-- Players Tab -->
                 <div id="admin-tab-players">
+                    <div id="admin-lifecycle-card" class="glass-card rounded-2xl p-4 mb-4 border border-yellow-500/20">
+                        <div class="flex items-center justify-between gap-3 flex-wrap">
+                            <div><h4 class="text-sm font-black text-white"><i class="fa-solid fa-gears text-yellow-300 ml-1"></i> إدارة البطولة الحالية</h4><p id="admin-selected-tournament-name" class="text-xs text-slate-500 mt-1"></p></div>
+                            <div class="flex gap-2 flex-wrap">
+                                <button onclick="openParticipantImporter()" class="px-3 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-black"><i class="fa-solid fa-file-import ml-1"></i> استيراد مشاركين</button>
+                                <button onclick="openSelectedTournamentRegistration()" id="admin-open-registration-btn" class="px-3 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-black"><i class="fa-solid fa-user-plus ml-1"></i> فتح التسجيل</button>
+                                <button onclick="startSelectedTournament()" id="admin-start-tournament-btn" class="px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-black"><i class="fa-solid fa-play ml-1"></i> Start</button>
+                                <button onclick="finishSelectedTournament(false)" id="admin-finish-tournament-btn" class="px-3 py-2 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-200 text-xs font-black"><i class="fa-solid fa-flag-checkered ml-1"></i> إنهاء وأرشفة</button>
+                                <button onclick="deleteSelectedTournament()" class="px-3 py-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-black"><i class="fa-solid fa-trash ml-1"></i> حذف وأرشفة</button>
+                                <button onclick="openCreateTournamentModal()" class="px-3 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-black"><i class="fa-solid fa-plus ml-1"></i> بطولة جديدة</button>
+                                <button onclick="goToTournamentHub()" class="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-xs font-black"><i class="fa-solid fa-layer-group ml-1"></i> كل البطولات</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-sm font-bold text-slate-300">قائمة المسجلين</h4>
+                        <div><h4 class="text-sm font-bold text-slate-300">المسجلون في البطولة المختارة فقط</h4><p id="current-tournament-players-caption" class="text-[11px] text-slate-500 mt-1"></p></div>
                         <div class="flex items-center gap-2 flex-wrap justify-end">
                             <button onclick="copyWhatsAppNumbersOnly()" class="text-xs px-3 py-1.5 glass-panel rounded-lg text-cyan-300 hover:text-white transition-all">
                                 <i class="fa-solid fa-copy ml-1"></i> نسخ الأرقام فقط
@@ -439,6 +481,19 @@
 
                 <!-- Manual Control Tab -->
                 <div id="admin-tab-manual" class="hidden space-y-4">
+                    <div id="participant-transfer-card" class="glass-card rounded-2xl p-4 border border-purple-500/20">
+                        <h4 class="text-sm font-black text-white mb-2"><i class="fa-solid fa-people-arrows text-purple-300 ml-1"></i> نقل أو نسخ مشاركين</h4>
+                        <p class="text-xs text-slate-500 mb-3">هات لاعبين من بطولة شغالة أو من الأرشيف، وبعدها اختار نقلهم أو عمل نسخة منهم داخل البطولة الحالية.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <select id="participant-source-select" onchange="loadParticipantTransferSource()" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white"><option value="">اختر مصدر اللاعبين...</option></select>
+                            <select id="participant-transfer-mode" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white"><option value="copy">عمل نسخة في البطولة الحالية</option><option value="move">نقل للبطولة الحالية</option></select>
+                        </div>
+                        <div id="participant-transfer-list" class="participant-transfer-list rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-sm text-slate-500 text-center">اختار بطولة أو أرشيف أولاً</div>
+                        <div class="flex items-center justify-between gap-2 mt-3 flex-wrap">
+                            <label class="text-xs text-slate-400"><input type="checkbox" onchange="toggleAllTransferPlayers(this.checked)" class="accent-cyan-400 ml-1"> اختيار الكل</label>
+                            <button onclick="transferSelectedParticipants()" class="px-4 py-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-black"><i class="fa-solid fa-right-left ml-1"></i> تنفيذ</button>
+                        </div>
+                    </div>
                     <div id="manual-match-create-card" class="glass-card rounded-2xl p-4">
                         <h4 class="text-sm font-bold text-slate-300 mb-3"><i class="fa-solid fa-users-gear text-cyan-400 ml-1"></i> إنشاء مباراة يدوية</h4>
                         <p class="text-xs text-slate-500 mb-3">اختار لاعبين من المسجلين وابدأ مباراة بينهم مباشرة</p>
@@ -760,6 +815,23 @@
         </div>
     </div>
 
+    <!-- إنشاء بطولة مستقلة -->
+    <div id="create-tournament-modal" class="fixed inset-0 z-[135] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm" onclick="closeCreateTournamentModal()"></div>
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-6 relative z-10 space-y-5">
+            <div class="flex items-center justify-between"><div><h3 class="text-xl font-black text-white"><i class="fa-solid fa-trophy text-yellow-300 ml-1"></i> إنشاء بطولة جديدة</h3><p class="text-xs text-slate-500 mt-1">هتظهر فورًا ككارت مستقل للناس.</p></div><button onclick="closeCreateTournamentModal()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300"><i class="fa-solid fa-times"></i></button></div>
+            <div><label class="text-xs text-slate-400 font-bold block mb-1">اسم البطولة *</label><input id="new-tournament-name" maxlength="60" placeholder="مثال: كأس الخميس" class="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 outline-none rounded-xl px-4 py-3 text-sm text-white text-right"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div><label class="text-xs text-slate-400 font-bold block mb-1">نوع البطولة</label><select id="new-tournament-type" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><option value="league">دوري</option><option value="champions">دوري أبطال</option><option value="coop">Co-op فرق ثنائية</option></select></div>
+                <div><label class="text-xs text-slate-400 font-bold block mb-1">حجم المجموعة</label><input id="new-tournament-group-size" type="number" min="2" max="32" value="4" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white" dir="ltr"></div>
+                <div><label class="text-xs text-slate-400 font-bold block mb-1">المنصة</label><select id="new-tournament-platform" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><option value="all">كل المنصات</option><option value="steam">Steam</option><option value="xbox">Xbox</option><option value="ps">PlayStation</option><option value="mobile">Mobile</option></select></div>
+                <div><label class="text-xs text-slate-400 font-bold block mb-1">الحالة عند الإنشاء</label><select id="new-tournament-status" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white"><option value="REGISTER_OPEN">فتح التسجيل</option><option value="DRAFT">مسودة للأدمن</option></select></div>
+            </div>
+            <div><label class="text-xs text-slate-400 font-bold block mb-1">لينك جروب واتساب (اختياري)</label><input id="new-tournament-group-link" type="url" dir="ltr" placeholder="https://chat.whatsapp.com/..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white"></div>
+            <button id="create-tournament-submit" onclick="createNewTournament()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black"><i class="fa-solid fa-plus ml-1"></i> إنشاء البطولة</button>
+        </div>
+    </div>
+
     <script>
         // ===== FIRESTORE CONFIG =====
         const FS = {
@@ -789,6 +861,19 @@
         let currentArchiveId = '';
         let tournamentHistoryCache = new Map();
         let knockoutManualPairing = { roundKey: '', pairs: [] };
+        let selectedTournamentDocId = new URLSearchParams(window.location.search).get('tid') || '';
+        let tournamentCatalog = [];
+        let participantTransferRows = [];
+        let adminAutoOpened = false;
+
+        function getSelectedTournamentDocId() { return selectedTournamentDocId || 'current'; }
+        function getSelectedTournamentId() { return String(currentTournamentData.tournamentId || selectedTournamentDocId || '').trim(); }
+        function selectedTournamentStateRef() { return db.collection(FS.tournamentState).doc(getSelectedTournamentDocId()); }
+        function tournamentUrl(docId) { return `tournament.html?tid=${encodeURIComponent(String(docId || ''))}`; }
+        function tournamentMatchDocId(matchId) {
+            const tournamentId = getSelectedTournamentId() || getSelectedTournamentDocId() || 'legacy';
+            return `${tournamentId}__${String(matchId || '').replace(/[\\/]/g, '_')}`;
+        }
 
         // ===== BASIC HELPERS =====
         function escapeHtml(value) {
@@ -903,7 +988,10 @@
         }
 
         function getStoredTournamentState() {
-            try { return normalizeTournamentState(JSON.parse(localStorage.getItem('efb_tournament_state') || '{}')); }
+            try {
+                const scopedKey = selectedTournamentDocId ? `efb_tournament_state_${selectedTournamentDocId}` : 'efb_tournament_state';
+                return normalizeTournamentState(JSON.parse(localStorage.getItem(scopedKey) || (selectedTournamentDocId === 'current' ? localStorage.getItem('efb_tournament_state') : '') || '{}'));
+            }
             catch(e) { return {}; }
         }
 
@@ -917,7 +1005,11 @@
         function saveTournamentStateFallback(data) {
             const state = normalizeTournamentState(data);
             if (!state.status) return;
-            try { localStorage.setItem('efb_tournament_state', JSON.stringify(state)); } catch(e) {}
+            try {
+                const scopedKey = selectedTournamentDocId ? `efb_tournament_state_${selectedTournamentDocId}` : 'efb_tournament_state';
+                localStorage.setItem(scopedKey, JSON.stringify(state));
+                if (selectedTournamentDocId === 'current') localStorage.setItem('efb_tournament_state', JSON.stringify(state));
+            } catch(e) {}
         }
 
         // ===== PLAYER / MATCH NORMALIZATION =====
@@ -991,17 +1083,17 @@
         }
 
         function isActivePlayer(player) {
-            return !['deleted', 'delete', 'removed', 'inactive'].includes(String(player.status || '').toLowerCase());
+            return !['deleted', 'delete', 'removed', 'inactive', 'archived'].includes(String(player.status || '').toLowerCase());
         }
 
         function belongsToCurrentTournament(player) {
             if (!isActivePlayer(player)) return false;
             const currentId = String(currentTournamentData.tournamentId || '').trim();
             const playerId = String(player.tournamentId || '').trim();
-            if (currentTournamentStatus === 'STOP' || !currentTournamentStatus) return Boolean(player.preparedForNextTournament);
-            if (!currentId) return true;
-            if (playerId) return playerId === currentId;
-            return Boolean(player.preparedForNextTournament) || !playerHasAnyResult(player);
+            const legacySelection = getSelectedTournamentDocId() === 'current';
+            if (playerId) return Boolean(currentId) && playerId === currentId;
+            // السجلات القديمة غير المربوطة تظل في البطولة القديمة فقط ولا تتسرب لأي بطولة جديدة.
+            return legacySelection;
         }
 
         function isCurrentTournamentMatch(match) {
@@ -1009,7 +1101,8 @@
             if (['ended', 'archived', 'deleted', 'cancelled'].includes(status)) return false;
             const currentId = String(currentTournamentData.tournamentId || '').trim();
             const matchId = String(match?.tournamentId || '').trim();
-            return !currentId || !matchId || matchId === currentId;
+            if (matchId) return Boolean(currentId) && matchId === currentId;
+            return getSelectedTournamentDocId() === 'current';
         }
 
         function goalDiff(player) { return (player.goalsFor || 0) - (player.goalsAgainst || 0); }
@@ -1060,7 +1153,7 @@
 
         async function fetchTournamentBundle() {
             const [stateSnap, playersSnap, matchesSnap] = await Promise.all([
-                db.collection(FS.tournamentState).doc('current').get(),
+                selectedTournamentStateRef().get(),
                 db.collection(FS.tournamentPlayers).get(),
                 db.collection(FS.tournamentMatches).get()
             ]);
@@ -1099,9 +1192,45 @@
             const host = String(window.location.hostname || '');
             const mode = new URLSearchParams(window.location.search).get('ui_test');
             if (!['localhost','127.0.0.1'].includes(host) || !mode) return;
+            if (mode === 'multi' || mode === 'multi-admin') {
+                isAdmin = mode === 'multi-admin';
+                currentTournamentStatus = '';
+                currentTournamentData = {};
+                tournamentCatalog = [
+                    { docId: 'local-cup-1', tournamentId: 'local-cup-1', title: 'كأس الأبطال الأسبوعي', status: 'REGISTER_OPEN', tournamentType: 'league', playerCount: 18 },
+                    { docId: 'local-cup-2', tournamentId: 'local-cup-2', title: 'دوري المحترفين', status: 'START', tournamentType: 'champions', playerCount: 16 },
+                    { docId: 'local-cup-3', tournamentId: 'local-cup-3', title: 'Co-op مساء الجمعة', status: 'REGISTER_OPEN', tournamentType: 'coop', playerCount: 10 }
+                ];
+                showState('hub');
+                document.getElementById('hub-new-tournament-btn')?.classList.toggle('hidden', !isAdmin);
+                document.getElementById('tournament-hub-empty')?.classList.add('hidden');
+                document.getElementById('tournament-hub-grid').innerHTML = tournamentCatalog.map(renderTournamentHubCard).join('');
+                document.getElementById('hub-public-history').innerHTML = '';
+                return;
+            }
+            if (mode === 'admin-isolation') {
+                selectedTournamentDocId = 'local-cup-a';
+                currentTournamentStatus = 'REGISTER_OPEN';
+                currentTournamentData = { status: 'REGISTER_OPEN', tournamentId: 'local-cup-a', title: 'بطولة A', tournamentType: 'league' };
+                setTournamentAdminState(true, { email: 'local-ui-test' });
+                document.getElementById('admin-panel-modal').classList.remove('hidden');
+                updateAdminPanelAvailability();
+                const fixture = [
+                    normalizePlayer({ id: 'a1', rowIndex: 1, name: 'لاعب بطولة A', tournamentId: 'local-cup-a', status: 'active' }),
+                    normalizePlayer({ id: 'b1', rowIndex: 2, name: 'لاعب بطولة B', tournamentId: 'local-cup-b', status: 'active' }),
+                    normalizePlayer({ id: 'old1', rowIndex: 3, name: 'لاعب قديم بدون بطولة', tournamentId: '', status: 'active' })
+                ];
+                allPlayers = fixture.filter(belongsToCurrentTournament);
+                renderPlayersList(document.getElementById('players-list-container'), allPlayers);
+                populateManualSelects(allPlayers);
+                const caption = document.getElementById('current-tournament-players-caption');
+                if (caption) caption.textContent = `بطولة A · ${allPlayers.length} مشارك`;
+                switchAdminTab('players');
+                return;
+            }
             if (mode === 'admin') {
-                currentTournamentStatus = 'STOP';
-                currentTournamentData = { status: 'STOP', tournamentId: 'local-admin-test' };
+                currentTournamentStatus = 'REGISTER_OPEN';
+                currentTournamentData = { status: 'REGISTER_OPEN', tournamentId: 'local-admin-test', title: 'بطولة اختبار الإدارة', tournamentType: 'league' };
                 setTournamentAdminState(true, { email: 'local-ui-test' });
                 document.getElementById('admin-panel-modal').classList.remove('hidden');
                 updateAdminPanelAvailability();
@@ -1141,16 +1270,22 @@
                 indicator.classList.toggle('hidden', !isAdmin);
                 indicator.classList.toggle('flex', isAdmin);
             }
-            if (currentTournamentStatus) renderState(currentTournamentData);
+            if (selectedTournamentDocId && currentTournamentStatus) renderState(currentTournamentData);
+            else if (!selectedTournamentDocId) loadTournamentHub();
             if (isAdmin) updatePendingScoreReportsBadge();
+            if (isAdmin && selectedTournamentDocId && new URLSearchParams(window.location.search).get('admin') === '1' && !adminAutoOpened) {
+                adminAutoOpened = true; setTimeout(openAdminPanel, 150);
+            }
         }
 
         async function loadTournamentStatus() {
             showState('loading');
+            if (!selectedTournamentDocId) return loadTournamentHub();
             const fallbackState = getFallbackTournamentState();
             try {
-                const snap = await db.collection(FS.tournamentState).doc('current').get();
+                const snap = await selectedTournamentStateRef().get();
                 const data = snap.exists ? normalizeTournamentState(snap.data()) : fallbackState;
+                if (!data.tournamentId) data.tournamentId = selectedTournamentDocId === 'current' ? '' : selectedTournamentDocId;
                 currentTournamentStatus = data.status;
                 currentTournamentData = data;
                 saveTournamentStateFallback(data);
@@ -1169,11 +1304,14 @@
             const status = state.status;
             currentTournamentStatus = status;
             currentTournamentData = state;
+            document.getElementById('selected-tournament-back')?.classList.toggle('hidden', !selectedTournamentDocId);
             updateHeaderBadge(status);
             if (status === 'STOP' || !status) {
                 renderLiveMatches([]); showState('idle'); loadPublicHistoryPreview();
             } else if (status === 'REGISTER_OPEN') {
                 renderLiveMatches([]); showState('registration'); updateRegistrationMode(state);
+                const regTitle = document.getElementById('registration-tournament-title');
+                if (regTitle) regTitle.textContent = `🎮 التسجيل مفتوح: ${state.title || state.name || 'البطولة'}`;
             } else if (status === 'START') {
                 showState('tournament'); renderTournamentContent(state);
             } else {
@@ -1197,7 +1335,7 @@
         }
 
         function showState(state) {
-            ['loading','idle','registration','tournament'].forEach(s => document.getElementById('state-' + s).classList.add('hidden'));
+            ['loading','hub','idle','registration','tournament'].forEach(s => document.getElementById('state-' + s).classList.add('hidden'));
             document.getElementById('state-' + state).classList.remove('hidden');
         }
 
@@ -1206,6 +1344,7 @@
             const type = data.tournamentType || 'league';
             const container = document.getElementById('tournament-content');
             const subtitle = document.getElementById('tournament-subtitle');
+            document.getElementById('tournament-title-display').textContent = `🏆 ${data.title || data.name || 'البطولة'}`;
             subtitle.textContent = type === 'knockout' ? `${data.sourceTournamentType === 'coop' ? 'Co-op · ' : ''}خروج مغلوب - شجرة نوك أوت` : (type === 'champions' ? 'دوري أبطال - مجموعات + ناك أوت' : (type === 'coop' ? 'Co-op - كل فريق مكوّن من لاعبين' : 'نظام الدوري - ترتيب حسب النقاط'));
             if (type === 'knockout' || Array.isArray(data.knockout) && data.knockout.length) renderKnockout(data, container);
             else if (type === 'champions') renderChampions(data, container);
@@ -1510,7 +1649,7 @@ function renderLiveMatches(matches = []) {
                 const partnerPhone = isCoop ? code + partnerPhoneLocal : '';
                 await db.collection(FS.tournamentPlayers).add({
                     rowIndex: Date.now(), name: isCoop ? teamName : name, teamName: isCoop ? teamName : '', player1Name: isCoop ? name : '', player2Name: isCoop ? partnerName : '', partnerPhone,
-                    platform, timeFrom, timeTo, phone: fullPhone, tournamentId: currentTournamentData.tournamentId || '', tournamentType: currentTournamentData.tournamentType || 'league', preparedForNextTournament: false,
+                    platform, timeFrom, timeTo, phone: fullPhone, tournamentId: getSelectedTournamentId(), tournamentType: currentTournamentData.tournamentType || 'league', preparedForNextTournament: false,
                     wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0,
                     matches: [], status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp()
                 });
@@ -1538,16 +1677,22 @@ function renderLiveMatches(matches = []) {
         function adminLogout() { writeAdminLog('admin_logout', { email: auth.currentUser?.email || '' }); auth.signOut(); setTournamentAdminState(false, null); closeAdminPanel(); }
 
         // ===== ADMIN PANEL =====
-        async function openAdminPanel() { if (!isAdmin) return openAdminLogin(); document.getElementById('admin-panel-modal').classList.remove('hidden'); updateAdminPanelAvailability(); await refreshPlayers(); loadGroupLinkInput(); loadAnnouncementInputs(); updatePendingScoreReportsBadge(); }
+        async function openAdminPanel() { if (!isAdmin) return openAdminLogin(); if (!selectedTournamentDocId) return showTAlert('اختار بطولة', 'اختار كارت بطولة الأول عشان تفتح إدارتها.', true); document.getElementById('admin-panel-modal').classList.remove('hidden'); updateAdminPanelAvailability(); await refreshPlayers(); loadGroupLinkInput(); loadAnnouncementInputs(); updatePendingScoreReportsBadge(); }
         function closeAdminPanel() { document.getElementById('admin-panel-modal').classList.add('hidden'); }
         function updateAdminPanelAvailability() {
             const active = currentTournamentStatus === 'START';
+            const canStart = ['REGISTER_OPEN','DRAFT'].includes(currentTournamentStatus);
             document.getElementById('manual-match-create-card')?.classList.toggle('hidden', !active);
+            document.getElementById('admin-start-tournament-btn')?.classList.toggle('hidden', !canStart);
+            document.getElementById('admin-open-registration-btn')?.classList.toggle('hidden', currentTournamentStatus !== 'DRAFT');
+            document.getElementById('admin-finish-tournament-btn')?.classList.toggle('hidden', !['START','REGISTER_OPEN'].includes(currentTournamentStatus));
+            const selectedName = document.getElementById('admin-selected-tournament-name');
+            if (selectedName) selectedName.textContent = `${currentTournamentData.title || currentTournamentData.name || 'البطولة'} · ${tournamentTypeLabel(currentTournamentData.tournamentType)}`;
             const status = document.getElementById('admin-tournament-status');
             if (status) {
                 const registrationOpen = currentTournamentStatus === 'REGISTER_OPEN';
                 status.className = `inline-flex mt-1 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${active ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300' : registrationOpen ? 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300' : 'border-slate-700 bg-slate-900/80 text-slate-400'}`;
-                status.innerHTML = `<i class="fa-solid fa-circle text-[6px]"></i> ${active ? 'البطولة شغالة الآن' : registrationOpen ? 'التسجيل مفتوح — البطولة لم تبدأ' : 'لا توجد بطولة شغالة الآن'}`;
+                status.innerHTML = `<i class="fa-solid fa-circle text-[6px]"></i> ${active ? 'البطولة شغالة الآن' : registrationOpen ? 'التسجيل مفتوح — البطولة لم تبدأ' : currentTournamentStatus === 'DRAFT' ? 'البطولة مسودة' : 'البطولة غير نشطة'}`;
             }
         }
         function switchAdminTab(tab) {
@@ -1571,9 +1716,14 @@ function renderLiveMatches(matches = []) {
             document.getElementById('tab-' + primaryTab)?.classList.remove('text-slate-400','border-transparent');
             if (tab === 'results' || tab === 'manual') loadMatchesForAdmin();
             if (tab === 'pending-results') loadPendingScoreReports();
-            if (tab === 'manual') { loadGroupLinkInput(); loadAnnouncementInputs(); }
+            if (tab === 'manual') { loadGroupLinkInput(); loadAnnouncementInputs(); loadParticipantSources(); }
             if (tab === 'logs') loadAdminLogs();
             if (tab === 'history') loadTournamentHistory();
+        }
+
+        function openParticipantImporter() {
+            switchAdminTab('manual');
+            setTimeout(() => document.getElementById('participant-transfer-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
         }
 
         async function refreshPlayers() {
@@ -1582,12 +1732,14 @@ function renderLiveMatches(matches = []) {
             try {
                 const snap = await db.collection(FS.tournamentPlayers).get();
                 allPlayers = snap.docs.map((doc, index) => normalizePlayer(doc, index)).filter(belongsToCurrentTournament);
+                const caption = document.getElementById('current-tournament-players-caption');
+                if (caption) caption.textContent = `${currentTournamentData.title || currentTournamentData.name || 'البطولة الحالية'} · ${allPlayers.length} مشارك`;
                 renderPlayersList(container, allPlayers); populateManualSelects(allPlayers);
             } catch(e) { console.error('refreshPlayers failed', e); container.innerHTML = '<div class="text-center py-6 text-rose-400">تعذر تحميل اللاعبين من Firebase<br><span class="text-xs text-slate-500" dir="ltr">' + escapeHtml(e.message || e.code || e) + '</span></div>'; }
         }
 
         function renderPlayersList(container, players) {
-            if (!players.length) { container.innerHTML = '<div class="text-center py-8 text-slate-500">لا يوجد مسجلون بعد</div>'; return; }
+            if (!players.length) { container.innerHTML = '<div class="text-center py-10 rounded-2xl border border-slate-800 bg-slate-950/30"><i class="fa-solid fa-users-slash text-3xl text-slate-700 mb-3 block"></i><p class="text-slate-400">لا يوجد مسجلون في البطولة دي</p><button onclick="openParticipantImporter()" class="mt-4 px-4 py-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-200 text-xs font-black"><i class="fa-solid fa-file-import ml-1"></i> استيراد من بطولة أخرى أو الأرشيف</button></div>'; return; }
             container.innerHTML = `<div class="overflow-x-auto"><table class="w-full standings-table"><thead><tr><th class="text-right">#</th><th class="text-right">الاسم / الفريق</th><th class="text-right">الجروب</th><th class="text-right">المنصة</th><th class="text-right">الوقت</th><th class="text-right">واتساب</th><th class="text-right">رسالة</th><th></th></tr></thead><tbody>${players.map((p,i) => { const roster = [p.player1Name,p.player2Name].filter(Boolean).join(' + '); return `<tr><td class="text-slate-500 text-xs">${i+1}</td><td><span class="font-bold text-sm text-white">${escapeHtml(p.name || '-')}</span>${roster ? `<span class="block text-[10px] text-purple-300 mt-1">${escapeHtml(roster)}</span>` : ''}</td><td class="text-xs text-yellow-300 font-bold">${escapeHtml(p.groupNum || '-')}</td><td><span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">${getPlatformIcon(p.platform)} ${escapeHtml(p.platform || '-')}</span></td><td class="text-xs text-slate-400">${escapeHtml(p.timeFrom||'?')} - ${escapeHtml(p.timeTo||'?')}</td><td class="text-xs text-emerald-400" dir="ltr">${escapeHtml(cleanWhatsAppNumber(p.phone) || '-')}</td><td><button onclick="sendWhatsAppToPlayer(${jsArg(p.rowIndex)})" class="text-emerald-300 hover:text-white text-xs px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 hover:border-emerald-500/40 transition-all"><i class="fa-brands fa-whatsapp ml-1"></i> إرسال</button></td><td><button onclick="deletePlayer(${jsArg(p.rowIndex)})" class="text-rose-400 hover:text-rose-300 text-xs px-2 py-1 rounded bg-rose-500/10 border border-rose-500/20 hover:border-rose-500/40 transition-all"><i class="fa-solid fa-trash-can"></i></button></td></tr>`; }).join('')}</tbody></table></div>`;
         }
 
@@ -1639,7 +1791,7 @@ function renderLiveMatches(matches = []) {
             if (!p1id || !p2id || p1id === p2id) { showTAlert('تنبيه', 'اختار لاعبين مختلفين', false); return; }
             const p1 = allPlayers.find(p => String(p.rowIndex) === String(p1id)); const p2 = allPlayers.find(p => String(p.rowIndex) === String(p2id)); if (!p1 || !p2) return;
             const matchId = `manual_${Date.now()}_${p1.rowIndex}_${p2.rowIndex}`;
-            try { await db.collection(FS.tournamentMatches).doc(matchId).set({ matchId, p1name: p1.name, p2name: p2.name, p1idx: p1.rowIndex, p2idx: p2.rowIndex, tournamentId: currentTournamentData.tournamentId || '', status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp() }); document.getElementById('manual-player1').value = ''; document.getElementById('manual-player2').value = ''; await writeAdminLog('create_manual_match', { matchId, p1: p1.name, p2: p2.name }); showTAlert('تم إنشاء المباراة', 'المباراة ظهرت في الداشبورد وهيفضل مكانها لحد نهاية البطولة.', false); await loadTournamentStatus(); }
+            try { await db.collection(FS.tournamentMatches).doc(tournamentMatchDocId(matchId)).set({ matchId, p1name: p1.name, p2name: p2.name, p1idx: p1.rowIndex, p2idx: p2.rowIndex, tournamentId: getSelectedTournamentId(), status: 'active', createdAt: fsTimestamp(), updatedAt: fsTimestamp() }); document.getElementById('manual-player1').value = ''; document.getElementById('manual-player2').value = ''; await writeAdminLog('create_manual_match', { matchId, p1: p1.name, p2: p2.name }); showTAlert('تم إنشاء المباراة', 'المباراة ظهرت في الداشبورد وهيفضل مكانها لحد نهاية البطولة.', false); await loadTournamentStatus(); }
             catch(e) { showTAlert('خطأ', 'تعذر حفظ المباراة في Firebase', true); }
         }
 
@@ -1886,7 +2038,7 @@ function renderLiveMatches(matches = []) {
                 const qualifiers = getQualifiersFromGroups(payload.groups || [], mode, bestThirdsCount);
                 if (qualifiers.length < 2) return showTAlert('تنبيه', 'لازم يكون فيه لاعبين مؤهلين على الأقل عشان نعمل نوك أوت.', true);
                 const bracket = buildKnockoutBracket(qualifiers);
-                await db.collection(FS.tournamentState).doc('current').set({ status: 'START', sourceTournamentType: currentTournamentData.sourceTournamentType || currentTournamentData.tournamentType || 'league', tournamentType: 'knockout', knockout: bracket, knockoutChampion: '', knockoutQualifiers: qualifiers.map(p => ({ name: p.name, rowIndex: p.rowIndex || '', phone: p.phone || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '', group: p.sourceGroup || '', rank: p.sourceRank || '', points: p.points || 0, goalsFor: p.goalsFor || 0, goalsAgainst: p.goalsAgainst || 0 })), leagueFinalized: true, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+                await selectedTournamentStateRef().set({ status: 'START', sourceTournamentType: currentTournamentData.sourceTournamentType || currentTournamentData.tournamentType || 'league', tournamentType: 'knockout', knockout: bracket, knockoutChampion: '', knockoutQualifiers: qualifiers.map(p => ({ name: p.name, rowIndex: p.rowIndex || '', phone: p.phone || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '', group: p.sourceGroup || '', rank: p.sourceRank || '', points: p.points || 0, goalsFor: p.goalsFor || 0, goalsAgainst: p.goalsAgainst || 0 })), leagueFinalized: true, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
                 await writeAdminLog('finish_league_create_knockout', { mode, bestThirdsCount, qualifiersCount: qualifiers.length, bracketSize: bracket[0]?.size || 0 });
                 showTAlert('تم إنشاء النوك أوت ✅', `تم تأهيل ${qualifiers.length} لاعب ورسم شجرة ${bracket[0]?.label || 'نوك أوت'}.`, false);
                 await loadTournamentStatus();
@@ -2209,7 +2361,7 @@ function renderLiveMatches(matches = []) {
         }
 
         async function updateKnockoutBracket(mutator, action, details = {}) {
-            const stateRef = db.collection(FS.tournamentState).doc('current');
+            const stateRef = selectedTournamentStateRef();
             let logDetails = {};
             await db.runTransaction(async tx => {
                 const snap = await tx.get(stateRef);
@@ -2551,7 +2703,7 @@ function renderLiveMatches(matches = []) {
             const winner = score1 > score2 ? p1name : score2 > score1 ? p2name : 'draw';
             const p1ref = await findPlayerDocByRowIndex(p1idx);
             const p2ref = await findPlayerDocByRowIndex(p2idx);
-            const matchRef = db.collection(FS.tournamentMatches).doc(String(matchId));
+            const matchRef = db.collection(FS.tournamentMatches).doc(tournamentMatchDocId(matchId));
             await db.runTransaction(async tx => {
                 const [p1snap, p2snap] = await Promise.all([tx.get(p1ref), tx.get(p2ref)]);
                 const p1data = p1snap.data() || {};
@@ -2562,7 +2714,7 @@ function renderLiveMatches(matches = []) {
                 p2matches.push({ matchId, opponent: p1name, score: `${score2}-${score1}`, result: winner === p2name ? 'win' : winner === 'draw' ? 'draw' : 'loss', date: new Date().toISOString(), approvedFromReportId: reportId || '' });
                 tx.update(p1ref, { matches: p1matches, ...statsFromMatches(p1matches), updatedAt: fsTimestamp() });
                 tx.update(p2ref, { matches: p2matches, ...statsFromMatches(p2matches), updatedAt: fsTimestamp() });
-                tx.set(matchRef, { matchId, p1name, p2name, p1idx, p2idx, score1, score2, winner, tournamentId: currentTournamentData.tournamentId || '', status: 'scored', approvedFromReportId: reportId || '', updatedAt: fsTimestamp(), createdAt: fsTimestamp() }, { merge: true });
+                tx.set(matchRef, { matchId, p1name, p2name, p1idx, p2idx, score1, score2, winner, tournamentId: getSelectedTournamentId(), status: 'scored', approvedFromReportId: reportId || '', updatedAt: fsTimestamp(), createdAt: fsTimestamp() }, { merge: true });
             });
             await writeAdminLog(reportId ? 'approve_player_score_report' : 'submit_score', { matchId, p1name, p2name, score1, score2, winner, reportId });
             return winner;
@@ -2597,7 +2749,7 @@ function renderLiveMatches(matches = []) {
                         matchType: isKnockoutMatch ? 'knockout' : 'group',
                         tournamentStatus: currentTournamentStatus || '',
                         tournamentType: currentTournamentData.tournamentType || '',
-                        tournamentId: currentTournamentData.tournamentId || '',
+                        tournamentId: getSelectedTournamentId(),
                         platformFilter: currentTournamentData.platformFilter || '',
                         createdAt: fsTimestamp(),
                         updatedAt: fsTimestamp()
@@ -2712,6 +2864,7 @@ function renderLiveMatches(matches = []) {
             try {
                 await db.collection(FS.tournamentPlayers).add({
                     rowIndex, name, phone, platform, timeFrom, timeTo, groupNum,
+                    tournamentId: getSelectedTournamentId(), tournamentType: currentTournamentData.tournamentType || 'league',
                     status: 'active', wins: 0, losses: 0, draws: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [],
                     createdByAdmin: getAdminMeta().email || '', createdAt: fsTimestamp(), updatedAt: fsTimestamp()
                 });
@@ -2740,8 +2893,9 @@ function renderLiveMatches(matches = []) {
 
         async function clearTournamentMatchCollections(batch) {
             const [matchesSnap, reportsSnap] = await Promise.all([db.collection(FS.tournamentMatches).get(), db.collection(FS.scoreReports).get()]);
-            matchesSnap.docs.forEach(d => batch.delete(d.ref));
-            reportsSnap.docs.forEach(d => batch.delete(d.ref));
+            const tournamentId = getSelectedTournamentId();
+            matchesSnap.docs.filter(d => String(d.data().tournamentId || '') === tournamentId).forEach(d => batch.delete(d.ref));
+            reportsSnap.docs.filter(d => String(d.data().tournamentId || '') === tournamentId).forEach(d => batch.delete(d.ref));
         }
 
         async function reshuffleAllGroupsWithReset() {
@@ -2931,7 +3085,7 @@ function renderLiveMatches(matches = []) {
                     id: String(Date.now()),
                     updatedAtText: new Date().toISOString()
                 };
-                await db.collection(FS.tournamentState).doc('current').set({ announcement, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+                await selectedTournamentStateRef().set({ announcement, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
                 currentTournamentData.announcement = announcement;
                 selectedAnnouncementImageFile = null;
                 await writeAdminLog('save_tournament_announcement', { kind: announcement.kind, hasTitle: !!title, hasDescription: !!description, hasImage: !!imageUrl, expiresAtText });
@@ -2945,7 +3099,7 @@ function renderLiveMatches(matches = []) {
             if (!isAdmin) return openAdminLogin();
             if (!confirm('حذف إعلان البطولة الحالي؟')) return;
             try {
-                await db.collection(FS.tournamentState).doc('current').set({ announcement: { active: false, deletedAtText: new Date().toISOString() }, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+                await selectedTournamentStateRef().set({ announcement: { active: false, deletedAtText: new Date().toISOString() }, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
                 currentTournamentData.announcement = { active: false };
                 loadAnnouncementInputs();
                 await writeAdminLog('delete_tournament_announcement', {});
@@ -2992,8 +3146,8 @@ function renderLiveMatches(matches = []) {
         }
 
         // ===== GROUP LINK / LOGS / HISTORY =====
-        async function loadGroupLinkInput() { try { const snap = await db.collection(FS.tournamentState).doc('current').get(); const link = snap.exists ? (snap.data().groupLink || '') : ''; const input = document.getElementById('admin-group-link-input'); if (input) input.value = link; const inline = document.getElementById('inline-group-link-input'); if (inline) inline.value = link; } catch(e) {} }
-        async function saveGroupLinkValue(link) { await db.collection(FS.tournamentState).doc('current').set({ groupLink: link, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true }); currentTournamentData.groupLink = link; saveTournamentStateFallback(currentTournamentData); await writeAdminLog('update_whatsapp_group_link', { hasLink: !!link }); showTAlert('تم الحفظ', link ? 'تم حفظ لينك الجروب وهيظهر للناس.' : 'تم مسح لينك الجروب، مش هيظهر للناس.', false); renderState(currentTournamentData); }
+        async function loadGroupLinkInput() { try { const snap = await selectedTournamentStateRef().get(); const link = snap.exists ? (snap.data().groupLink || '') : ''; const input = document.getElementById('admin-group-link-input'); if (input) input.value = link; const inline = document.getElementById('inline-group-link-input'); if (inline) inline.value = link; } catch(e) {} }
+        async function saveGroupLinkValue(link) { await selectedTournamentStateRef().set({ groupLink: link, updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true }); currentTournamentData.groupLink = link; saveTournamentStateFallback(currentTournamentData); await writeAdminLog('update_whatsapp_group_link', { hasLink: !!link }); showTAlert('تم الحفظ', link ? 'تم حفظ لينك الجروب وهيظهر للناس.' : 'تم مسح لينك الجروب، مش هيظهر للناس.', false); renderState(currentTournamentData); }
         async function saveTournamentGroupLink() { const link = (document.getElementById('admin-group-link-input')?.value || '').trim(); try { await saveGroupLinkValue(link); } catch(e) { showTAlert('خطأ', 'تعذر حفظ لينك الجروب', true); } }
         async function saveInlineTournamentGroupLink() { const link = (document.getElementById('inline-group-link-input')?.value || '').trim(); try { const modalInput = document.getElementById('admin-group-link-input'); if (modalInput) modalInput.value = link; await saveGroupLinkValue(link); } catch(e) { showTAlert('خطأ', 'تعذر حفظ لينك الجروب', true); } }
 
@@ -3069,10 +3223,18 @@ function renderLiveMatches(matches = []) {
             } catch(e) {
                 console.warn('Tournament history collection unavailable, using fallback archive.', e);
                 try {
-                    const stateSnap = await db.collection(FS.tournamentState).doc('current').get();
+                    const stateSnap = await selectedTournamentStateRef().get();
                     if (stateSnap.exists && Array.isArray(stateSnap.data().historyFallback)) stateFallbackRows = stateSnap.data().historyFallback;
                 } catch(ignore) {}
             }
+            try {
+                const statesSnap = await db.collection(FS.tournamentState).get();
+                statesSnap.docs.forEach(doc => {
+                    const data = doc.data();
+                    if (data.archiveSnapshot) stateFallbackRows.push(data.archiveSnapshot);
+                    if (Array.isArray(data.historyFallback)) stateFallbackRows.push(...data.historyFallback);
+                });
+            } catch(ignore) {}
             const rows = mergeTournamentHistoryRows(firestoreRows, stateFallbackRows, getLocalTournamentHistory()).slice(0, limit);
             rows.forEach(row => tournamentHistoryCache.set(row.id, row));
             return rows;
@@ -3093,7 +3255,7 @@ function renderLiveMatches(matches = []) {
             if (!confirm('هيتم حفظ اللاعبين والنتائج القديمة في الأرشيف، وبعدها تنظيفهم من البطولة الحالية. تكمل؟')) return;
             try {
                 const [stateSnap, playersSnap, matchesSnap] = await Promise.all([
-                    db.collection(FS.tournamentState).doc('current').get(),
+                    selectedTournamentStateRef().get(),
                     db.collection(FS.tournamentPlayers).get(),
                     db.collection(FS.tournamentMatches).get()
                 ]);
@@ -3126,7 +3288,7 @@ function renderLiveMatches(matches = []) {
                 try {
                     const existing = Array.isArray(state.historyFallback) ? state.historyFallback : [];
                     const historyFallback = [history, ...existing.filter(row => String(row.id || row.archiveId) !== archiveId)].slice(0, 3);
-                    await db.collection(FS.tournamentState).doc('current').set({ historyFallback }, { merge: true });
+                    await selectedTournamentStateRef().set({ historyFallback }, { merge: true });
                     currentTournamentData.historyFallback = historyFallback;
                 } catch(e) {}
                 const updates = [
@@ -3210,11 +3372,10 @@ function renderLiveMatches(matches = []) {
                 for (const [order, index] of indexes.entries()) {
                     const raw = sourcePlayers[index] || {};
                     const p = normalizePlayer(raw, index);
-                    const oldId = String(raw.id || raw.docId || p.docId || '').trim();
-                    const ref = oldId ? db.collection(FS.tournamentPlayers).doc(oldId) : db.collection(FS.tournamentPlayers).doc();
+                    const ref = db.collection(FS.tournamentPlayers).doc();
                     batch.set(ref, {
                         name: p.name, teamName: p.teamName || '', player1Name: p.player1Name || '', player2Name: p.player2Name || '', partnerPhone: p.partnerPhone || '', phone: p.phone || '', platform: p.platform || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '',
-                        rowIndex: Date.now() + order, groupNum: 1, status: 'active', preparedForNextTournament: true, tournamentId: '', wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [],
+                        rowIndex: Date.now() + order, groupNum: 1, status: 'active', preparedForNextTournament: false, tournamentId: getSelectedTournamentId(), tournamentType: currentTournamentData.tournamentType || 'league', wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [],
                         importedFromArchiveId: history.id, importedAt: fsTimestamp(), updatedAt: fsTimestamp()
                     }, { merge: true });
                     operations++;
@@ -3238,6 +3399,277 @@ function renderLiveMatches(matches = []) {
                 if (!div) { div = document.createElement('div'); div.id = 'public-history-preview'; div.className = 'mt-10 max-w-3xl mx-auto text-right'; idle.appendChild(div); }
                 div.innerHTML = `<h3 class="text-lg font-extrabold text-white mb-3 text-center"><i class="fa-solid fa-clock-rotate-left text-yellow-400 ml-1"></i> أرشيف البطولات</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${rows.map((h, i) => renderHistoryCard(h, i, true)).join('')}</div>`;
             } catch(e) {}
+        }
+
+        // ===== MULTI TOURNAMENT MANAGER =====
+        function tournamentStatusMeta(status) {
+            const value = normalizeTournamentStatusValue(status);
+            if (value === 'START') return { label: 'مرحلة اللعب', color: 'text-emerald-300', accent: '#34d399', icon: 'fa-play' };
+            if (value === 'REGISTER_OPEN') return { label: 'التسجيل مفتوح', color: 'text-cyan-300', accent: '#22d3ee', icon: 'fa-user-plus' };
+            if (value === 'DRAFT') return { label: 'مسودة', color: 'text-slate-300', accent: '#94a3b8', icon: 'fa-pen-ruler' };
+            return { label: 'منتهية', color: 'text-yellow-300', accent: '#facc15', icon: 'fa-box-archive' };
+        }
+
+        function catalogTournamentId(row) {
+            return String(row.tournamentId || (row.docId === 'current' ? '' : row.docId) || '').trim();
+        }
+
+        async function fetchTournamentCatalog() {
+            const [statesSnap, playersSnap] = await Promise.all([
+                db.collection(FS.tournamentState).get(),
+                db.collection(FS.tournamentPlayers).get().catch(() => ({ docs: [] }))
+            ]);
+            const playerCounts = new Map();
+            playersSnap.docs.forEach(doc => {
+                const p = doc.data();
+                if (['deleted','archived'].includes(String(p.status || '').toLowerCase())) return;
+                const id = String(p.tournamentId || '').trim();
+                playerCounts.set(id, (playerCounts.get(id) || 0) + 1);
+            });
+            const rows = statesSnap.docs.map(doc => ({ docId: doc.id, ...normalizeTournamentState(doc.data()) }));
+            const visible = rows.filter(row => {
+                const status = normalizeTournamentStatusValue(row.status);
+                if (row.deleted || row.isDeleted || status === 'DELETED' || status === 'ARCHIVED' || status === 'STOP') return false;
+                return isAdmin || ['START','REGISTER_OPEN'].includes(status);
+            });
+            const deduped = new Map();
+            visible.forEach(row => {
+                const key = catalogTournamentId(row) || `doc:${row.docId}`;
+                const withCount = { ...row, playerCount: playerCounts.get(catalogTournamentId(row)) || 0 };
+                if (!deduped.has(key) || row.docId !== 'current') deduped.set(key, withCount);
+            });
+            return [...deduped.values()].sort((a, b) => {
+                const order = { START: 0, REGISTER_OPEN: 1, DRAFT: 2 };
+                return (order[normalizeTournamentStatusValue(a.status)] ?? 9) - (order[normalizeTournamentStatusValue(b.status)] ?? 9) || tsToMillis(b.createdAt) - tsToMillis(a.createdAt);
+            });
+        }
+
+        function tournamentTypeLabel(type) {
+            return type === 'coop' ? 'Co-op' : type === 'champions' ? 'دوري أبطال' : type === 'knockout' ? 'خروج مغلوب' : 'دوري';
+        }
+
+        function renderTournamentHubCard(row) {
+            const meta = tournamentStatusMeta(row.status);
+            const title = row.title || row.name || `بطولة ${row.date || ''}`.trim();
+            const status = normalizeTournamentStatusValue(row.status);
+            const actionLabel = status === 'REGISTER_OPEN' ? 'سجّل في البطولة' : status === 'START' ? 'ادخل البطولة' : 'فتح الإدارة';
+            return `<article class="tournament-hub-card glass-panel rounded-3xl p-5 border border-slate-800" style="--card-accent:${meta.accent}">
+                <div class="flex items-start justify-between gap-3 mb-5">
+                    <div><div class="flex items-center gap-2 ${meta.color} text-xs font-black"><span class="tournament-status-dot"></span>${meta.label}</div><h2 class="text-xl font-black text-white mt-2">${escapeHtml(title)}</h2><p class="text-xs text-slate-500 mt-1">${escapeHtml(tournamentTypeLabel(row.tournamentType))} · ${row.playerCount || 0} مشارك</p></div>
+                    <div class="w-11 h-11 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 flex items-center justify-center"><i class="fa-solid fa-trophy"></i></div>
+                </div>
+                <a href="${escapeHtml(tournamentUrl(row.docId))}" class="block w-full py-3 rounded-2xl text-center bg-cyan-500/15 border border-cyan-500/30 text-cyan-200 font-black text-sm hover:bg-cyan-500/25"><i class="fa-solid ${meta.icon} ml-1"></i> ${actionLabel}</a>
+                ${isAdmin ? `<div class="grid grid-cols-2 gap-2 mt-2"><button onclick="event.preventDefault();hubQuickStart(${jsArg(row.docId)})" class="py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-black" ${status === 'START' ? 'disabled style="opacity:.35"' : ''}>Start</button><button onclick="event.preventDefault();hubOpenAdmin(${jsArg(row.docId)})" class="py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-black">إدارة</button></div>` : ''}
+            </article>`;
+        }
+
+        async function loadTournamentHub() {
+            selectedTournamentDocId = '';
+            currentTournamentStatus = '';
+            currentTournamentData = {};
+            showState('hub');
+            document.getElementById('selected-tournament-back')?.classList.add('hidden');
+            document.getElementById('hub-new-tournament-btn')?.classList.toggle('hidden', !isAdmin);
+            const grid = document.getElementById('tournament-hub-grid');
+            if (grid) grid.innerHTML = '<div class="col-span-full text-center py-16 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl mb-3 block"></i>جاري تحميل البطولات...</div>';
+            try {
+                tournamentCatalog = await fetchTournamentCatalog();
+                if (grid) grid.innerHTML = tournamentCatalog.map(renderTournamentHubCard).join('');
+                document.getElementById('tournament-hub-empty')?.classList.toggle('hidden', tournamentCatalog.length > 0);
+                const history = await fetchTournamentHistoryRows(4).catch(() => []);
+                const historyBox = document.getElementById('hub-public-history');
+                if (historyBox) historyBox.innerHTML = history.length ? `<h3 class="text-lg font-black text-white mb-3"><i class="fa-solid fa-box-archive text-yellow-300 ml-1"></i> بطولات سابقة</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${history.map((h,i) => renderHistoryCard(h,i,true)).join('')}</div>` : '';
+            } catch(e) {
+                console.error(e);
+                if (grid) grid.innerHTML = '<div class="col-span-full text-center py-16 text-rose-300">تعذر تحميل قائمة البطولات. راجع صلاحيات tournamentState.</div>';
+            }
+        }
+
+        function goToTournamentHub() { window.location.href = 'tournament.html'; }
+        function hubOpenAdmin(docId) { window.location.href = tournamentUrl(docId) + '&admin=1'; }
+        function openCreateTournamentModal() { if (!isAdmin) return openAdminLogin(); document.getElementById('create-tournament-modal').classList.remove('hidden'); }
+        function closeCreateTournamentModal() { document.getElementById('create-tournament-modal').classList.add('hidden'); }
+
+        function makeMultiTournamentId() {
+            return `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+        }
+
+        async function createNewTournament() {
+            if (!isAdmin) return openAdminLogin();
+            const title = (document.getElementById('new-tournament-name')?.value || '').trim();
+            if (!title) return showTAlert('اسم البطولة مطلوب', 'اكتب اسم واضح للبطولة.', true);
+            const tournamentId = makeMultiTournamentId();
+            const state = {
+                tournamentId, title,
+                tournamentType: document.getElementById('new-tournament-type')?.value || 'league',
+                leagueSize: Math.max(2, toNumber(document.getElementById('new-tournament-group-size')?.value || 4)),
+                platformFilter: document.getElementById('new-tournament-platform')?.value || 'all',
+                status: document.getElementById('new-tournament-status')?.value || 'REGISTER_OPEN',
+                groupLink: (document.getElementById('new-tournament-group-link')?.value || '').trim(),
+                knockout: [], knockoutChampion: '', leagueFinalized: false,
+                createdAt: fsTimestamp(), updatedAt: fsTimestamp(), createdBy: getAdminMeta().email || ''
+            };
+            const btn = document.getElementById('create-tournament-submit');
+            if (btn) btn.disabled = true;
+            try {
+                await db.collection(FS.tournamentState).doc(tournamentId).set(state);
+                await writeAdminLog('create_multi_tournament', { tournamentId, title, type: state.tournamentType, status: state.status });
+                closeCreateTournamentModal();
+                window.location.href = tournamentUrl(tournamentId);
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر إنشاء البطولة. راجع صلاحيات tournamentState.', true); }
+            finally { if (btn) btn.disabled = false; }
+        }
+
+        async function getTournamentPlayersById(tournamentId) {
+            const snap = await db.collection(FS.tournamentPlayers).get();
+            return snap.docs.map((doc,index) => normalizePlayer(doc,index)).filter(p => String(p.tournamentId || '') === String(tournamentId || '') && isActivePlayer(p));
+        }
+
+        async function startTournamentDocument(docId, silent = false) {
+            const ref = db.collection(FS.tournamentState).doc(docId);
+            const snap = await ref.get();
+            if (!snap.exists) throw new Error('TOURNAMENT_NOT_FOUND');
+            const state = normalizeTournamentState(snap.data());
+            const tournamentId = String(state.tournamentId || (docId === 'current' ? '' : docId));
+            let players = await getTournamentPlayersById(tournamentId);
+            const platform = state.platformFilter || 'all';
+            if (platform !== 'all') players = players.filter(p => p.platform === platform);
+            if (players.length < 2) throw new Error('NO_ELIGIBLE_PLAYERS');
+            players = shuffledCopy(players);
+            const groupSize = state.tournamentType === 'champions' ? 4 : Math.max(2, toNumber(state.leagueSize || 4));
+            let batch = db.batch();
+            players.forEach((player,index) => batch.set(db.collection(FS.tournamentPlayers).doc(player.docId), {
+                tournamentId, tournamentType: state.tournamentType || 'league', groupNum: Math.floor(index / groupSize) + 1,
+                status: 'active', preparedForNextTournament: false, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [], updatedAt: fsTimestamp()
+            }, { merge: true }));
+            await batch.commit();
+            await ref.set({ status: 'START', startedAt: fsTimestamp(), updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+            await writeAdminLog('start_multi_tournament', { tournamentId, docId, players: players.length });
+            if (!silent) showTAlert('البطولة بدأت ✅', `تم بدء البطولة بعدد ${players.length} مشارك.`, false);
+            return players.length;
+        }
+
+        async function startSelectedTournament() {
+            if (!isAdmin) return openAdminLogin();
+            try { await startTournamentDocument(getSelectedTournamentDocId()); await loadTournamentStatus(); updateAdminPanelAvailability(); }
+            catch(e) { showTAlert('تعذر البدء', e.message === 'NO_ELIGIBLE_PLAYERS' ? 'لازم يكون فيه لاعبين مسجلين صالحين على الأقل.' : 'حدث خطأ أثناء بدء البطولة.', true); }
+        }
+
+        async function openSelectedTournamentRegistration() {
+            if (!isAdmin) return openAdminLogin();
+            try {
+                await selectedTournamentStateRef().set({ status: 'REGISTER_OPEN', registrationOpenedAt: fsTimestamp(), updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+                await writeAdminLog('open_multi_tournament_registration', { tournamentId: getSelectedTournamentId() });
+                await loadTournamentStatus(); updateAdminPanelAvailability();
+                showTAlert('التسجيل مفتوح ✅', 'البطولة ظهرت للناس دلوقتي ويقدروا يسجلوا فيها.', false);
+            } catch(e) { showTAlert('خطأ', 'تعذر فتح التسجيل.', true); }
+        }
+
+        async function hubQuickStart(docId) {
+            if (!isAdmin) return openAdminLogin();
+            try { const count = await startTournamentDocument(docId, true); showTAlert('تم البدء ✅', `بدأت البطولة بعدد ${count} مشارك.`, false); await loadTournamentHub(); }
+            catch(e) { showTAlert('تعذر البدء', e.message === 'NO_ELIGIBLE_PLAYERS' ? 'البطولة محتاجة لاعبين مسجلين على الأقل.' : 'حدث خطأ أثناء البدء.', true); }
+        }
+
+        async function archiveTournamentDocument(docId, deletion = false) {
+            const stateRef = db.collection(FS.tournamentState).doc(docId);
+            const [stateSnap, playersSnap, matchesSnap] = await Promise.all([stateRef.get(), db.collection(FS.tournamentPlayers).get(), db.collection(FS.tournamentMatches).get()]);
+            if (!stateSnap.exists) throw new Error('TOURNAMENT_NOT_FOUND');
+            const state = normalizeTournamentState(stateSnap.data());
+            const tournamentId = String(state.tournamentId || (docId === 'current' ? '' : docId));
+            const playerDocs = playersSnap.docs.filter(doc => String(doc.data().tournamentId || '') === tournamentId && !['deleted','archived'].includes(String(doc.data().status || '').toLowerCase()));
+            const matchDocs = matchesSnap.docs.filter(doc => String(doc.data().tournamentId || '') === tournamentId);
+            const archiveId = `archive_${tournamentId || 'legacy'}_${Date.now()}`;
+            const history = {
+                id: archiveId, archiveId, tournamentId, title: state.title || state.name || `بطولة ${state.date || ''}`.trim(),
+                state: JSON.parse(JSON.stringify({ ...state, status: deletion ? 'DELETED' : 'ARCHIVED' })),
+                players: playerDocs.map(doc => ({ id: doc.id, ...doc.data() })), matches: matchDocs.map(doc => ({ id: doc.id, ...doc.data() })),
+                champion: getArchivedTournamentChampion({ state, players: playerDocs.map(doc => doc.data()) }),
+                archivedAtText: new Date().toISOString(), archiveVersion: 4, deletedByAdmin: deletion, archivedBy: getAdminMeta().email || ''
+            };
+            saveLocalTournamentHistory(history);
+            let firestoreSaved = false;
+            try { await db.collection(FS.tournamentHistory).doc(archiveId).set({ ...history, createdAt: fsTimestamp() }); firestoreSaved = true; } catch(e) { console.warn('Archive fallback used', e); }
+            let batch = db.batch();
+            playerDocs.forEach(doc => batch.set(doc.ref, { status: 'archived', archivedIn: archiveId, updatedAt: fsTimestamp() }, { merge: true }));
+            matchDocs.forEach(doc => batch.set(doc.ref, { status: 'ended', archivedIn: archiveId, updatedAt: fsTimestamp() }, { merge: true }));
+            batch.set(stateRef, { status: deletion ? 'DELETED' : 'ARCHIVED', deleted: deletion, archiveId, archiveSnapshot: history, endedAt: fsTimestamp(), updatedAt: fsTimestamp(), updatedBy: getAdminMeta().email || '' }, { merge: true });
+            await batch.commit();
+            await writeAdminLog(deletion ? 'delete_multi_tournament' : 'finish_multi_tournament', { tournamentId, docId, archiveId, players: playerDocs.length, matches: matchDocs.length, firestoreSaved });
+            return history;
+        }
+
+        async function finishSelectedTournament(deletion = false) {
+            if (!isAdmin) return openAdminLogin();
+            if (!confirm(deletion ? 'هيتم أرشفة الأسماء والنتائج ثم حذف البطولة من القايمة. تكمل؟' : 'هيتم إنهاء البطولة وحفظ الأسماء والنتائج في الأرشيف. تكمل؟')) return;
+            try { await archiveTournamentDocument(getSelectedTournamentDocId(), deletion); closeAdminPanel(); showTAlert('تمت الأرشفة ✅', deletion ? 'اتحفظت الأسماء والنتائج ثم اتحذفت البطولة من القائمة.' : 'انتهت البطولة واتحفظت بالكامل في الأرشيف.', false); setTimeout(goToTournamentHub, 900); }
+            catch(e) { console.error(e); showTAlert('خطأ', 'تعذر إنهاء وأرشفة البطولة.', true); }
+        }
+
+        function deleteSelectedTournament() { return finishSelectedTournament(true); }
+
+        async function loadParticipantSources() {
+            const select = document.getElementById('participant-source-select');
+            if (!select || !isAdmin) return;
+            try {
+                const [catalog, history] = await Promise.all([fetchTournamentCatalog(), fetchTournamentHistoryRows(30)]);
+                tournamentCatalog = catalog;
+                const currentDocId = getSelectedTournamentDocId();
+                select.innerHTML = '<option value="">اختر مصدر اللاعبين...</option>' +
+                    catalog.filter(row => row.docId !== currentDocId).map(row => `<option value="live:${escapeHtml(row.docId)}">بطولة حالية: ${escapeHtml(row.title || row.name || row.docId)}</option>`).join('') +
+                    history.map(row => `<option value="archive:${escapeHtml(row.id)}">أرشيف: ${escapeHtml(row.title || row.id)}</option>`).join('');
+            } catch(e) { select.innerHTML = '<option value="">تعذر تحميل المصادر</option>'; }
+        }
+
+        async function loadParticipantTransferSource() {
+            const value = document.getElementById('participant-source-select')?.value || '';
+            const box = document.getElementById('participant-transfer-list');
+            participantTransferRows = [];
+            if (!value) { if (box) box.textContent = 'اختار بطولة أو أرشيف أولاً'; return; }
+            if (box) box.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...';
+            try {
+                const [kind, id] = value.split(':');
+                if (kind === 'live') {
+                    const source = tournamentCatalog.find(row => row.docId === id);
+                    const sourceId = catalogTournamentId(source || { docId: id });
+                    const snap = await db.collection(FS.tournamentPlayers).get();
+                    participantTransferRows = snap.docs.map((doc,index) => ({ ...normalizePlayer(doc,index), sourceDocId: doc.id, sourceKind: 'live' })).filter(p => String(p.tournamentId || '') === sourceId && isActivePlayer(p));
+                } else {
+                    let history = tournamentHistoryCache.get(id);
+                    if (!history) { const snap = await db.collection(FS.tournamentHistory).doc(id).get(); if (snap.exists) history = { id: snap.id, ...snap.data() }; }
+                    participantTransferRows = (history?.players || []).map((p,index) => ({ ...normalizePlayer(p,index), sourceKind: 'archive', sourceArchiveId: id }));
+                }
+                if (box) box.innerHTML = participantTransferRows.length ? participantTransferRows.map((p,index) => `<label class="flex items-center gap-3 p-2.5 border-b border-slate-800 last:border-0 text-right"><input type="checkbox" class="transfer-player-checkbox accent-purple-400" value="${index}"><span class="flex-1"><b class="text-white">${escapeHtml(p.name)}</b>${p.player1Name || p.player2Name ? `<small class="block text-purple-300">${escapeHtml([p.player1Name,p.player2Name].filter(Boolean).join(' + '))}</small>` : ''}<small class="block text-slate-500">${escapeHtml(p.phone || p.platform || '')}</small></span></label>`).join('') : '<div class="py-6">لا يوجد مشاركون صالحون في المصدر</div>';
+            } catch(e) { console.error(e); if (box) box.innerHTML = '<div class="py-6 text-rose-300">تعذر تحميل اللاعبين</div>'; }
+        }
+
+        function toggleAllTransferPlayers(checked) { document.querySelectorAll('.transfer-player-checkbox').forEach(box => { box.checked = !!checked; }); }
+
+        async function transferSelectedParticipants() {
+            if (!isAdmin) return openAdminLogin();
+            const indexes = [...document.querySelectorAll('.transfer-player-checkbox:checked')].map(box => Number(box.value)).filter(Number.isFinite);
+            if (!indexes.length) return showTAlert('اختار لاعبين', 'علّم على لاعب واحد على الأقل.', true);
+            const mode = document.getElementById('participant-transfer-mode')?.value || 'copy';
+            const targetId = getSelectedTournamentId();
+            try {
+                let batch = db.batch();
+                indexes.forEach((index,order) => {
+                    const p = participantTransferRows[index];
+                    if (!p) return;
+                    const canMove = mode === 'move' && p.sourceKind === 'live' && p.sourceDocId;
+                    const ref = canMove ? db.collection(FS.tournamentPlayers).doc(p.sourceDocId) : db.collection(FS.tournamentPlayers).doc();
+                    batch.set(ref, {
+                        name: p.name, teamName: p.teamName || '', player1Name: p.player1Name || '', player2Name: p.player2Name || '', partnerPhone: p.partnerPhone || '', phone: p.phone || '', platform: p.platform || '', timeFrom: p.timeFrom || '', timeTo: p.timeTo || '',
+                        rowIndex: Date.now() + order, tournamentId: targetId, tournamentType: currentTournamentData.tournamentType || 'league', groupNum: currentTournamentStatus === 'START' ? 1 : 0,
+                        status: 'active', preparedForNextTournament: false, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, points: 0, played: 0, matches: [],
+                        importedFromTournamentId: p.tournamentId || '', importedFromArchiveId: p.sourceArchiveId || '', transferMode: canMove ? 'move' : 'copy', importedAt: fsTimestamp(), updatedAt: fsTimestamp()
+                    }, { merge: true });
+                });
+                await batch.commit();
+                await writeAdminLog('transfer_tournament_participants', { targetId, count: indexes.length, mode });
+                showTAlert('تم التنفيذ ✅', `تم ${mode === 'move' ? 'نقل' : 'نسخ'} ${indexes.length} مشارك للبطولة الحالية بنتائج صفر.`, false);
+                await refreshPlayers(); await loadParticipantTransferSource();
+            } catch(e) { console.error(e); showTAlert('خطأ', 'تعذر نقل أو نسخ المشاركين.', true); }
         }
 
         // ===== HELPERS =====
