@@ -3555,29 +3555,7 @@
         async function tournamentAction(action) {
             document.getElementById('tournament-dropdown').classList.add('hidden');
             tournamentDropdownOpen = false;
-
-            if (action === 'start') {
-                openTournamentStartModal('start');
-            } else if (action === 'stop') {
-                showConfirm('إيقاف البطولة', 'هل أنت متأكد من إيقاف البطولة؟ سيتم أرشفة البطولة الحالية ثم إغلاق الداشبورد.', async () => {
-                    const blocker = document.getElementById('action-blocker');
-                    blocker.classList.remove('hidden');
-                    try {
-                        const archiveResult = await archiveCurrentTournament();
-                        await endTournamentPlayers();
-                        await logTournamentEvent('STOP');
-                        setTournamentEntryPulse('STOP');
-                        showAlert('تم الإيقاف', archiveResult?.firestoreSaved ? 'تم إيقاف البطولة وحفظها في الهيستوري.' : 'تم إيقاف البطولة وحفظ نسخة احتياطية من الأرشيف؛ صلاحيات tournamentHistory محتاجة تحديث.', false);
-                    } catch(e) {
-                        console.warn('Tournament stop error:', e);
-                        showAlert('خطأ', 'تعذر إيقاف البطولة بالكامل. راجع صلاحيات Firestore وحاول تاني.', true);
-                    } finally {
-                        blocker.classList.add('hidden');
-                    }
-                });
-            } else if (action === 'register') {
-                openTournamentStartModal('register');
-            }
+            window.location.href = 'tournament.html?admin=1';
         }
 
         async function logTournamentEvent(eventType, extraData = '') {
@@ -3633,14 +3611,7 @@
         }
 
         function buildTournamentPageUrl() {
-            const state = getTournamentStateFallback();
-            const params = new URLSearchParams();
-            if (state.status) params.set('status', state.status);
-            if (state.tournamentType) params.set('type', state.tournamentType);
-            if (state.leagueSize) params.set('leagueSize', state.leagueSize);
-            if (state.platformFilter) params.set('platform', state.platformFilter);
-            if (state.groupLink) params.set('groupLink', state.groupLink);
-            return 'tournament.html' + (params.toString() ? '?' + params.toString() : '');
+            return 'tournament.html';
         }
 
         function openTournamentPage(event) {
@@ -3973,8 +3944,9 @@
             const popup = document.getElementById('tournament-popup');
             if (popup) popup.classList.add('hidden');
             try {
-                const stateSnap = await db.collection(FS.tournamentState).doc('current').get();
-                const data = stateSnap.exists ? stateSnap.data() : getTournamentStateFallback();
+                const statesSnap = await db.collection(FS.tournamentState).get();
+                const states = statesSnap.docs.map(doc => ({ docId: doc.id, ...doc.data() })).filter(row => !row.deleted && ['START','REGISTER_OPEN'].includes(String(row.status || '').toUpperCase()));
+                const data = states.find(row => row.announcement?.active) || states[0] || getTournamentStateFallback();
                 const status = data.status;
                 if (status === 'START' || status === 'REGISTER_OPEN') {
                     saveTournamentStateFallback(data);
